@@ -17,7 +17,10 @@
     void insert(alpha_token_t *head, int line, int token_id, char* content, char* type);
     void print(alpha_token_t* head);
 
-    
+    typedef enum keywords{IF,ELSE,WHILE,FOR,FUNCTION,RETURN,BREAK,CONTINUE,AND,NOT,OR,LOCAL,TRUE,FALSE,NIL}keywords_t;
+    typedef enum operators{ASSIGN,PLUS,MINUS,MULT,DIV,MOD,EQUAL,NOT_EQUAL,PLUS_PLUS,MINUS_MINUS,LESSER,GREATER,GREATER_EQUAL,LESSER_EQUAL}operators_t;
+    typedef enum punc{LEFT_BRACE,RIGHT_BRACE,LEFT_SQBRACE,RIGHT_SQBRACE,LEFT_PARENTHESIS,RIGHT_PARENTHESIS,SEMICOLON,COMA,COLON,COLON_COLON,DOT,DOT_DOT}punc_t;
+    typedef enum comments{LINE_COMMENT,BLOCK_COMMENT}comments_t;
 %}
 
 /* Flex options */
@@ -32,7 +35,7 @@ INTCONST 	    (0[xX][0-9a-fA-F]+)|[0-9]+
 REALCONST       [0-9]*\.([0-9](e|E)?[0-9]*)
 STRING          \"[^\n"]*\"
 OPERATOR	    "="|"+"|"-"|"*"|"/"|"%"|"=="|"!="|"++"|"--"|">"|"<"|">="|"<="
-ID		        [a-zA-Z_][a-zA-Z_0-9]*
+IDENT           [a-zA-Z_][a-zA-Z_0-9]*
 PUNCTUATION		"{"|"}"|"["|"]"|"("|")"|";"|","|":"|"::"|"."|".."
 SPACE           [\r\n \t\v]
 COMMENT		    ("//".*)|("/*".*?"*/")
@@ -46,7 +49,7 @@ COMMENT		    ("//".*)|("/*".*?"*/")
 {REALCONST}     { fprintf(stderr,"Recognised real number with value: %s\n",yytext); }
 {STRING}        { fprintf(stderr,"Recognised string with value: %s\n",yytext); }
 {OPERATOR}      { fprintf(stderr,"Recognised operator with value: %s\n",yytext); }
-{ID}            { fprintf(stderr,"Recognised id with value: %s\n",yytext); }
+{IDENT}         { fprintf(stderr,"Recognised id with value: %s\n",yytext); }
 {PUNCTUATION}   { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext); }
 {SPACE}         { }
 {COMMENT}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext); }
