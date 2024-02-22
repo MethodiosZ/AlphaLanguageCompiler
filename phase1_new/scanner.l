@@ -28,6 +28,7 @@ string      \"[^\n"]*\"
 operator	"="|"+"|"-"|"*"|"/"|"%"|"=="|"!="|"++"|"--"|">"|"<"|">="|"<="
 id			[a-zA-Z_][a-zA-Z_0-9]*
 mark		"{"|"}"|"["|"]"|"("|")"|";"|","|":"|"::"|"."|".."
+space       [\r\n \t\v]
 comment		("//".*)|("/*".*?"*/")
 
 %x COMMENT
@@ -41,6 +42,7 @@ comment		("//".*)|("/*".*?"*/")
 {operator}      { fprintf(stderr,"Recognised operator with value: %s\n",yytext); }
 {id}            { fprintf(stderr,"Recognised id with value: %s\n",yytext); }
 {mark}          { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext); }
+{space}         { }
 {comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext); }
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
 
