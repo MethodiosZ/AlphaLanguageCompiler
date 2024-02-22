@@ -21,37 +21,32 @@
 %option yylineno
 
 /* Flex macros */
-id          [a-zA-Z][a-zA-Z_0-9]*
-integer     (0[xX][0-9A-Fa-f]+)|([0-9]+)
-real        [0-9]*\.[0-9](e|E)?[0-9]*
+keyword		"if"|"else"|"while"|"for"|"function"|"return"|"break"|"continue"|"and"|"not"|"or"|"local"|"true"|"false"|"nil"
+integer 	(0[xX][0-9a-fA-F]+)|[0-9]+
+real    	[0-9]*\.([0-9](e|E)?[0-9]*)
 string      \"[^\n"]*\"
-comment     "//".*|"/*".*"*/"
-keyword     "if" | "else" | "while" | "for" | "function" | "return" | "break" | "continue" | "and" | "not" | "or" | "local" | "true" | "false" | "nil"
-operator    "=" | "+" | "-" | "*" | "/" | "%" | "==" | "!=" | "++" | "--" | "<" | ">" | ">=" | "<="
-mark        "{" | "}" | "[" | "]" | "(" | ")" | ";" | "," | ":" | "::" | "." | ".."
+operator	"="|"+"|"-"|"*"|"/"|"%"|"=="|"!="|"++"|"--"|">"|"<"|">="|"<="
+id			[a-zA-Z_][a-zA-Z_0-9]*
+mark		"{"|"}"|"["|"]"|"("|")"|";"|","|":"|"::"|"."|".."
+comment		("//".*)|("/*".*?"*/")
 
 %x COMMENT
 
 %%
 
-
-{id}            { fprintf(stderr,"Recognised id with value: %s\n",yytext); }
-{string}        { fprintf(stderr,"Recognised string with value: %s\n",yytext); }
-{integer}       { fprintf(stderr,"Recognised integer with value: %s\n",yytext); }    
-{real}          { fprintf(stderr,"Recognised real number with value: %s\n",yytext); }
-{comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext); }
 {keyword}       { fprintf(stderr,"Recognised keyword with value: %s\n",yytext); }
+{integer}       { fprintf(stderr,"Recognised integer with value: %s\n",yytext); }
+{real}          { fprintf(stderr,"Recognised real number with value: %s\n",yytext); }
+{string}        { fprintf(stderr,"Recognised string with value: %s\n",yytext); }
 {operator}      { fprintf(stderr,"Recognised operator with value: %s\n",yytext); }
+{id}            { fprintf(stderr,"Recognised id with value: %s\n",yytext); }
 {mark}          { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext); }
-
+{comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext); }
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
 
 %%
 
-void print(){
-
-}
-
+/* user code */
 int main(int argc, char* argv[]) {
     system("clear");
     if(argc > 1) {
