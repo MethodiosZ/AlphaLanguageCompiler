@@ -1,3 +1,4 @@
+/* Flex definitions */
 %{
     #include <stdio.h>
     #include <stdlib.h>
@@ -13,17 +14,20 @@
     }alpha_token_t;
 %}
 
+/* Flex options */
+
 %option header-file="./scanner.h"
 %option noyywrap 
 %option yylineno
 
+/* Flex macros */
 id          [a-zA-Z][a-zA-Z_0-9]*
 integer     (0[xX][0-9A-Fa-f]+)|([0-9]+)
 real        [0-9]*\.[0-9](e|E)?[0-9]*
 string      \"[^\n"]*\"
 comment     "//".*|"/*".*"*/"
 keyword     "if" | "else" | "while" | "for" | "function" | "return" | "break" | "continue" | "and" | "not" | "or" | "local" | "true" | "false" | "nil"
-operator    "="" | "+" | "-" | "*" | "/" | "%" | "==" | "!=" | "++" | "--" | "<" | ">" | ">=" | "<="
+operator    "=" | "+" | "-" | "*" | "/" | "%" | "==" | "!=" | "++" | "--" | "<" | ">" | ">=" | "<="
 mark        "{" | "}" | "[" | "]" | "(" | ")" | ";" | "," | ":" | "::" | "." | ".."
 
 %x COMMENT
