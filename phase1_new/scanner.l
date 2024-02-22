@@ -4,6 +4,13 @@
     #include <string.h>
 
     int alpha_yylex (void* yylval)
+
+    typedef struct alpha_token{
+        int line;
+        int token_id;
+        char* content;
+        char* type;
+    }alpha_token_t;
 %}
 
 %option header-file="./scanner.h"
