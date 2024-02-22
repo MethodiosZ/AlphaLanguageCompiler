@@ -95,6 +95,6 @@ int main(int argc, char* argv[]) {
     head->content=NULL;
     head->type=NULL;
     head->next=NULL;
-    yylex(head);
+    alpha_yylex(head);
     return 0;
 }
