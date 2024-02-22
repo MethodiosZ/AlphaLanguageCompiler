@@ -16,6 +16,8 @@
 
     void insert(alpha_token_t *head, int line, int token_id, char* content, char* type);
     void print(alpha_token_t* head);
+
+    
 %}
 
 /* Flex options */
@@ -25,29 +27,29 @@
 %option yylineno
 
 /* Flex macros */
-keyword		"if"|"else"|"while"|"for"|"function"|"return"|"break"|"continue"|"and"|"not"|"or"|"local"|"true"|"false"|"nil"
-integer 	(0[xX][0-9a-fA-F]+)|[0-9]+
-real    	[0-9]*\.([0-9](e|E)?[0-9]*)
-string      \"[^\n"]*\"
-operator	"="|"+"|"-"|"*"|"/"|"%"|"=="|"!="|"++"|"--"|">"|"<"|">="|"<="
-id			[a-zA-Z_][a-zA-Z_0-9]*
-mark		"{"|"}"|"["|"]"|"("|")"|";"|","|":"|"::"|"."|".."
-space       [\r\n \t\v]
-comment		("//".*)|("/*".*?"*/")
+KEYWORD		    "if"|"else"|"while"|"for"|"function"|"return"|"break"|"continue"|"and"|"not"|"or"|"local"|"true"|"false"|"nil"
+INTCONST 	    (0[xX][0-9a-fA-F]+)|[0-9]+
+REALCONST       [0-9]*\.([0-9](e|E)?[0-9]*)
+STRING          \"[^\n"]*\"
+OPERATOR	    "="|"+"|"-"|"*"|"/"|"%"|"=="|"!="|"++"|"--"|">"|"<"|">="|"<="
+ID		        [a-zA-Z_][a-zA-Z_0-9]*
+PUNCTUATION		"{"|"}"|"["|"]"|"("|")"|";"|","|":"|"::"|"."|".."
+SPACE           [\r\n \t\v]
+COMMENT		    ("//".*)|("/*".*?"*/")
 
 %x COMMENT
 
 %%
 
-{keyword}       { fprintf(stderr,"Recognised keyword with value: %s\n",yytext); }
-{integer}       { fprintf(stderr,"Recognised integer with value: %s\n",yytext); }
-{real}          { fprintf(stderr,"Recognised real number with value: %s\n",yytext); }
-{string}        { fprintf(stderr,"Recognised string with value: %s\n",yytext); }
-{operator}      { fprintf(stderr,"Recognised operator with value: %s\n",yytext); }
-{id}            { fprintf(stderr,"Recognised id with value: %s\n",yytext); }
-{mark}          { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext); }
-{space}         { }
-{comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext); }
+{KEYWORD}       { fprintf(stderr,"Recognised keyword with value: %s\n",yytext); }
+{INTCONST}      { fprintf(stderr,"Recognised integer with value: %s\n",yytext); }
+{REALCONST}     { fprintf(stderr,"Recognised real number with value: %s\n",yytext); }
+{STRING}        { fprintf(stderr,"Recognised string with value: %s\n",yytext); }
+{OPERATOR}      { fprintf(stderr,"Recognised operator with value: %s\n",yytext); }
+{ID}            { fprintf(stderr,"Recognised id with value: %s\n",yytext); }
+{PUNCTUATION}   { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext); }
+{SPACE}         { }
+{COMMENT}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext); }
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
 
 %%
