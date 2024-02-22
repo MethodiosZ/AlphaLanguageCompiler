@@ -14,8 +14,8 @@
         alpha_token_t*  next;
     }alpha_token_t;
 
-    void insert();
-    void print();
+    void insert(alpha_token_t *head, int line, int token_id, char* content, char* type);
+    void print(alpha_token_t* head);
 %}
 
 /* Flex options */
@@ -53,12 +53,24 @@ comment		("//".*)|("/*".*?"*/")
 %%
 /* user code */
 
-void insert(){
-
+void insert(alpha_token_t *head, int line, int token_id, char* content, char* type){
+    alpha_token_t *new_token,*temp;
+    new_token=(alpha_token_t*)malloc(sizeof(alpha_token_t));
+    new_token->line=line;
+    new_token->token_id=token_id;
+    strcpy(new_token->content,content);
+    strcpy(new_token->type,type);
+    new_token->next=NULL;
+    temp=head;
+    while(temp->next!=NULL){
+        temp=temp->next;
+    }
+    temp->next=new_token;
+    return;
 }
 
-void print(){
-    
+void print(alpha_token_t* head){
+
 }
 
 int main(int argc, char* argv[]) {
