@@ -7,11 +7,15 @@
     int alpha_yylex (void* yylval)
 
     typedef struct alpha_token{
-        int line;
-        int token_id;
-        char* content;
-        char* type;
+        int             line;
+        int             token_id;
+        char*           content;
+        char*           type;
+        alpha_token_t*  next;
     }alpha_token_t;
+
+    void insert();
+    void print();
 %}
 
 /* Flex options */
@@ -47,8 +51,16 @@ comment		("//".*)|("/*".*?"*/")
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
 
 %%
-
 /* user code */
+
+void insert(){
+
+}
+
+void print(){
+    
+}
+
 int main(int argc, char* argv[]) {
     system("clear");
     if(argc > 1) {
@@ -59,6 +71,13 @@ int main(int argc, char* argv[]) {
     }else {
         yyin = stdin;
     }
-    yylex();
+    alpha_token_t* head = NULL;
+    head = (alpha_token_t*)malloc(sizeof(alpha_token_t));
+    head->line=0;
+    head->token_id=0;
+    head->content=NULL;
+    head->type=NULL;
+    head->next=NULL;
+    yylex(head);
     return 0;
 }
