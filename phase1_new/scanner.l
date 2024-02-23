@@ -12,12 +12,17 @@
         int             line;
         int             token_id;
         char*           content;
-        char*           type;
+        char*           category;
+        char*           type:
         alpha_token_t*  next;
     }alpha_token_t;
 
-    void insert(alpha_token_t *head, int line, int token_id, char* content, char* type);
+    void insert(alpha_token_t *head, int line, int token_id, char* content,char* category, char* type);
     void print(alpha_token_t* head);
+    keywords_t text_to_enum_keys(char* text);
+    operators_t text_to_enum_ops(char* text);
+    punc_t text_to_enum_puncs(char* text);
+    comments_t text_to_enum_comments(char* text);
 
     typedef enum keywords{IF,ELSE,WHILE,FOR,FUNCTION,RETURN,BREAK,CONTINUE,AND,NOT,OR,LOCAL,TRUE,FALSE,NIL}keywords_t;
     typedef enum operators{ASSIGN,PLUS,MINUS,MULT,DIV,MOD,EQUAL,NOT_EQUAL,PLUS_PLUS,MINUS_MINUS,LESSER,GREATER,GREATER_EQUAL,LESSER_EQUAL}operators_t;
@@ -68,12 +73,29 @@ comment		    ("//".*)|("/*".*?"*/")
 %%
 /* user code */
 
-void insert(alpha_token_t *head, int line, int token_id, char* content, char* type){
+keywords_t text_to_enum_keys(char* text){
+
+}
+
+operators_t text_to_enum_ops(char* text){
+
+}
+
+punc_t text_to_enum_puncs(char* text){
+
+}
+
+comments_t text_to_enum_comments(char* text){
+    
+}
+
+void insert(alpha_token_t *head, int line, int token_id, char* content,char* category, char* type){
     alpha_token_t *new_token,*temp;
     new_token=(alpha_token_t*)malloc(sizeof(alpha_token_t));
     new_token->line=line;
     new_token->token_id=token_id;
     strcpy(new_token->content,content);
+    strcpy(new_token->category,category);
     strcpy(new_token->type,type);
     new_token->next=NULL;
     temp=head;
@@ -103,6 +125,7 @@ int main(int argc, char* argv[]) {
     head->line=0;
     head->token_id=0;
     head->content=NULL;
+    head->category=NULL;
     head->type=NULL;
     head->next=NULL;
     alpha_yylex(head);
