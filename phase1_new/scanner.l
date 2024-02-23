@@ -51,23 +51,27 @@ comment		    ("//".*)|("/*".*?"*/")
 
 %%
 
-{keyword}       { fprintf(stderr,"Recognised keyword with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"KEYWORD")  }
+{keyword}       { fprintf(stderr,"Recognised keyword with value: %s\n",yytext);
+                  keywords_t key = text_to_enum_keys(yytext);  
+                  insert(yylval,yylineno,++yytokenid,yytext,"KEYWORD",key);  }
 {intconst}      { fprintf(stderr,"Recognised integer with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"INTCONST")   }
+                  insert(yylval,yylineno,++yytokenid,yytext,"INTCONST",yytext);   }
 {realconst}     { fprintf(stderr,"Recognised real number with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"REALCONST")   }
+                  insert(yylval,yylineno,++yytokenid,yytext,"REALCONST",yytext);   }
 {string}        { fprintf(stderr,"Recognised string with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"STRING")   }
-{operator}      { fprintf(stderr,"Recognised operator with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"OPERATOR")   }
+                  insert(yylval,yylineno,++yytokenid,yytext,"STRING",yytext);   }
+{operator}      { fprintf(stderr,"Recognised operator with value: %s\n",yytext);
+                  operators_t op = text_to_enum_ops(yytext);  
+                  insert(yylval,yylineno,++yytokenid,yytext,"OPERATOR",op);   }
 {ident}         { fprintf(stderr,"Recognised id with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"IDENT")   }
-{punctuation}   { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"PUNCTUATION")   }
+                  insert(yylval,yylineno,++yytokenid,yytext,"IDENT",yytext);   }
+{punctuation}   { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext);
+                  punc_t mark = text_to_enum_puncs(yytext);  
+                  insert(yylval,yylineno,++yytokenid,yytext,"PUNCTUATION",mark);   }
 {space}         { }
-{comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT")   }
+{comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext);
+                  comments_t comm = text_to_enum_comments(yytext);  
+                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",comm);   }
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
 
 %%
