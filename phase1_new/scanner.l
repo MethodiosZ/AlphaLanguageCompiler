@@ -17,6 +17,11 @@
         struct alpha_token*     next;
     }alpha_token_t;
 
+    typedef enum keywords{IF,ELSE,WHILE,FOR,FUNCTION,RETURN,BREAK,CONTINUE,AND,NOT,OR,LOCAL,TRUE,FALSE,NIL}keywords_t;
+    typedef enum operators{ASSIGN,PLUS,MINUS,MULTIPLY,DIV,MOD,EQUAL,NOT_EQUAL,PLUS_PLUS,MINUS_MINUS,LESSER,GREATER,GREATER_EQUAL,LESSER_EQUAL}operators_t;
+    typedef enum punc{LEFT_BRACE,RIGHT_BRACE,LEFT_SQBRACE,RIGHT_SQBRACE,LEFT_PARENTHESIS,RIGHT_PARENTHESIS,SEMICOLON,COMA,COLON,COLON_COLON,DOT,DOT_DOT}punc_t;
+    typedef enum comments{LINE_COMMENT,BLOCK_COMMENT}comments_t;
+
     void insert(alpha_token_t *head, int line, int token_id, char* content,char* category, char* type);
     void print(alpha_token_t* head);
     keywords_t text_to_enum_keys(char* text);
@@ -24,10 +29,6 @@
     punc_t text_to_enum_puncs(char* text);
     comments_t text_to_enum_comments(char* text);
 
-    typedef enum keywords{IF,ELSE,WHILE,FOR,FUNCTION,RETURN,BREAK,CONTINUE,AND,NOT,OR,LOCAL,TRUE,FALSE,NIL}keywords_t;
-    typedef enum operators{ASSIGN,PLUS,MINUS,MULTIPLY,DIV,MOD,EQUAL,NOT_EQUAL,PLUS_PLUS,MINUS_MINUS,LESSER,GREATER,GREATER_EQUAL,LESSER_EQUAL}operators_t;
-    typedef enum punc{LEFT_BRACE,RIGHT_BRACE,LEFT_SQBRACE,RIGHT_SQBRACE,LEFT_PARENTHESIS,RIGHT_PARENTHESIS,SEMICOLON,COMA,COLON,COLON_COLON,DOT,DOT_DOT}punc_t;
-    typedef enum comments{LINE_COMMENT,BLOCK_COMMENT}comments_t;
 %}
 
 /* Flex options */
@@ -151,7 +152,11 @@ void insert(alpha_token_t *head, int line, int token_id, char* content,char* cat
 }
 
 void print(alpha_token_t* head){
-
+    while(head){
+        printf("%d: #%d %s %s %s",head->line,head->token_id,head->content,head->category,head->type);
+        head=head->next;
+    }
+    return;
 }
 
 int main(int argc, char* argv[]) {
@@ -173,5 +178,6 @@ int main(int argc, char* argv[]) {
     head->type=NULL;
     head->next=NULL;
     alpha_yylex(head);
+    print(head);
     return 0;
 }
