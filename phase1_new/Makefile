@@ -18,3 +18,5 @@ $(EXECUTABLE): scanner.l
 # Clean generated files
 clean:
 	rm -f lex.yy.c $(EXECUTABLE)
+	rm -f a.out
+	rm -f scanner.h
