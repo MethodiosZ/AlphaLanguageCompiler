@@ -140,9 +140,6 @@ void insert(alpha_token_t *head, int line, int token_id, char* content,char* cat
     new_token->category=strdup(category);
     new_token->type=type;
     new_token->next=NULL;
-    if(head==NULL){
-        head=new_token;
-    }
     temp=head;
     while(temp->next!=NULL){
         temp=temp->next;
@@ -152,9 +149,11 @@ void insert(alpha_token_t *head, int line, int token_id, char* content,char* cat
 }
 
 void print(alpha_token_t* head){
-    while(head){
-        printf("%d: #%d %s %s %s\n",head->line,head->token_id,head->content,head->category,head->type);
-        head=head->next;
+    alpha_token_t* temp;
+    temp=head->next;
+    while(temp){
+        printf("%d: #%d %s %s %s\n",temp->line,temp->token_id,temp->content,temp->category,temp->type);
+        temp=temp->next;
     }
     return;
 }
@@ -163,11 +162,6 @@ int main(int argc, char* argv[]) {
     system("clear");
     alpha_token_t* head = NULL;
     head = (alpha_token_t*)malloc(sizeof(alpha_token_t));
-    head->line=0;
-    head->token_id=0;
-    head->content=NULL;
-    head->category=NULL;
-    head->type=NULL;
     head->next=NULL;
     if(argc > 1) {
         if(!(yyin = fopen(argv[1],"r"))) {
