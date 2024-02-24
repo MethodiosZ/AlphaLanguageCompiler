@@ -1,5 +1,5 @@
 # Compiler
-CC = gcc -g
+CC = gcc -g -w
 
 # Flex compiler
 FL = flex
