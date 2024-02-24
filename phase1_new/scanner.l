@@ -4,17 +4,17 @@
     #include <stdlib.h>
     #include <string.h>
 
-    int alpha_yylex (void* yylval)
+    int alpha_yylex (void* yylval);
 
     int yytokenid = 0;
 
     typedef struct alpha_token{
-        int             line;
-        int             token_id;
-        char*           content;
-        char*           category;
-        char*           type:
-        alpha_token_t*  next;
+        int                     line;
+        int                     token_id;
+        char*                   content;
+        char*                   category;
+        char*                   type:
+        struct alpha_token*     next;
     }alpha_token_t;
 
     void insert(alpha_token_t *head, int line, int token_id, char* content,char* category, char* type);
