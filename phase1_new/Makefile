@@ -1,8 +1,8 @@
 # Compiler
-CC = gcc
+CC = gcc -g
 
 # Flex compiler
-FLEX = flex
+FL = flex
 
 # Executable name
 EXECUTABLE = scanner
@@ -10,13 +10,13 @@ EXECUTABLE = scanner
 # Default rule
 all: $(EXECUTABLE)
 
-# Compile lexer
+# Compile
 $(EXECUTABLE): scanner.l
-	$(FLEX) -o lex.yy.c scanner.l
-	$(CC) -o $@ lex.yy.c -lfl
+	$(FL) -o lex.yy.c scanner.l
+	$(CC) -o scanner lex.yy.c
 
 # Clean generated files
 clean:
 	rm -f lex.yy.c $(EXECUTABLE)
-	rm -f a.out
+	rm -f scanner
 	rm -f scanner.h
