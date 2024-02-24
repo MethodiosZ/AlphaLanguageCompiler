@@ -4,7 +4,7 @@
     #include <stdlib.h>
     #include <string.h>
 
-    int alpha_yylex (void* yylval);
+    #define YY_DECL int alpha_yylex (void* yylval);
 
     int yytokenid = 0;
 
