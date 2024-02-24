@@ -136,10 +136,13 @@ void insert(alpha_token_t *head, int line, int token_id, char* content,char* cat
     new_token=(alpha_token_t*)malloc(sizeof(alpha_token_t));
     new_token->line=line;
     new_token->token_id=token_id;
-    strcpy(new_token->content,content);
-    strcpy(new_token->category,category);
+    new_token->content=strdup(content);
+    new_token->category=strdup(category);
     new_token->type=type;
     new_token->next=NULL;
+    if(head==NULL){
+        head=new_token;
+    }
     temp=head;
     while(temp->next!=NULL){
         temp=temp->next;
@@ -150,7 +153,7 @@ void insert(alpha_token_t *head, int line, int token_id, char* content,char* cat
 
 void print(alpha_token_t* head){
     while(head){
-        printf("%d: #%d %s %s %s",head->line,head->token_id,head->content,head->category,head->type);
+        printf("%d: #%d %s %s %s\n",head->line,head->token_id,head->content,head->category,head->type);
         head=head->next;
     }
     return;
@@ -158,14 +161,6 @@ void print(alpha_token_t* head){
 
 int main(int argc, char* argv[]) {
     system("clear");
-    if(argc > 1) {
-        if(!(yyin = fopen(argv[1],"r"))) {
-            fprintf(stderr, "Cannot read file:  %s\n", argv[1]);
-            return -1;
-        }
-    }else {
-        yyin = stdin;
-    }
     alpha_token_t* head = NULL;
     head = (alpha_token_t*)malloc(sizeof(alpha_token_t));
     head->line=0;
@@ -174,6 +169,14 @@ int main(int argc, char* argv[]) {
     head->category=NULL;
     head->type=NULL;
     head->next=NULL;
+    if(argc > 1) {
+        if(!(yyin = fopen(argv[1],"r"))) {
+            fprintf(stderr, "Cannot read file:  %s\n", argv[1]);
+            return -1;
+        }
+    }else {
+        yyin = stdin;
+    }
     alpha_yylex(head);
     print(head);
     return 0;
