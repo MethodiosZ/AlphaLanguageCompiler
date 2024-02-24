@@ -13,7 +13,7 @@
         int                     token_id;
         char*                   content;
         char*                   category;
-        char*                   type:
+        char*                   type;
         struct alpha_token*     next;
     }alpha_token_t;
 
