@@ -7,6 +7,18 @@
 
     int yytokenid = 0;
 
+    static const char *Keys[] = {
+        "IF","ELSE","WHILE","FOR","FUNCTION","RETURN","BREAK","CONTINUE","AND","NOT","OR","LOCAL","TRUE","FALSE","NIL",
+    };
+
+    static const char *Ops[] = {
+        "ASSIGN","PLUS","MINUS","MULTIPLY","DIV","MOD","EQUAL","NOT_EQUAL","PLUS_PLUS","MINUS_MINUS","LESSER","GREATER","GREATER_EQUAL","LESSER_EQUAL",
+    };
+
+    static const char *Puncs[] = {
+        "LEFT_BRACE","RIGHT_BRACE","LEFT_SQBRACE","RIGHT_SQBRACE","LEFT_PARENTHESIS","RIGHT_PARENTHESIS","SEMICOLON","COMA","COLON","COLON_COLON","DOT","DOT_DOT",
+    };
+
     typedef struct alpha_token{
         int                     line;
         int                     token_id;
@@ -19,14 +31,12 @@
     typedef enum keywords{IF,ELSE,WHILE,FOR,FUNCTION,RETURN,BREAK,CONTINUE,AND,NOT,OR,LOCAL,TRUE,FALSE,NIL}keywords_t;
     typedef enum operators{ASSIGN,PLUS,MINUS,MULTIPLY,DIV,MOD,EQUAL,NOT_EQUAL,PLUS_PLUS,MINUS_MINUS,LESSER,GREATER,GREATER_EQUAL,LESSER_EQUAL}operators_t;
     typedef enum punc{LEFT_BRACE,RIGHT_BRACE,LEFT_SQBRACE,RIGHT_SQBRACE,LEFT_PARENTHESIS,RIGHT_PARENTHESIS,SEMICOLON,COMA,COLON,COLON_COLON,DOT,DOT_DOT}punc_t;
-    typedef enum comments{LINE_COMMENT,BLOCK_COMMENT}comments_t;
 
     void insert(alpha_token_t *head, int line, int token_id, char* content,char* category, int type);
     void print(alpha_token_t* head);
     int text_to_enum_keys(char* text);
     int text_to_enum_ops(char* text);
     int text_to_enum_puncs(char* text);
-    int text_to_enum_comments(char* text);
 
 %}
 
@@ -52,24 +62,23 @@ comment		    ("//".*)
                   int key = text_to_enum_keys(yytext);  
                   insert(yylval,yylineno,++yytokenid,yytext,"KEYWORD",key);  }
 {intconst}      { fprintf(stderr,"Recognised integer with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"INTCONST",NULL);   }
+                  insert(yylval,yylineno,++yytokenid,yytext,"INTCONST",-1);   }
 {realconst}     { fprintf(stderr,"Recognised real number with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"REALCONST",NULL);   }
+                  insert(yylval,yylineno,++yytokenid,yytext,"REALCONST",-1);   }
 {string}        { fprintf(stderr,"Recognised string with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"STRING",NULL);   }
+                  insert(yylval,yylineno,++yytokenid,yytext,"STRING",-1);   }
 {operator}      { fprintf(stderr,"Recognised operator with value: %s\n",yytext);
                   int op = text_to_enum_ops(yytext);  
                   insert(yylval,yylineno,++yytokenid,yytext,"OPERATOR",op);   }
 {ident}         { fprintf(stderr,"Recognised id with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"IDENT",NULL);   }
+                  insert(yylval,yylineno,++yytokenid,yytext,"IDENT",-1);   }
 {punctuation}   { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext);
                   int mark = text_to_enum_puncs(yytext);  
                   insert(yylval,yylineno,++yytokenid,yytext,"PUNCTUATION",mark);   }
 <<EOF>>         { fprintf(stderr,"\nAlanyzing Completed\n"); return 1;}  
 {space}         { }
-{comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext);
-                  int comm = text_to_enum_comments(yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",comm);   }
+{comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext);  
+                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",0);   }
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
 
 %%
@@ -125,12 +134,6 @@ int text_to_enum_puncs(char* text){
 	else if(!strcmp(text, "..")) return DOT_DOT;
 }
 
-int text_to_enum_comments(char* text){
-    if(!strcmp(text,"//")) return LINE_COMMENT;
-    else if(!strcmp(text, "/*")) return BLOCK_COMMENT;
-	else if(!strcmp(text, "*/")) return BLOCK_COMMENT;
-}
-
 void insert(alpha_token_t *head, int line, int token_id, char* content,char* category, int type){
     alpha_token_t *new_token,*temp;
     new_token=(alpha_token_t*)malloc(sizeof(alpha_token_t));
@@ -151,8 +154,26 @@ void insert(alpha_token_t *head, int line, int token_id, char* content,char* cat
 void print(alpha_token_t* head){
     alpha_token_t* temp;
     temp=head->next;
+    printf("---------------------   Lexical Analysis    ---------------------\n");
     while(temp){
-        printf("%d: #%d %s %s %d\n",temp->line,temp->token_id,temp->content,temp->category,temp->type);
+        printf("%d: #%d %s %s",temp->line,temp->token_id,temp->content,temp->category);
+        if(temp->type!=-1){
+            if(!strcmp(temp->category,"KEYWORD")){
+                printf(" %s\n",Keys[temp->type]);
+            }
+            else if(!strcmp(temp->category,"OPERATOR")){
+                printf(" %s\n",Ops[temp->type]);
+            }
+            else if(!strcmp(temp->category,"PUNCTUATION")){
+                printf(" %s\n",Puncs[temp->type]);
+            }
+            else{
+                printf(" LINE_COMMENT\n");
+            }
+        }
+        else{
+            printf(" %s\n",temp->content);
+        }
         temp=temp->next;
     }
     return;
