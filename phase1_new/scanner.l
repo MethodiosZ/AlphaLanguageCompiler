@@ -23,10 +23,10 @@
 
     void insert(alpha_token_t *head, int line, int token_id, char* content,char* category, int type);
     void print(alpha_token_t* head);
-    keywords_t text_to_enum_keys(char* text);
-    operators_t text_to_enum_ops(char* text);
-    punc_t text_to_enum_puncs(char* text);
-    comments_t text_to_enum_comments(char* text);
+    int text_to_enum_keys(char* text);
+    int text_to_enum_ops(char* text);
+    int text_to_enum_puncs(char* text);
+    int text_to_enum_comments(char* text);
 
 %}
 
@@ -44,12 +44,12 @@ operator	    "="|"+"|"-"|"*"|"/"|"%"|"=="|"!="|"++"|"--"|">"|"<"|">="|"<="
 ident           [a-zA-Z_][a-zA-Z_0-9]*
 punctuation		"{"|"}"|"["|"]"|"("|")"|";"|","|":"|"::"|"."|".."
 space           [\r\n \t\v]
-comment		    ("//".*)|("/*".*"*/")
+comment		    ("//".*)
 
 %%
 
 {keyword}       { fprintf(stderr,"Recognised keyword with value: %s\n",yytext);
-                  keywords_t key = text_to_enum_keys(yytext);  
+                  int key = text_to_enum_keys(yytext);  
                   insert(yylval,yylineno,++yytokenid,yytext,"KEYWORD",key);  }
 {intconst}      { fprintf(stderr,"Recognised integer with value: %s\n",yytext); 
                   insert(yylval,yylineno,++yytokenid,yytext,"INTCONST",NULL);   }
@@ -58,24 +58,24 @@ comment		    ("//".*)|("/*".*"*/")
 {string}        { fprintf(stderr,"Recognised string with value: %s\n",yytext); 
                   insert(yylval,yylineno,++yytokenid,yytext,"STRING",NULL);   }
 {operator}      { fprintf(stderr,"Recognised operator with value: %s\n",yytext);
-                  operators_t op = text_to_enum_ops(yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"OPERATOR",op);   }
+                  int op = text_to_enum_ops(yytext);  
+                  insert(yylval,yylineno,++yytokenid,yytext,"OPERATOR",NULL);   }
 {ident}         { fprintf(stderr,"Recognised id with value: %s\n",yytext); 
                   insert(yylval,yylineno,++yytokenid,yytext,"IDENT",NULL);   }
 {punctuation}   { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext);
-                  punc_t mark = text_to_enum_puncs(yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"PUNCTUATION",mark);   }
+                  int mark = text_to_enum_puncs(yytext);  
+                  insert(yylval,yylineno,++yytokenid,yytext,"PUNCTUATION",NULL);   }
 <<EOF>>         { fprintf(stderr,"\nAlanyzing Completed\n"); return 1;}  
 {space}         { }
 {comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext);
-                  comments_t comm = text_to_enum_comments(yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",comm);   }
+                  int comm = text_to_enum_comments(yytext);  
+                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",NULL);   }
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
 
 %%
 /* user code */
 
-keywords_t text_to_enum_keys(char* text){
+int text_to_enum_keys(char* text){
     if(!strcmp(text,"if")) return IF;
     else if(!strcmp(text, "else")) return ELSE;
 	else if(!strcmp(text, "while")) return WHILE;
@@ -93,9 +93,9 @@ keywords_t text_to_enum_keys(char* text){
 	else if(!strcmp(text, "nil")) return NIL;
 }
 
-operators_t text_to_enum_ops(char* text){
+int text_to_enum_ops(char* text){
     if(!strcmp(text,"=")) return ASSIGN;
-    else if(!strcmp(text, "=")) return PLUS;
+    else if(!strcmp(text, "+")) return PLUS;
 	else if(!strcmp(text, "-")) return MINUS;
 	else if(!strcmp(text, "*")) return MULTIPLY;
 	else if(!strcmp(text, "/")) return DIV;
@@ -110,7 +110,7 @@ operators_t text_to_enum_ops(char* text){
 	else if(!strcmp(text, "<=")) return LESSER_EQUAL;
 }
 
-punc_t text_to_enum_puncs(char* text){
+int text_to_enum_puncs(char* text){
     if(!strcmp(text,"{")) return LEFT_BRACE;
     else if(!strcmp(text, "}")) return RIGHT_BRACE;
 	else if(!strcmp(text, "[")) return LEFT_SQBRACE;
@@ -125,7 +125,7 @@ punc_t text_to_enum_puncs(char* text){
 	else if(!strcmp(text, "..")) return DOT_DOT;
 }
 
-comments_t text_to_enum_comments(char* text){
+int text_to_enum_comments(char* text){
     if(!strcmp(text,"//")) return LINE_COMMENT;
     else if(!strcmp(text, "/*")) return BLOCK_COMMENT;
 	else if(!strcmp(text, "*/")) return BLOCK_COMMENT;
@@ -152,7 +152,7 @@ void print(alpha_token_t* head){
     alpha_token_t* temp;
     temp=head->next;
     while(temp){
-        printf("%d: #%d %s %s %s\n",temp->line,temp->token_id,temp->content,temp->category,temp->type);
+        printf("%d: #%d %s %s %d\n",temp->line,temp->token_id,temp->content,temp->category,temp->type);
         temp=temp->next;
     }
     return;
