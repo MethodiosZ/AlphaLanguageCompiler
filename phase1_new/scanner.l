@@ -59,17 +59,17 @@ comment		    ("//".*)
                   insert(yylval,yylineno,++yytokenid,yytext,"STRING",NULL);   }
 {operator}      { fprintf(stderr,"Recognised operator with value: %s\n",yytext);
                   int op = text_to_enum_ops(yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"OPERATOR",NULL);   }
+                  insert(yylval,yylineno,++yytokenid,yytext,"OPERATOR",op);   }
 {ident}         { fprintf(stderr,"Recognised id with value: %s\n",yytext); 
                   insert(yylval,yylineno,++yytokenid,yytext,"IDENT",NULL);   }
 {punctuation}   { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext);
                   int mark = text_to_enum_puncs(yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"PUNCTUATION",NULL);   }
+                  insert(yylval,yylineno,++yytokenid,yytext,"PUNCTUATION",mark);   }
 <<EOF>>         { fprintf(stderr,"\nAlanyzing Completed\n"); return 1;}  
 {space}         { }
 {comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext);
                   int comm = text_to_enum_comments(yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",NULL);   }
+                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",comm);   }
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
 
 %%
