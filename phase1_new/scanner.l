@@ -56,6 +56,9 @@ punctuation		"{"|"}"|"["|"]"|"("|")"|";"|","|":"|"::"|"."|".."
 space           [\r\n \t\v]
 comment		    ("//".*)
 
+%x BLOCK_COMMENT
+%x NESTED_COMMENT
+
 %%
 
 {keyword}       { fprintf(stderr,"Recognised keyword with value: %s\n",yytext);
@@ -78,7 +81,26 @@ comment		    ("//".*)
 <<EOF>>         { fprintf(stderr,"\nAlanyzing Completed\n"); return 1;}  
 {space}         { }
 {comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",0);   }
+                  insert(yylval,yylineno,++yytokenid,yytext,"LINE_COMMENT",0);   }
+
+"/*"            { fprintf(stderr,"Recognised block comment beginning with value: %s\n",yytext);  
+                  insert(yylval,yylineno,++yytokenid,yytext,"BLOCK_COMMENT",0);
+                  BEGIN(BLOCK_COMMENT);  }   /* Start of block comment */
+
+<BLOCK_COMMENT>{
+    "/*" { fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);  
+                  insert(yylval,yylineno,++yytokenid,yytext,"NESTED_COMMENT",0);
+                  BEGIN(NESTED_COMMENT);  }
+    "*/" { fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
+           BEGIN(INITIAL);}        /* End of block comment */
+    .    { /* ignore comment's contents */ }
+}
+
+<NESTED_COMMENT>{
+    "*/" { fprintf(stderr,"Recognised nested comment ending with value: %s\n",yytext);
+           BEGIN(INITIAL);}        /* End of nested comment */
+    .    { /* ignore comment's contents */ }
+}
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
 
 %%
@@ -167,8 +189,12 @@ void print(alpha_token_t* head){
             else if(!strcmp(temp->category,"PUNCTUATION")){
                 printf(" %s\n",Puncs[temp->type]);
             }
-            else{
-                printf(" LINE_COMMENT\n");
+            else if(!strcmp(temp->category,"LINE_COMMENT")){
+                printf(" LINE COMMENT\n");
+            }else if(!strcmp(temp->category,"BLOCK_COMMENT")){
+                printf(" BLOCK COMMENT\n");
+            }else if(!strcmp(temp->category,"NESTED_COMMENT")){
+                printf(" BLOCK COMMENT\n");
             }
         }
         else{
