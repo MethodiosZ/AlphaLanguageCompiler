@@ -100,6 +100,7 @@ comment		    ("//".*)
             snprintf(commentlines,10,"%d - %d",commentbegin,yylineno);
             insert(yylval,commentbegin,++yytokenid,commentlines,"COMMENT",1);
             BEGIN(INITIAL);}        /* End of block comment */
+    <<EOF>> { fprintf(stderr,"Comment Ending Not Found");}
     .    { yylineno++; }
 }
 
@@ -109,6 +110,7 @@ comment		    ("//".*)
     "*/" {  fprintf(stderr,"Recognised nested comment ending with value: %s\n",yytext);
             insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",2);
             BEGIN(BLOCK_COMMENT);}        /* End of nested comment */
+    <<EOF>> { fprintf(stderr,"Comment Ending Not Found");}  
     .    { /* ignore comment's contents */ }
 }
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
