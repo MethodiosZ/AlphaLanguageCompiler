@@ -85,24 +85,26 @@ comment		    ("//".*)
 <<EOF>>         { fprintf(stderr,"\nAnalysis Complete\n"); return 1;}  
 {space}         { }
 {comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",0);   }
+                  insert(yylval,yylineno,++yytokenid,"","COMMENT",0);   }
 
-"/*"            { fprintf(stderr,"Recognised block comment beginning with value: %s\n",yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",1);
+"/*"            { fprintf(stderr,"Recognised block comment beginning with value: %s\n",yytext);   
                   BEGIN(BLOCK_COMMENT);  }   /* Start of block comment */
 
 <BLOCK_COMMENT>{
     "/*" { fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",2);
                   BEGIN(NESTED_COMMENT);  }
-    "*/" { fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
-           BEGIN(INITIAL);}        /* End of block comment */
+    "*/" {  fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
+            insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",1);
+            BEGIN(INITIAL);}        /* End of block comment */
     .    { /* ignore comment's contents */ }
 }
 
 <NESTED_COMMENT>{
-    "*/" { fprintf(stderr,"Recognised nested comment ending with value: %s\n",yytext);
-           BEGIN(BLOCK_COMMENT);}        /* End of nested comment */
+    "/*" { fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);  
+                  BEGIN(NESTED_COMMENT);  }
+    "*/" {  fprintf(stderr,"Recognised nested comment ending with value: %s\n",yytext);
+            insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",2);
+            BEGIN(BLOCK_COMMENT);}        /* End of nested comment */
     .    { /* ignore comment's contents */ }
 }
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
