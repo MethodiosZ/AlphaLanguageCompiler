@@ -6,6 +6,7 @@
     #include <string.h>
 
     int yytokenid = 0;
+    int commentlines = 0;
 
     static const char *Keys[] = {
         "IF","ELSE","WHILE","FOR","FUNCTION","RETURN","BREAK","CONTINUE","AND","NOT","OR","LOCAL","TRUE","FALSE","NIL",
@@ -182,7 +183,7 @@ void insert(alpha_token_t *head, int line, int token_id, char* content,char* cat
 void print(alpha_token_t* head){
     alpha_token_t* temp;
     temp=head->next;
-    printf("---------------------   Lexical Analysis    ---------------------\n");
+    printf("---------------------   Lexical Analysis    ---------------------\n\n");
     while(temp){
         printf("%d: #%d %s %s",temp->line,temp->token_id,temp->content,temp->category);
         if(temp->type!=-1){
