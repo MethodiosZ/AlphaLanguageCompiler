@@ -63,7 +63,6 @@ comment		    ("//".*)
 
 %x BLOCK_COMMENT
 %x NESTED_COMMENT
-
 %%
 
 {keyword}       { fprintf(stderr,"Recognised keyword with value: %s\n",yytext);
@@ -103,7 +102,7 @@ comment		    ("//".*)
 
 <NESTED_COMMENT>{
     "*/" { fprintf(stderr,"Recognised nested comment ending with value: %s\n",yytext);
-           BEGIN(INITIAL);}        /* End of nested comment */
+           BEGIN(BLOCK_COMMENT);}        /* End of nested comment */
     .    { /* ignore comment's contents */ }
 }
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
