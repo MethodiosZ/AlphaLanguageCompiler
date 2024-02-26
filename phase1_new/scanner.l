@@ -6,7 +6,8 @@
     #include <string.h>
 
     int yytokenid = 0;
-    int commentlines = 0;
+    int commentbegin = 0;
+    char commentlines[10];
 
     static const char *Keys[] = {
         "IF","ELSE","WHILE","FOR","FUNCTION","RETURN","BREAK","CONTINUE","AND","NOT","OR","LOCAL","TRUE","FALSE","NIL",
@@ -89,15 +90,17 @@ comment		    ("//".*)
                   insert(yylval,yylineno,++yytokenid,"","COMMENT",0);   }
 
 "/*"            { fprintf(stderr,"Recognised block comment beginning with value: %s\n",yytext);   
+                  commentbegin=yylineno;  
                   BEGIN(BLOCK_COMMENT);  }   /* Start of block comment */
 
 <BLOCK_COMMENT>{
     "/*" { fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);  
                   BEGIN(NESTED_COMMENT);  }
     "*/" {  fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
-            insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",1);
+            snprintf(commentlines,10,"%d - %d",commentbegin,yylineno);
+            insert(yylval,commentbegin,++yytokenid,commentlines,"COMMENT",1);
             BEGIN(INITIAL);}        /* End of block comment */
-    .    { /* ignore comment's contents */ }
+    .    { yylineno++; }
 }
 
 <NESTED_COMMENT>{
