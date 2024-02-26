@@ -19,6 +19,10 @@
         "LEFT_BRACE","RIGHT_BRACE","LEFT_SQBRACE","RIGHT_SQBRACE","LEFT_PARENTHESIS","RIGHT_PARENTHESIS","SEMICOLON","COMA","COLON","COLON_COLON","DOT","DOT_DOT",
     };
 
+    static const char *Comms[] = {
+        "LINE_COMMENT","BLOCK_COMMENT","NESTED_COMMENT",
+    };
+
     typedef struct alpha_token{
         int                     line;
         int                     token_id;
@@ -31,6 +35,7 @@
     typedef enum keywords{IF,ELSE,WHILE,FOR,FUNCTION,RETURN,BREAK,CONTINUE,AND,NOT,OR,LOCAL,TRUE,FALSE,NIL}keywords_t;
     typedef enum operators{ASSIGN,PLUS,MINUS,MULTIPLY,DIV,MOD,EQUAL,NOT_EQUAL,PLUS_PLUS,MINUS_MINUS,LESSER,GREATER,GREATER_EQUAL,LESSER_EQUAL}operators_t;
     typedef enum punc{LEFT_BRACE,RIGHT_BRACE,LEFT_SQBRACE,RIGHT_SQBRACE,LEFT_PARENTHESIS,RIGHT_PARENTHESIS,SEMICOLON,COMA,COLON,COLON_COLON,DOT,DOT_DOT}punc_t;
+    typedef enum comm{LINE_COMMENT,BLOCK_COMMENT,NESTED_COMMENT}comm_t;
 
     void insert(alpha_token_t *head, int line, int token_id, char* content,char* category, int type);
     void print(alpha_token_t* head);
@@ -78,18 +83,18 @@ comment		    ("//".*)
 {punctuation}   { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext);
                   int mark = text_to_enum_puncs(yytext);  
                   insert(yylval,yylineno,++yytokenid,yytext,"PUNCTUATION",mark);   }
-<<EOF>>         { fprintf(stderr,"\nAlanyzing Completed\n"); return 1;}  
+<<EOF>>         { fprintf(stderr,"\nAnalysis Complete\n"); return 1;}  
 {space}         { }
 {comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"LINE_COMMENT",0);   }
+                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",0);   }
 
 "/*"            { fprintf(stderr,"Recognised block comment beginning with value: %s\n",yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"BLOCK_COMMENT",0);
+                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",1);
                   BEGIN(BLOCK_COMMENT);  }   /* Start of block comment */
 
 <BLOCK_COMMENT>{
     "/*" { fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);  
-                  insert(yylval,yylineno,++yytokenid,yytext,"NESTED_COMMENT",0);
+                  insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",2);
                   BEGIN(NESTED_COMMENT);  }
     "*/" { fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
            BEGIN(INITIAL);}        /* End of block comment */
@@ -189,12 +194,8 @@ void print(alpha_token_t* head){
             else if(!strcmp(temp->category,"PUNCTUATION")){
                 printf(" %s\n",Puncs[temp->type]);
             }
-            else if(!strcmp(temp->category,"LINE_COMMENT")){
-                printf(" LINE COMMENT\n");
-            }else if(!strcmp(temp->category,"BLOCK_COMMENT")){
-                printf(" BLOCK COMMENT\n");
-            }else if(!strcmp(temp->category,"NESTED_COMMENT")){
-                printf(" BLOCK COMMENT\n");
+            else if(!strcmp(temp->category,"COMMENT")){
+                printf(" %s\n",Comms[temp->type]);
             }
         }
         else{
