@@ -84,14 +84,21 @@ comment		    ("//".*)
 {punctuation}   { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext);
                   int mark = text_to_enum_puncs(yytext);  
                   insert(yylval,yylineno,++yytokenid,yytext,"PUNCTUATION",mark);   }
-<<EOF>>         { fprintf(stderr,"\nAnalysis Complete\n"); return 1;}  
+<<EOF>>  {  if (YY_START == BLOCK_COMMENT){
+                fprintf(stderr, "Error: Block comment not closed at end of file\n");
+            } else if(YY_START == NESTED_COMMENT){
+                fprintf(stderr, "Error: Nested comment not closed at end of file\n");
+            }
+            return 1; 
+}
 {space}         { }
 {comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext);  
                   insert(yylval,yylineno,++yytokenid,"","COMMENT",0);   }
 
 "/*"            { fprintf(stderr,"Recognised block comment beginning with value: %s\n",yytext);   
                   commentbegin=yylineno;  
-                  BEGIN(BLOCK_COMMENT);  }   /* Start of block comment */
+                  BEGIN(BLOCK_COMMENT);  
+                  }   /* Start of block comment */
 
 <BLOCK_COMMENT>{
     "/*" { fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);  
@@ -100,7 +107,6 @@ comment		    ("//".*)
             snprintf(commentlines,10,"%d - %d",commentbegin,yylineno);
             insert(yylval,commentbegin,++yytokenid,commentlines,"COMMENT",1);
             BEGIN(INITIAL);}        /* End of block comment */
-    <<EOF>> { fprintf(stderr,"Comment Ending Not Found");}
     .    { yylineno++; }
 }
 
@@ -109,8 +115,7 @@ comment		    ("//".*)
                   BEGIN(NESTED_COMMENT);  }
     "*/" {  fprintf(stderr,"Recognised nested comment ending with value: %s\n",yytext);
             insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",2);
-            BEGIN(BLOCK_COMMENT);}        /* End of nested comment */
-    <<EOF>> { fprintf(stderr,"Comment Ending Not Found");}  
+            BEGIN(BLOCK_COMMENT);}        /* End of nested comment */ 
     .    { /* ignore comment's contents */ }
 }
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
