@@ -7,6 +7,7 @@
 
     int yytokenid = 0;
     int commentbegin = 0;
+    int nestedcomentbegin =0;
     char commentlines[10];
 
     static const char *Keys[] = {
@@ -84,12 +85,14 @@ comment		    ("//".*)
 {punctuation}   { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext);
                   int mark = text_to_enum_puncs(yytext);  
                   insert(yylval,yylineno,++yytokenid,yytext,"PUNCTUATION",mark);   }
-<<EOF>>  {  if (YY_START == BLOCK_COMMENT){
-                fprintf(stderr, "Error: Block comment not closed at end of file\n");
-            } else if(YY_START == NESTED_COMMENT){
-                fprintf(stderr, "Error: Nested comment not closed at end of file\n");
-            }
-            return 1; 
+<<EOF>>         {  if (YY_START == BLOCK_COMMENT){
+                    fprintf(stderr, "Error: Block comment not closed at end of file\n");
+                } else if(YY_START == NESTED_COMMENT){
+                    fprintf(stderr, "Error: Nested comment not closed at end of file\n");
+                } else {
+                    fprintf(stderr,"\nAnalysis Complete\n");
+                }
+                return 1; 
 }
 {space}         { }
 {comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext);  
@@ -101,8 +104,9 @@ comment		    ("//".*)
                   }   /* Start of block comment */
 
 <BLOCK_COMMENT>{
-    "/*" { fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);  
-                  BEGIN(NESTED_COMMENT);  }
+    "/*" {  fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);  
+            nestedcomentbegin = yylineno;
+            BEGIN(NESTED_COMMENT);  }
     "*/" {  fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
             snprintf(commentlines,10,"%d - %d",commentbegin,yylineno);
             insert(yylval,commentbegin,++yytokenid,commentlines,"COMMENT",1);
@@ -111,12 +115,11 @@ comment		    ("//".*)
 }
 
 <NESTED_COMMENT>{
-    "/*" { fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);  
-                  BEGIN(NESTED_COMMENT);  }
     "*/" {  fprintf(stderr,"Recognised nested comment ending with value: %s\n",yytext);
-            insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",2);
+            snprintf(commentlines,10,"%d - %d",nestedcomentbegin,yylineno);
+            insert(yylval,nestedcomentbegin,++yytokenid,commentlines,"COMMENT",2);
             BEGIN(BLOCK_COMMENT);}        /* End of nested comment */ 
-    .    { /* ignore comment's contents */ }
+    .    { yylineno++; }
 }
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
 
