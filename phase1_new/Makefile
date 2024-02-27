@@ -20,3 +20,4 @@ clean:
 	rm -f lex.yy.c $(EXECUTABLE)
 	rm -f scanner
 	rm -f scanner.h
+	clear
