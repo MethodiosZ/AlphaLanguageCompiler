@@ -124,7 +124,7 @@ comment		    ("//".*)
     "*/" {  if(commentnestlvl == 1) {
                 fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
                 snprintf(commentlines,10,"%d - %d",nestedcommentbegin,yylineno);
-                insert(yylval,commentbegin,++yytokenid,commentlines,"COMMENT",2);
+                insert(yylval,nestedcommentbegin,++yytokenid,commentlines,"COMMENT",2);
                 BEGIN(BLOCK_COMMENT);        /* End of block comment */ 
             }else {
                 fprintf(stderr,"Recognised nested comment ending with value: %s\n",yytext);
