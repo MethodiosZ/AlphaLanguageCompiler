@@ -89,6 +89,8 @@ comment		    ("//".*)
                 fprintf(stderr, "Error: Block comment not closed at end of file\n");
             } else if(YY_START == NESTED_COMMENT){
                 fprintf(stderr, "Error: Nested comment not closed at end of file\n");
+            } else {
+                    fprintf(stderr,"\nAnalysis Complete\n");
             }
             return 1; 
 }
