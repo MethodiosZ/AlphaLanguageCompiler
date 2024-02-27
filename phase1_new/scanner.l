@@ -131,7 +131,7 @@ comment		    ("//".*)
                 BEGIN(NESTED_COMMENT); /* End of nested comment */
             }
         } 
-    .    { /* ignore comment's contents */ }
+    .    { yylineno++; }
 }
 
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
