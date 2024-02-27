@@ -8,6 +8,7 @@
     int yytokenid           = 0;
     int commentbegin        = 0;
     int commentnestlvl      = 0;
+    int nestedcommentbegin  = 0;
     char commentlines[10];
 
     static const char *Keys[] = {
@@ -105,7 +106,7 @@ comment		    ("//".*)
 
 <BLOCK_COMMENT>{
     "/*" {  fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);
-            insert(yylval,commentbegin,++yytokenid,commentlines,"COMMENT",2);
+            nestedcommentbegin=yylineno;
             commentnestlvl++;
             BEGIN(NESTED_COMMENT);  }
     "*/" {  fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
@@ -122,7 +123,8 @@ comment		    ("//".*)
             BEGIN(NESTED_COMMENT);  }
     "*/" {  if(commentnestlvl == 1) {
                 fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
-                // insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",1);
+                snprintf(commentlines,10,"%d - %d",nestedcommentbegin,yylineno);
+                insert(yylval,commentbegin,++yytokenid,commentlines,"COMMENT",2);
                 BEGIN(BLOCK_COMMENT);        /* End of block comment */ 
             }else {
                 fprintf(stderr,"Recognised nested comment ending with value: %s\n",yytext);
