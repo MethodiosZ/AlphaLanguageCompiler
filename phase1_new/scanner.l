@@ -5,9 +5,9 @@
     #include <stdlib.h>
     #include <string.h>
 
-    int yytokenid = 0;
-    int commentbegin = 0;
-    int nestedcomentbegin =0;
+    int yytokenid           = 0;
+    int commentbegin        = 0;
+    int commentnestlvl      = 0;
     char commentlines[10];
 
     static const char *Keys[] = {
@@ -85,42 +85,59 @@ comment		    ("//".*)
 {punctuation}   { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext);
                   int mark = text_to_enum_puncs(yytext);  
                   insert(yylval,yylineno,++yytokenid,yytext,"PUNCTUATION",mark);   }
-<<EOF>>         {  if (YY_START == BLOCK_COMMENT){
-                    fprintf(stderr, "Error: Block comment not closed at end of file\n");
-                } else if(YY_START == NESTED_COMMENT){
-                    fprintf(stderr, "Error: Nested comment not closed at end of file\n");
-                } else {
-                    fprintf(stderr,"\nAnalysis Complete\n");
-                }
-                return 1; 
+<<EOF>>  {  if (YY_START == BLOCK_COMMENT){
+                fprintf(stderr, "Error: Block comment not closed at end of file\n");
+            } else if(YY_START == NESTED_COMMENT){
+                fprintf(stderr, "Error: Nested comment not closed at end of file\n");
+            }
+            return 1; 
 }
 {space}         { }
 {comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext);  
                   insert(yylval,yylineno,++yytokenid,"","COMMENT",0);   }
 
-"/*"            { fprintf(stderr,"Recognised block comment beginning with value: %s\n",yytext);   
+"/*"            { fprintf(stderr,"Recognised block comment beginning with value: %s\n",yytext);
+                  insert(yylval,commentbegin,++yytokenid,commentlines,"COMMENT",1);   
                   commentbegin=yylineno;  
                   BEGIN(BLOCK_COMMENT);  
                   }   /* Start of block comment */
 
 <BLOCK_COMMENT>{
-    "/*" {  fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);  
-            nestedcomentbegin = yylineno;
+    "/*" {  fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);
+            insert(yylval,commentbegin,++yytokenid,commentlines,"COMMENT",2);
+            commentnestlvl++;
             BEGIN(NESTED_COMMENT);  }
     "*/" {  fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
             snprintf(commentlines,10,"%d - %d",commentbegin,yylineno);
-            insert(yylval,commentbegin,++yytokenid,commentlines,"COMMENT",1);
+            
             BEGIN(INITIAL);}        /* End of block comment */
-    .    { yylineno++; }
+    .    {  yylineno++; }
 }
 
 <NESTED_COMMENT>{
-    "*/" {  fprintf(stderr,"Recognised nested comment ending with value: %s\n",yytext);
-            snprintf(commentlines,10,"%d - %d",nestedcomentbegin,yylineno);
-            insert(yylval,nestedcomentbegin,++yytokenid,commentlines,"COMMENT",2);
-            BEGIN(BLOCK_COMMENT);}        /* End of nested comment */ 
-    .    { yylineno++; }
+    "/*" {  fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);
+            insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",2);
+            commentnestlvl++;  
+            BEGIN(NESTED_COMMENT);  }
+    "*/" {  if(commentnestlvl == 0) {
+                fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
+                // insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",1);
+                BEGIN(INITIAL);        /* End of block comment */ 
+            }else {
+                fprintf(stderr,"Recognised nested comment ending with value: %s\n",yytext);
+                commentnestlvl--;
+                // insert(yylval,yylineno,++yytokenid,yytext,"COMMENT",2);
+                BEGIN(NESTED_COMMENT); /* End of nested comment */
+            }
+        } 
+    .    { /* ignore comment's contents */ }
 }
+
+"*/"            { fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);   
+                  commentbegin=yylineno;  
+                  BEGIN(INITIAL);  
+                  }   /* End of block comment */
+
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
 
 %%
