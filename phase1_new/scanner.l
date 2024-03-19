@@ -10,6 +10,7 @@
     int commentnestlvl      = 0;
     int nestedcommentbegin[10] = {0,0,0,0,0,0,0,0,0,0};
     char commentlines[10];
+    char* string_build;
 
     static const char *Keys[] = {
         "IF","ELSE","WHILE","FOR","FUNCTION","RETURN","BREAK","CONTINUE","AND","NOT","OR","LOCAL","TRUE","FALSE","NIL",
@@ -58,7 +59,6 @@
 keyword		    "if"|"else"|"while"|"for"|"function"|"return"|"break"|"continue"|"and"|"not"|"or"|"local"|"true"|"false"|"nil"
 intconst 	    (0[xX][0-9a-fA-F]+)|[0-9]+
 realconst       [0-9]*\.([0-9](e|E)?[0-9]*)
-string          \"[^\n"]*\"
 operator	    "="|"+"|"-"|"*"|"/"|"%"|"=="|"!="|"++"|"--"|">"|"<"|">="|"<="
 ident           [a-zA-Z_][a-zA-Z_0-9]*
 punctuation		"{"|"}"|"["|"]"|"("|")"|";"|","|":"|"::"|"."|".."
@@ -67,6 +67,7 @@ comment		    ("//".*)
 
 %x BLOCK_COMMENT
 %x NESTED_COMMENT
+%x STRING
 %%
 
 {keyword}       { fprintf(stderr,"Recognised keyword with value: %s\n",yytext);
@@ -76,8 +77,49 @@ comment		    ("//".*)
                   insert(yylval,yylineno,++yytokenid,yytext,"INTCONST",-1);   }
 {realconst}     { fprintf(stderr,"Recognised real number with value: %s\n",yytext); 
                   insert(yylval,yylineno,++yytokenid,yytext,"REALCONST",-1);   }
-{string}        { fprintf(stderr,"Recognised string with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"STRING",-1);   }
+
+\"  {
+    string_build = (char*)malloc(1);
+    string_build[0] = '\0';
+    BEGIN(STRING);
+}
+
+<STRING>\\\" {
+    string_build = (char*)realloc(string_build, strlen(string_build) + 2);
+    strcat(string_build, "\\\"");
+}
+
+<STRING>\" {
+    insert(yylval, yylineno, ++yytokenid, strdup(string_build), "STRING", -1);
+    free(string_build);
+    BEGIN(INITIAL);
+}
+
+<STRING>\\n {
+    string_build = (char*)realloc(string_build, strlen(string_build) + 2);
+    strcat(string_build, "\n");
+}
+
+<STRING>\\t {
+    string_build = (char*)realloc(string_build, strlen(string_build) + 2);
+    strcat(string_build, "\t");
+}
+
+<STRING>\\\" {
+    string_build = (char*)realloc(string_build, strlen(string_build) + 2);
+    strcat(string_build, "\"");
+}
+
+<STRING>\\\\ {
+    string_build = (char*)realloc(string_build, strlen(string_build) + 2);
+    strcat(string_build, "\\");
+}
+
+<STRING>[^\"\\\n]+ {
+    string_build = (char*)realloc(string_build, strlen(string_build) + strlen(yytext) + 1);
+    strcat(string_build, yytext);
+}
+
 {operator}      { fprintf(stderr,"Recognised operator with value: %s\n",yytext);
                   int op = text_to_enum_ops(yytext);  
                   insert(yylval,yylineno,++yytokenid,yytext,"OPERATOR",op);   }
