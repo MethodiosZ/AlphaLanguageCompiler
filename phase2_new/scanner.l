@@ -1,9 +1,10 @@
 %{
-    #define YY_DECL int alpha_yylex(void* yylval)
-
     #include <stdio.h>
     #include <stdlib.h>
     #include <string.h>
+    #include "parser.h"
+
+    extern YYSTYPE yylval;
 
     int yytokenid           = 0;
     int commentbegin        = 0;
@@ -11,20 +12,9 @@
     int nestedcommentbegin[10] = {0,0,0,0,0,0,0,0,0,0};
     char commentlines[10];
     char* string_build;
-
-    typedef struct alpha_token{
-        int                     line;
-        int                     token_id;
-        char*                   content;
-        char*                   category;
-        int                     type;
-        struct alpha_token*     next;
-    }alpha_token_t;
-
 %}
 
 /* Flex options */
-%option header-file="./scanner.h"
 %option noyywrap 
 %option yylineno
 
@@ -55,6 +45,7 @@ comment		    ("//".*)
     insert(yylval, yylineno, ++yytokenid, strdup(string_build), "STRING", -1);
     free(string_build);
     BEGIN(INITIAL);
+    return STRING;
 }
 
 <STRING>\\n {
@@ -96,6 +87,7 @@ comment		    ("//".*)
             snprintf(commentlines,10,"%d - %d",commentbegin,yylineno);
             insert(yylval,commentbegin,++yytokenid,commentlines,"COMMENT",1);
             BEGIN(INITIAL);}        /* End of block comment */
+            return COMMENT;
     "\n"    { }
     .       { }
 }
@@ -126,16 +118,15 @@ comment		    ("//".*)
 {intconst}      { yylval.intVal = atoi(yytext);
                   return INTEGER;}
 
-{realconst}     { fprintf(stderr,"Recognised real number with value: %s\n",yytext); 
-                  insert(yylval,yylineno,++yytokenid,yytext,"REALCONST",-1);   }
+{realconst}     { yylval.realVal = atof(yytext);
+                  return FLOAT; }
 
 {ident}         { yylval.string = strdup(yytext);
                   return ID;}
 
 {space}         { }    
 
-{comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext);  
-                  insert(yylval,yylineno,++yytokenid,"","COMMENT",0);   }
+{comment}       { return COMMENT;  }
 
 "true"          {return TRUE;}
 "false"         {return FALSE;}
@@ -189,7 +180,7 @@ comment		    ("//".*)
             } else if(YY_START == NESTED_COMMENT){
                 fprintf(stderr, "Error: Nested comment not closed at end of file\n");
             } else {
-                    fprintf(stderr,"\nAnalysis Complete\n");
+                    return EOF;
             }
             return 1; 
 }

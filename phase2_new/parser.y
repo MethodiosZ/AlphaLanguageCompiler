@@ -18,6 +18,7 @@ extern FILE* yyin;
 %token <string>     STRING
 %token <string>     ID
 %token <intVal>     INTEGER 
+%token <realVal>    FLOAT
 
 %type <intVal>      expr
 
