@@ -43,26 +43,114 @@ extern FILE* yyin;
 
 %%
 
-program:        assignments expressions             {;}
+program:        stmt*                               {;}
                 |                                   {;}
                 ;
 
-assignments:    assignments assignment              {;}
-                |                                   {;}
+stmt:           expr SEMI
+                | ifstmt
+                | whilestmt
+                | forstmt
+                | returnstmt
+                | BREAK SEMI
+                | CONT SEMI
+                | block
+                | funcdef
+                |                                   {;}                       
                 ;
 
-assignment:     ID  ASSIGN  expression ';'          { assign($1,$3);}
+expr:           assignexpr                    
+                | expr op expr
+                | term                     
                 ;
 
-expressions:    expressions expr                    {;}
-                |   expr                              {;}
+op              ADD | SUB | MUL | DIV | MOD | MORE | MOREEQ | LESS | LESSEQ
+                | EQ |  NEQ | AND | OR
                 ;
 
-expr:           expression ';'                      { fprintf(stdout, "Result is: %d\n", $1);}
-                |   error ';'                       { yyerrok;}
+term            LPAR expr RPAR
+                | SUB expr
+                | NOT expr
+                | PPLUS lvalue
+                | lvalue PPLUS
+                | MMINUS lvalue
+                | lvalue MMINUS
+                | primary
                 ;
 
-expression:     INTEGER                             { $$ = $1;}
+assignexpr:     lvalue ASSIGN expr SEMI             { assign($1,$3);}
+                ;
+
+primary:        lvalue
+                | call
+                | objectdef
+                | LPAR funcdef RPAR
+                | const
+                ;
+
+lvalue:         ID
+                | LOCAL ID
+                | CCOLON ID
+                | member
+                ;
+
+member:         lvalue DOT ID
+                | lvalue LSQBRACE expr RSQBRACE
+                | call DOT ID
+                | call LSQBRACE expr RSQBRACE
+                ;
+
+call:           call LPAR elist RPAR
+                | lvalue callsuffix
+                | LPAR funcdef RPAR LPAR elist RPAR
+                ;
+
+callsuffix:     normcall
+                | methodcall
+                ;
+
+normcall:       LPAR elist RPAR
+                ;
+
+methodcall:     DDOT ID LPAR elist RPAR
+                ;
+
+elist:          expr COMMA expr* 
+                ;
+
+objectdef:      LSQBRACE elist | indexed RSQBRACE
+                ;
+
+indexed:        indexedelem COMMA indexedelem*
+                ;
+
+indexedelem:    LBRACE expr COLON expr RBRACE
+                ;
+
+block:          LBRACE stmt* RBRACE
+                ;
+
+funcdef:        FUNC ID LPAR idlist RPAR block
+                ;
+
+const:          INTEGER | FLOAT | STRING | NIL | TRUE | FALSE
+                ;
+
+idlist:         ID COMMA ID*
+                ;
+
+ifstmt:         IF LPAR expr RPAR stmt ELSE stmt
+                ;
+
+whilestmt:      WHILE LPAR expr RPAR stmt
+                ;
+
+forstmt:        FOR LPAR elist SEMI expr SEMI elist RPAR stmt
+                ;
+
+returnstmt:     RET expr SEMI
+
+/*expression:     INTEGER                             { $$ = $1;}
                 |   ID                              { $$ = lookup($1); free($1);}
                 |   expression ADD expression       { $$ = $1 + $3;}
                 |   expression SUB expression       { $$ = $1 - $3;}
@@ -72,7 +160,7 @@ expression:     INTEGER                             { $$ = $1;}
                 |   LPAR expression RPAR            { $$ = $2;}
                 |   SUB expression %prec UMINUS     { $$ = -$2;}
                 ;
-
+*/
 %%
 
 int yyerror (char* yaccProvidedMessage){

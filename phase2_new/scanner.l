@@ -141,10 +141,10 @@ comment		    ("//".*)
 "return"        {return RET;}
 "local"         {return LOCAL;}
 
-"{"             {return MMINUS;}
-"}"             {return MMINUS;}
-";"             {return MMINUS;}
-","             {return MMINUS;}
+"{"             {return LBRACE;}
+"}"             {return RBRACE;}
+";"             {return SEMI;}
+","             {return COMMA;}
 
 "("             {return LPAR;}
 ")"             {return RPAR;}
