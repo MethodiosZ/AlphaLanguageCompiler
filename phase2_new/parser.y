@@ -1,12 +1,16 @@
 %{
 #include <stdio.h>
+#include "symboltable.h"
 
 int yyerror(char* yaccProvidedMessage);
-int yylex(void);
+int alpha_yylex(void);
 
 extern int yylineno;
 extern char* yytext;
 extern FILE* yyin;
+
+SymTable *stbl[HASH_SIZE];
+Sym *symbol;
 %}
 
 %union{
@@ -23,8 +27,6 @@ extern FILE* yyin;
 %type <intVal>      expr
 
 %start program
-
-%destructor { free($$); } STRING
 
 %right      ASSIGN
 %left       OR
