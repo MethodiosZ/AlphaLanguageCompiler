@@ -23,8 +23,17 @@ Sym *symbol;
 %token <string>     ID
 %token <intVal>     INTEGER 
 %token <realVal>    FLOAT
+%token <string>     IF ELSE WHILE FOR BREAK CONT RET TRUE FALSE NIL FUNC LOCAL
+%token <string>     LPAR RPAR LBRACE RBRACE LSQBRACE RSQBRACE 
+%token <string>     ADD SUB MUL DIV MOD PPLUS MMINUS UMINUS
+%token <string>     ASSIGN EQ NEQ AND OR NOT MORE MOREEQ LESS LESSEQ
+%token <string>     SEMI DOT DDOT COLON CCOLON COMMA
 
 %type <intVal>      expr
+%type <string>      program stmt op term assignexpr primary lvalue member
+%type <string>      call callsuffix normcall methodcall elist objectdef
+%type <string>      indexed indexedelem block funcdef const idlist ifstmt
+%type <string>      whilestmt forstmt returnstmt
 
 %start program
 
@@ -117,7 +126,9 @@ normcall:       LPAR elist RPAR
 methodcall:     DDOT ID LPAR elist RPAR
                 ;
 
-elist:          expr COMMA expr* 
+elist:          expr 
+                | elist COMMA expr
+                |
                 ;
 
 objectdef:      LSQBRACE elist | indexed RSQBRACE
@@ -129,7 +140,8 @@ indexed:        indexedelem COMMA indexedelem*
 indexedelem:    LBRACE expr COLON expr RBRACE
                 ;
 
-block:          LBRACE stmt* RBRACE
+block:          LBRACE stmt RBRACE
+                |
                 ;
 
 funcdef:        FUNC ID LPAR idlist RPAR block
@@ -138,7 +150,9 @@ funcdef:        FUNC ID LPAR idlist RPAR block
 const:          INTEGER | FLOAT | STRING | NIL | TRUE | FALSE
                 ;
 
-idlist:         ID COMMA ID*
+idlist:         ID 
+                | idlist COMMA ID
+                |
                 ;
 
 ifstmt:         IF LPAR expr RPAR stmt ELSE stmt
