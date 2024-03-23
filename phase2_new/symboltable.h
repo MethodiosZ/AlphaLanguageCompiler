@@ -26,7 +26,7 @@ typedef struct Symbol_Table{
     struct SymTable *next;
 } SymTable;
 int hash(char* name);
-Sym* createSymbol(char* name,int scope,int line,type_t type);
+Sym* createSymbol(char* name,int scope,int line,type_t type,func_t funcid);
 Var* createVariable(char* name,int scope,int line);
 Func* createFunction(char* name,int scope,int line,func_t id);
 void Insert(Sym *nsymbol);
