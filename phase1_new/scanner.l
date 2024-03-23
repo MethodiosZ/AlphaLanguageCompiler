@@ -105,11 +105,6 @@ comment		    ("//".*)
     strcat(string_build, "\t");
 }
 
-<STRING>\\\" {
-    string_build = (char*)realloc(string_build, strlen(string_build) + 2);
-    strcat(string_build, "\"");
-}
-
 <STRING>\\\\ {
     string_build = (char*)realloc(string_build, strlen(string_build) + 2);
     strcat(string_build, "\\");
