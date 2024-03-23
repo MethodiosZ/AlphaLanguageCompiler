@@ -9,7 +9,7 @@ extern int yylineno;
 extern char* yytext;
 extern FILE* yyin;
 
-SymTable *stbl[HASH_SIZE];
+SymTable *stbl[TABLE_SIZE];
 Sym *symbol;
 %}
 
@@ -40,15 +40,15 @@ Sym *symbol;
 %right      ASSIGN
 %left       OR
 %left       AND
-%nonassoc   EQ, NEQ
-%nonassoc   LESS, MORE, MOREEQ, LESSEQ
-%left       ADD, SUB
-%left       MUL, DIV, MOD
-%right      NOT, PPLUS, MMINUS
-%left       DOT, DDOT
-%left       LSQBRACE, RSQBRACE
+%nonassoc   EQ NEQ
+%nonassoc   LESS MORE MOREEQ LESSEQ
+%left       ADD SUB
+%left       MUL DIV MOD
+%right      NOT PPLUS MMINUS
+%left       DOT DDOT
+%left       LSQBRACE RSQBRACE
 %nonassoc   UMINUS
-%left       LPAR, RPAR
+%left       LPAR RPAR
 
 %error-verbose
 
@@ -87,7 +87,7 @@ expr:           assignexpr                              {printf("Found assignmen
                 | term                                  {printf("Found term\n"); }
                 ;
 
-term            LPAR expr RPAR                          {printf("Found (expression)\n"); $$ = $2;}
+term:            LPAR expr RPAR                          {printf("Found (expression)\n"); $$ = $2;}
                 | SUB expr %prec UMINUS                 {printf("Found -expression\n"); $$ = -$2;}
                 | NOT expr                              {printf("Found !expression\n"); $$= $2?0:1; }
                 | PPLUS lvalue                          {printf("Found ++lvalue\n"); $$=$2+1 }

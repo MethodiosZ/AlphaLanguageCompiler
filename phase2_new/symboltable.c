@@ -4,26 +4,16 @@
 #include <string.h>
 #include "symboltable.h"
 
-extern SymTable *stbl[HASH_SIZE];
+extern SymTable *stbl[TABLE_SIZE];
 
-int hash(char* name){
-    int length=0,i=0,hashnum=0;
-    length = strlen(name);
-    for(i=0;i<length;i++){
-        hashnum += name[i];
-        hashnum = hashnum % HASH_SIZE;
-    }
-    return hashnum;
-}
-
-Sym *createSymbol(char *name, int scope, int line, type_t type,func_t funcid){
+Sym *createSymbol(char *name, int scope, int line, type_t type){
     Sym *new;
     new = (Sym*)malloc(sizeof(Sym)); 
     Var *newvar;
     Func *newfunc;
     new->type=type;
     if(type){
-        newfunc=createFunction(name,scope,line,funcid);
+        newfunc=createFunction(name,scope,line,1);
         new->FuncVal=newfunc;
         new->VarVal=NULL;
     }
@@ -55,7 +45,13 @@ Func* createFunction(char* name,int scope,int line,func_t id){
 }
 
 void Insert(Sym *nsymbol){
-
+    int index;
+    Sym *temp;
+    SymTable *head;
+    if(nsymbol->type) index=nsymbol->FuncVal->scope;
+    else index=nsymbol->VarVal->scope;
+    temp=(Sym*)malloc(sizeof(Sym));
+    head=stbl[index];
 }
 
 Sym* Serch(char* name){
@@ -65,10 +61,35 @@ Sym* Serch(char* name){
 
 void InitTable(){
     int i;
-    for (i=0;i<HASH_SIZE;i++){
+    for (i=0;i<TABLE_SIZE;i++){
         stbl[i]=NULL;
     }
-    
+    Sym *libfunc;
+    libfunc = createFunction("print",0,0,0);
+    Insert(libfunc);
+    libfunc = createFunction("input",0,0,0);
+    Insert(libfunc);
+    libfunc = createFunction("objectmemberkey",0,0,0);
+    Insert(libfunc);
+    libfunc = createFunction("objecttotalmembers",0,0,0);
+    Insert(libfunc);
+    libfunc = createFunction("objectcopy",0,0,0);
+    Insert(libfunc);
+    libfunc = createFunction("totalarguments",0,0,0);
+    Insert(libfunc);
+    libfunc = createFunction("argument",0,0,0);
+    Insert(libfunc);
+    libfunc = createFunction("typeof",0,0,0);
+    Insert(libfunc);
+    libfunc = createFunction("strtonum",0,0,0);
+    Insert(libfunc);
+    libfunc = createFunction("sqrt",0,0,0);
+    Insert(libfunc);
+    libfunc = createFunction("cos",0,0,0);
+    Insert(libfunc);
+    libfunc = createFunction("sin",0,0,0);
+    Insert(libfunc);
+    return;
 }
 
 void PrintTable(){

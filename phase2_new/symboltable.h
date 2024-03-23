@@ -1,4 +1,4 @@
-#define HASH_SIZE 256
+#define TABLE_SIZE 16
 typedef enum {
     var,func
 } type_t;
@@ -25,8 +25,7 @@ typedef struct Symbol_Table{
     Sym symbol;
     struct SymTable *next;
 } SymTable;
-int hash(char* name);
-Sym* createSymbol(char* name,int scope,int line,type_t type,func_t funcid);
+Sym* createSymbol(char* name,int scope,int line,type_t type);
 Var* createVariable(char* name,int scope,int line);
 Func* createFunction(char* name,int scope,int line,func_t id);
 void Insert(Sym *nsymbol);
