@@ -30,7 +30,7 @@ Sym *symbol;
 %token <string>     SEMI DOT DDOT COLON CCOLON COMMA
 
 %type <intVal>      expr
-%type <string>      program stmt op term assignexpr primary lvalue member
+%type <string>      program stmt term assignexpr primary lvalue member
 %type <string>      call callsuffix normcall methodcall elist objectdef
 %type <string>      indexed indexedelem block funcdef const idlist ifstmt
 %type <string>      whilestmt forstmt returnstmt
@@ -54,129 +54,139 @@ Sym *symbol;
 
 %%
 
-program:        stmt*                               {;}
-                |                                   {;}
+program:        stmt                                    {printf("Found statement\n");}
+                |                                       {;}
                 ;
 
-stmt:           expr SEMI
-                | ifstmt
-                | whilestmt
-                | forstmt
-                | returnstmt
-                | BREAK SEMI
-                | CONT SEMI
-                | block
-                | funcdef
-                |                                   {;}                       
+stmt:           expr SEMI                               {printf("Found expression\n");}
+                | ifstmt                                {printf("Found if statement\n");}
+                | whilestmt                             {printf("Found while statement\n");}
+                | forstmt                               {printf("Found for statement\n");}
+                | returnstmt                            {printf("Found return statement\n");}
+                | BREAK SEMI                            {printf("Found break\n");}
+                | CONT SEMI                             {printf("Found continue\n");}
+                | block                                 {printf("Found block\n");}
+                | funcdef                               {printf("Found function definition\n");}
+                |                                       {;}                       
                 ;
 
-expr:           assignexpr                    
-                | expr op expr
-                | term                     
+expr:           assignexpr                              {printf("Found assignment expression\n");}
+                | expr ADD expr                         {printf("Found expression + expression\n"); $$=$1+$3;}
+                | expr SUB expr                         {printf("Found expression - expression\n"); $$=$1-$3;}
+                | expr MUL expr                         {printf("Found expression * expression\n"); $$=$1*$3;}
+                | expr DIV expr                         {printf("Found expression / expression\n"); $$=$1/$3;}
+                | expr MOD expr                         {printf("Found expression MOD expression\n"); $$=$1%$3;}
+                | expr MORE expr                        {printf("Found expression > expression\n"); $$=($1>$3)?1:0;}
+                | expr MOREEQ expr                      {printf("Found expression >= expression\n"); $$=($1>=$3)?1:0;}
+                | expr LESS expr                        {printf("Found expression < expression\n"); $$=($1<$3)?1:0;}
+                | expr LESSEQ expr                      {printf("Found expression <= expression\n"); $$=($1<=$3)?1:0;}
+                | expr EQ expr                          {printf("Found expression == expression\n"); $$=($1==$3)?1:0;}
+                | expr NEQ expr                         {printf("Found expression != expression\n"); $$=($1!=$3)?1:0;}
+                | expr AND expr                         {printf("Found expression && expression\n"); $$=($1 && $3)?1:0;}
+                | expr OR expr                          {printf("Found expression || expression\n"); $$=($1 || $3)?1:0;}
+                | term                                  {printf("Found term\n"); }
                 ;
 
-op              ADD | SUB | MUL | DIV | MOD | MORE | MOREEQ | LESS | LESSEQ
-                | EQ |  NEQ | AND | OR
+term            LPAR expr RPAR                          {printf("Found (expression)\n"); $$ = $2;}
+                | SUB expr %prec UMINUS                 {printf("Found -expression\n"); $$ = -$2;}
+                | NOT expr                              {printf("Found !expression\n"); $$= $2?0:1; }
+                | PPLUS lvalue                          {printf("Found ++lvalue\n"); $$=$2+1 }
+                | lvalue PPLUS                          {printf("Found lvalue++\n"); $$=$1+1}
+                | MMINUS lvalue                         {printf("Found --lvalue\n"); $$=$2-1}
+                | lvalue MMINUS                         {printf("Found lvalue--\n"); $$=$1-1}
+                | primary                               {printf("Found primary\n"); }
                 ;
 
-term            LPAR expr RPAR
-                | SUB expr
-                | NOT expr
-                | PPLUS lvalue
-                | lvalue PPLUS
-                | MMINUS lvalue
-                | lvalue MMINUS
-                | primary
+assignexpr:     lvalue ASSIGN expr SEMI                 {printf("Found lvalue=expression;\n"); assign($1,$3);}
                 ;
 
-assignexpr:     lvalue ASSIGN expr SEMI             { assign($1,$3);}
+primary:        lvalue                                  {printf("Found lvalue\n"); }         
+                | call                                  {printf("Found call\n"); }
+                | objectdef                             {printf("Found object definition\n"); }
+                | LPAR funcdef RPAR                     {printf("Found (function definition)\n"); }
+                | const                                 {printf("Found const\n"); }
                 ;
 
-primary:        lvalue
-                | call
-                | objectdef
-                | LPAR funcdef RPAR
-                | const
+lvalue:         ID                                      {printf("Found id\n"); }
+                | LOCAL ID                              {printf("Found local id\n"); }
+                | CCOLON ID                             {printf("Found ::id\n"); }
+                | member                                {printf("Found member\n"); }
                 ;
 
-lvalue:         ID
-                | LOCAL ID
-                | CCOLON ID
-                | member
+member:         lvalue DOT ID                           {printf("Found lvalue.id\n"); }
+                | lvalue LSQBRACE expr RSQBRACE         {printf("Found lvalue[expression]\n"); }
+                | call DOT ID                           {printf("Found call.id\n"); }
+                | call LSQBRACE expr RSQBRACE           {printf("Found call[expression]\n"); }
                 ;
 
-member:         lvalue DOT ID
-                | lvalue LSQBRACE expr RSQBRACE
-                | call DOT ID
-                | call LSQBRACE expr RSQBRACE
+call:           call LPAR elist RPAR                    {printf("Found call(elist)\n"); }
+                | lvalue callsuffix                     {printf("Found lvalue call suffix\n"); }
+                | LPAR funcdef RPAR LPAR elist RPAR     {printf("Found (function definition)(elist)\n"); }
                 ;
 
-call:           call LPAR elist RPAR
-                | lvalue callsuffix
-                | LPAR funcdef RPAR LPAR elist RPAR
+callsuffix:     normcall                                {printf("Found normal call\n"); }
+                | methodcall                            {printf("Found method call\n"); }
                 ;
 
-callsuffix:     normcall
-                | methodcall
+normcall:       LPAR elist RPAR                         {printf("Found (elist)\n"); }
                 ;
 
-normcall:       LPAR elist RPAR
+methodcall:     DDOT ID LPAR elist RPAR                 {printf("Found ..id(elist)\n"); }
                 ;
 
-methodcall:     DDOT ID LPAR elist RPAR
+elist:          expr                                    {printf("Found expression\n"); } 
+                | elist COMMA expr                      {printf("Found elist,expression\n"); }
+                |                                       {;}
                 ;
 
-elist:          expr 
-                | elist COMMA expr
-                |
+objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n"); }
+                | LSQBRACE indexed RSQBRACE             {printf("Found [indexed]\n"); }
+                | LSQBRACE RSQBRACE                     {printf("Found []\n"); }
                 ;
 
-objectdef:      LSQBRACE elist | indexed RSQBRACE
+indexed:        indexedelem                             {printf("Found indexed element\n"); }
+                | indexed COMMA indexedelem             {printf("Found indexed, indexed element\n"); }
+                |                                       {;}
                 ;
 
-indexed:        indexedelem COMMA indexedelem*
+indexedelem:    LBRACE expr COLON expr RBRACE           {printf("Found {expression:expression}\n"); }
                 ;
 
-indexedelem:    LBRACE expr COLON expr RBRACE
+block:          LBRACE stmt RBRACE                      {printf("Found {statement}\n"); }
+                | LBRACE RBRACE                         {printf("Found {}\n"); }
                 ;
 
-block:          LBRACE stmt RBRACE
-                |
+funcdef:        FUNC ID LPAR idlist RPAR block          {printf("Found function id(id list) block\n"); }
+                | FUNC LPAR idlist RPAR block           {printf("Found function(id list) block\n"); }
                 ;
 
-funcdef:        FUNC ID LPAR idlist RPAR block
+const:          INTEGER                                 {printf("Found integer\n"); }
+                | FLOAT                                 {printf("Found float\n"); }
+                | STRING                                {printf("Found string\n"); }
+                | NIL                                   {printf("Found nil\n"); }
+                | TRUE                                  {printf("Found true\n"); }
+                | FALSE                                 {printf("Found false\n"); }
                 ;
 
-const:          INTEGER | FLOAT | STRING | NIL | TRUE | FALSE
+idlist:         ID                                      {printf("Found id\n"); }
+                | idlist COMMA ID                       {printf("Found id list, id\n"); }
+                |                                       {;}
                 ;
 
-idlist:         ID 
-                | idlist COMMA ID
-                |
+ifstmt:         IF LPAR expr RPAR stmt                  {printf("Found if(expression) statement\n"); }
+                | IF LPAR expr RPAR stmt ELSE stmt      {printf("Found if(expression) statement else statement\n"); }
                 ;
 
-ifstmt:         IF LPAR expr RPAR stmt ELSE stmt
+whilestmt:      WHILE LPAR expr RPAR stmt               {printf("Found while(expression) statement\n"); }
                 ;
 
-whilestmt:      WHILE LPAR expr RPAR stmt
+forstmt:        FOR LPAR elist SEMI expr SEMI elist RPAR stmt   {printf("Found for(elist;expression;elist) statement\n"); }
                 ;
 
-forstmt:        FOR LPAR elist SEMI expr SEMI elist RPAR stmt
+returnstmt:     RET SEMI                                {printf("Found return;\n"); }
+                | RET expr SEMI                         {printf("Found return expression;\n"); }
                 ;
 
-returnstmt:     RET expr SEMI
-
-/*expression:     INTEGER                             { $$ = $1;}
-                |   ID                              { $$ = lookup($1); free($1);}
-                |   expression ADD expression       { $$ = $1 + $3;}
-                |   expression SUB expression       { $$ = $1 - $3;}
-                |   expression MUL expression       { $$ = $1 * $3;}
-                |   expression DIV expression       { $$ = $1 / $3;}
-                |   expression MOD expression       { $$ = $1 % $3;}
-                |   LPAR expression RPAR            { $$ = $2;}
-                |   SUB expression %prec UMINUS     { $$ = -$2;}
-                ;
-*/
 %%
 
 int yyerror (char* yaccProvidedMessage){
