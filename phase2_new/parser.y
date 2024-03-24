@@ -54,8 +54,8 @@ Sym *symbol;
 
 %%
 
-program:        stmt                                    {printf("Found statement\n");}
-                |                                       {;}
+program:        stmt program                            {printf("Found statement\n");}
+                | %empty                                
                 ;
 
 stmt:           expr SEMI                               {printf("Found expression\n");}
@@ -67,7 +67,7 @@ stmt:           expr SEMI                               {printf("Found expressio
                 | CONT SEMI                             {printf("Found continue\n");}
                 | block                                 {printf("Found block\n");}
                 | funcdef                               {printf("Found function definition\n");}
-                |                                       {;}                       
+                | SEMI                                  {printf("Found semicolon\n");}                       
                 ;
 
 expr:           assignexpr                              {printf("Found assignment expression\n");}
@@ -97,7 +97,7 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                 | primary                               {printf("Found primary\n"); }
                 ;
 
-assignexpr:     lvalue ASSIGN expr SEMI                 {printf("Found lvalue=expression;\n"); /*$1=$3;*/}
+assignexpr:     lvalue ASSIGN expr                      {printf("Found lvalue=expression\n"); /*$1=$3;*/}
                 ;
 
 primary:        lvalue                                  {printf("Found lvalue\n"); }         
@@ -136,7 +136,7 @@ methodcall:     DDOT ID LPAR elist RPAR                 {printf("Found ..id(elis
 
 elist:          expr                                    {printf("Found expression\n"); } 
                 | elist COMMA expr                      {printf("Found elist,expression\n"); }
-                |                                       {;}
+                | %empty                                
                 ;
 
 objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n"); }
@@ -146,7 +146,7 @@ objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n
 
 indexed:        indexedelem                             {printf("Found indexed element\n"); }
                 | indexed COMMA indexedelem             {printf("Found indexed, indexed element\n"); }
-                |                                       {;}
+                | %empty                                
                 ;
 
 indexedelem:    LBRACE expr COLON expr RBRACE           {printf("Found {expression:expression}\n"); }
@@ -170,7 +170,7 @@ const:          INTEGER                                 {printf("Found integer\n
 
 idlist:         ID                                      {printf("Found id\n"); }
                 | idlist COMMA ID                       {printf("Found id list, id\n"); }
-                |                                       {;}
+                | %empty                                
                 ;
 
 ifstmt:         IF LPAR expr RPAR stmt                  {printf("Found if(expression) statement\n"); }
@@ -207,6 +207,7 @@ int main(int argc, char **argv){
         yyin = stdin;
     }
     yyparse();
+
     PrintTable();
     return 0;
 }

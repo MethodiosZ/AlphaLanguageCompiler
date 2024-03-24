@@ -161,6 +161,9 @@ comment		    ("//".*)
             } else if(YY_START == NESTED_COMMENT){
                 fprintf(stderr, "Error: Nested comment not closed at end of file\n");
             }
+            else{
+                return EOF;
+            }
 }
 
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
