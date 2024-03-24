@@ -90,14 +90,14 @@ expr:           assignexpr                              {printf("Found assignmen
 term:           LPAR expr RPAR                          {printf("Found (expression)\n"); $$ = $2;}
                 | SUB expr %prec UMINUS                 {printf("Found -expression\n"); $$ = -$2;}
                 | NOT expr                              {printf("Found !expression\n"); $$= $2?0:1; }
-                | PPLUS lvalue                          {printf("Found ++lvalue\n"); $$=$2+1; }
-                | lvalue PPLUS                          {printf("Found lvalue++\n"); $$=$1+1;}
-                | MMINUS lvalue                         {printf("Found --lvalue\n"); $$=$2-1;}
-                | lvalue MMINUS                         {printf("Found lvalue--\n"); $$=$1-1;}
+                | PPLUS lvalue                          {printf("Found ++lvalue\n"); /*$$=$2+1;*/ }
+                | lvalue PPLUS                          {printf("Found lvalue++\n"); /*$$=$1+1;*/}
+                | MMINUS lvalue                         {printf("Found --lvalue\n"); /*$$=$2-1;*/}
+                | lvalue MMINUS                         {printf("Found lvalue--\n"); /*$$=$1-1;*/}
                 | primary                               {printf("Found primary\n"); }
                 ;
 
-assignexpr:     lvalue ASSIGN expr SEMI                 {printf("Found lvalue=expression;\n"); $1=$3;}
+assignexpr:     lvalue ASSIGN expr SEMI                 {printf("Found lvalue=expression;\n"); /*$1=$3;*/}
                 ;
 
 primary:        lvalue                                  {printf("Found lvalue\n"); }         
