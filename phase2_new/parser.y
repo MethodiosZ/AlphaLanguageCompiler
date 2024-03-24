@@ -29,8 +29,8 @@ Sym *symbol;
 %token <string>     ASSIGN EQ NEQ AND OR NOT MORE MOREEQ LESS LESSEQ
 %token <string>     SEMI DOT DDOT COLON CCOLON COMMA
 
-%type <intVal>      expr
-%type <string>      program stmt term assignexpr primary lvalue member
+%type <intVal>      expr term
+%type <string>      program stmt assignexpr primary lvalue member
 %type <string>      call callsuffix normcall methodcall elist objectdef
 %type <string>      indexed indexedelem block funcdef const idlist ifstmt
 %type <string>      whilestmt forstmt returnstmt
@@ -87,17 +87,17 @@ expr:           assignexpr                              {printf("Found assignmen
                 | term                                  {printf("Found term\n"); }
                 ;
 
-term:            LPAR expr RPAR                          {printf("Found (expression)\n"); $$ = $2;}
+term:           LPAR expr RPAR                          {printf("Found (expression)\n"); $$ = $2;}
                 | SUB expr %prec UMINUS                 {printf("Found -expression\n"); $$ = -$2;}
                 | NOT expr                              {printf("Found !expression\n"); $$= $2?0:1; }
-                | PPLUS lvalue                          {printf("Found ++lvalue\n"); $$=$2+1 }
-                | lvalue PPLUS                          {printf("Found lvalue++\n"); $$=$1+1}
-                | MMINUS lvalue                         {printf("Found --lvalue\n"); $$=$2-1}
-                | lvalue MMINUS                         {printf("Found lvalue--\n"); $$=$1-1}
+                | PPLUS lvalue                          {printf("Found ++lvalue\n"); $$=$2+1; }
+                | lvalue PPLUS                          {printf("Found lvalue++\n"); $$=$1+1;}
+                | MMINUS lvalue                         {printf("Found --lvalue\n"); $$=$2-1;}
+                | lvalue MMINUS                         {printf("Found lvalue--\n"); $$=$1-1;}
                 | primary                               {printf("Found primary\n"); }
                 ;
 
-assignexpr:     lvalue ASSIGN expr SEMI                 {printf("Found lvalue=expression;\n"); assign($1,$3);}
+assignexpr:     lvalue ASSIGN expr SEMI                 {printf("Found lvalue=expression;\n"); $1=$3;}
                 ;
 
 primary:        lvalue                                  {printf("Found lvalue\n"); }         

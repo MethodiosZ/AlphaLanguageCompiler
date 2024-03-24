@@ -46,48 +46,98 @@ Func* createFunction(char* name,int scope,int line,func_t id){
 
 void Insert(Sym *nsymbol){
     int index;
-    Sym *temp;
-    SymTable *head;
+    SymTable *head,*temp;;
+    head=(SymTable*)malloc(sizeof(SymTable));
+    temp=(SymTable*)malloc(sizeof(SymTable));
     if(nsymbol->type) index=nsymbol->FuncVal->scope;
     else index=nsymbol->VarVal->scope;
-    temp=(Sym*)malloc(sizeof(Sym));
     head=stbl[index];
+    temp->symbol=nsymbol;
+    if(head==NULL){
+        temp->next=NULL;
+        head=temp;
+    }
+    else{
+        while(head->next!=NULL){
+            head=head->next;
+        }
+
+    }
+    
 }
 
-Sym* Serch(char* name){
-
-    return;
+Sym* Search(char* name){
+    Sym *temp;
+    return temp;
 }
 
 void InitTable(){
     int i;
+    Func *nfunc;
+    Sym *libfunc;
     for (i=0;i<TABLE_SIZE;i++){
         stbl[i]=NULL;
     }
-    Sym *libfunc;
-    libfunc = createFunction("print",0,0,0);
+    
+    nfunc = createFunction("print",0,0,0);
+    libfunc->FuncVal=nfunc;
+    libfunc->type=func;
+    libfunc->VarVal=NULL;
     Insert(libfunc);
-    libfunc = createFunction("input",0,0,0);
+    nfunc = createFunction("input",0,0,0);
+    libfunc->FuncVal=nfunc;
+    libfunc->type=func;
+    libfunc->VarVal=NULL;
     Insert(libfunc);
-    libfunc = createFunction("objectmemberkey",0,0,0);
+    nfunc = createFunction("objectmemberkey",0,0,0);
+    libfunc->FuncVal=nfunc;
+    libfunc->type=func;
+    libfunc->VarVal=NULL;
     Insert(libfunc);
-    libfunc = createFunction("objecttotalmembers",0,0,0);
+    nfunc = createFunction("objecttotalmembers",0,0,0);
+    libfunc->FuncVal=nfunc;
+    libfunc->type=func;
+    libfunc->VarVal=NULL;
     Insert(libfunc);
-    libfunc = createFunction("objectcopy",0,0,0);
+    nfunc = createFunction("objectcopy",0,0,0);
+    libfunc->FuncVal=nfunc;
+    libfunc->type=func;
+    libfunc->VarVal=NULL;
     Insert(libfunc);
-    libfunc = createFunction("totalarguments",0,0,0);
+    nfunc = createFunction("totalarguments",0,0,0);
+    libfunc->FuncVal=nfunc;
+    libfunc->type=func;
+    libfunc->VarVal=NULL;
     Insert(libfunc);
-    libfunc = createFunction("argument",0,0,0);
+    nfunc = createFunction("argument",0,0,0);
+    libfunc->FuncVal=nfunc;
+    libfunc->type=func;
+    libfunc->VarVal=NULL;
     Insert(libfunc);
-    libfunc = createFunction("typeof",0,0,0);
+    nfunc = createFunction("typeof",0,0,0);
+    libfunc->FuncVal=nfunc;
+    libfunc->type=func;
+    libfunc->VarVal=NULL;
     Insert(libfunc);
-    libfunc = createFunction("strtonum",0,0,0);
+    nfunc = createFunction("strtonum",0,0,0);
+    libfunc->FuncVal=nfunc;
+    libfunc->type=func;
+    libfunc->VarVal=NULL;
     Insert(libfunc);
-    libfunc = createFunction("sqrt",0,0,0);
+    nfunc = createFunction("sqrt",0,0,0);
+    libfunc->FuncVal=nfunc;
+    libfunc->type=func;
+    libfunc->VarVal=NULL;
     Insert(libfunc);
-    libfunc = createFunction("cos",0,0,0);
+    nfunc = createFunction("cos",0,0,0);
+    libfunc->FuncVal=nfunc;
+    libfunc->type=func;
+    libfunc->VarVal=NULL;
     Insert(libfunc);
-    libfunc = createFunction("sin",0,0,0);
+    nfunc = createFunction("sin",0,0,0);
+    libfunc->FuncVal=nfunc;
+    libfunc->type=func;
+    libfunc->VarVal=NULL;
     Insert(libfunc);
     return;
 }

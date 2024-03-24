@@ -22,13 +22,13 @@ typedef struct Symbol{
     type_t type;
 } Sym;
 typedef struct Symbol_Table{
-    Sym symbol;
+    Sym *symbol;
     struct SymTable *next;
 } SymTable;
 Sym* createSymbol(char* name,int scope,int line,type_t type);
 Var* createVariable(char* name,int scope,int line);
 Func* createFunction(char* name,int scope,int line,func_t id);
 void Insert(Sym *nsymbol);
-Sym* Serch(char* name);
+Sym* Search(char* name);
 void InitTable();
 void PrintTable();
