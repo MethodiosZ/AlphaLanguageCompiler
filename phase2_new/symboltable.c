@@ -66,8 +66,30 @@ void Insert(Sym *nsymbol){
 }
 
 Sym* Search(char* name){
+    int i;
     Sym *temp;
-    return temp;
+    SymTable *head;
+    for(i=0;i<TABLE_SIZE;i++){
+        head=stbl[i];
+        while(head!=NULL){
+            if(head->symbol->type){
+                if(!strcmp(head->symbol->FuncVal->name,name)){
+                    temp=head->symbol;
+                    return temp;
+                }
+            }
+            else{
+                if(!strcmp(head->symbol->VarVal->name,name)){
+                    temp=head->symbol;
+                    return temp;
+                }
+
+            }
+            head=head->next;
+        }
+    }
+    printf("Symbol not found!\n");
+    return NULL;
 }
 
 void InitTable(){

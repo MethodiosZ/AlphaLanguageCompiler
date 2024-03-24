@@ -42,7 +42,6 @@ comment		    ("//".*)
 }
 
 <STRING>\" {
-    insert(yylval, yylineno, ++yytokenid, strdup(string_build), "STRING", -1);
     free(string_build);
     BEGIN(INITIAL);
     return STRING;
@@ -58,11 +57,6 @@ comment		    ("//".*)
     strcat(string_build, "\t");
 }
 
-<STRING>\\\" {
-    string_build = (char*)realloc(string_build, strlen(string_build) + 2);
-    strcat(string_build, "\"");
-}
-
 <STRING>\\\\ {
     string_build = (char*)realloc(string_build, strlen(string_build) + 2);
     strcat(string_build, "\\");
@@ -73,41 +67,28 @@ comment		    ("//".*)
     strcat(string_build, yytext);
 }
 
-"/*"            { fprintf(stderr,"Recognised block comment beginning with value: %s\n",yytext);
-                  commentbegin=yylineno;  
+"/*"            { commentbegin=yylineno;  
                   BEGIN(BLOCK_COMMENT);  
                   }   /* Start of block comment */
 
 <BLOCK_COMMENT>{
-    "/*" {  fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);
-            nestedcommentbegin[commentnestlvl]=yylineno;
+    "/*" {  nestedcommentbegin[commentnestlvl]=yylineno;
             commentnestlvl++;
             BEGIN(NESTED_COMMENT);  }
-    "*/" {  fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
-            snprintf(commentlines,10,"%d - %d",commentbegin,yylineno);
-            insert(yylval,commentbegin,++yytokenid,commentlines,"COMMENT",1);
-            BEGIN(INITIAL);}        /* End of block comment */
-            return COMMENT;
+    "*/" {  BEGIN(INITIAL);}        /* End of block comment */
     "\n"    { }
     .       { }
 }
 
 <NESTED_COMMENT>{
-    "/*" {  fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);
-            nestedcommentbegin[commentnestlvl]=yylineno;
+    "/*" {  nestedcommentbegin[commentnestlvl]=yylineno;
             commentnestlvl++;  
             BEGIN(NESTED_COMMENT);  }
     "*/" {  if(commentnestlvl == 1) {
                 commentnestlvl--;
-                fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
-                snprintf(commentlines,10,"%d - %d",nestedcommentbegin[commentnestlvl],yylineno);
-                insert(yylval,nestedcommentbegin[commentnestlvl],++yytokenid,commentlines,"COMMENT",2);
                 BEGIN(BLOCK_COMMENT);        /* End of block comment */ 
             }else {
-                fprintf(stderr,"Recognised nested comment ending with value: %s\n",yytext);
                 commentnestlvl--;
-                snprintf(commentlines,10,"%d - %d",nestedcommentbegin[commentnestlvl],yylineno);
-                insert(yylval,nestedcommentbegin[commentnestlvl],++yytokenid,commentlines,"COMMENT",2);
                 BEGIN(NESTED_COMMENT); /* End of nested comment */
             }
         } 
@@ -179,10 +160,7 @@ comment		    ("//".*)
                 fprintf(stderr, "Error: Block comment not closed at end of file\n");
             } else if(YY_START == NESTED_COMMENT){
                 fprintf(stderr, "Error: Nested comment not closed at end of file\n");
-            } else {
-                    return EOF;
             }
-            return 1; 
 }
 
 .               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
