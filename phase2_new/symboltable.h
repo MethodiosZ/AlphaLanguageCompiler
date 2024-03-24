@@ -27,7 +27,7 @@ typedef struct Symbol{
 } Sym;
 typedef struct Symbol_Table{
     Sym *symbol;
-    SymTable *next;
+    struct Symbol_Table *next;
 } SymTable;
 Sym* createSymbol(char* name,int scope,int line,type_t type,int id);
 Var* createVariable(char* name,int scope,int line,var_t id);

@@ -107,7 +107,7 @@ comment		    ("//".*)
 
 {space}         { }    
 
-{comment}       { return COMMENT;  }
+{comment}       { }
 
 "true"          {return TRUE;}
 "false"         {return FALSE;}
