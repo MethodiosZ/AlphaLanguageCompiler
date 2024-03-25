@@ -51,8 +51,8 @@ void Insert(Sym *nsymbol){
     head=stbl[index];
     temp->symbol=nsymbol;
     temp->next=NULL;
-    if(head==NULL){
-        head=temp;
+    if(stbl[index]==NULL){
+        stbl[index]=temp;
     }
     else{
         while(head->next!=NULL){
@@ -69,7 +69,7 @@ Sym* Search(char* name){
     for(i=0;i<TABLE_SIZE;i++){
         head=stbl[i];
         while(head!=NULL){
-            if(head->symbol->value.FuncVal){
+            if(head->symbol->type>2){
                 if(!strcmp(head->symbol->value.FuncVal->name,name)){
                     temp=head->symbol;
                     return temp;
@@ -85,8 +85,20 @@ Sym* Search(char* name){
             head=head->next;
         }
     }
-    printf("Symbol not found!\n");
     return NULL;
+}
+
+void Hide(int scope){
+    int i;
+    SymTable *list;
+    for(i=scope;i<TABLE_SIZE;i++){
+        list=stbl[i];
+        while(list!=NULL){
+            list->symbol->isActive=0;
+        }
+        list=list->next;
+    }
+    return;
 }
 
 void InitTable(){
@@ -130,7 +142,7 @@ void PrintTable(){
         temp=stbl[i];
         printf("---------------     Scope #%d       ---------------\n",i);
         while(temp!=NULL){
-            if(temp->symbol->value.FuncVal){
+            if(temp->symbol->type>2){
                 printf("\"%s\" ",temp->symbol->value.FuncVal->name);
                 if(temp->symbol->type==3){
                     printf("[user function] ");
@@ -153,6 +165,7 @@ void PrintTable(){
                 }
                 printf("(line %d) (scope %d)\n",temp->symbol->value.VarVal->line,temp->symbol->value.VarVal->scope);
             }
+            temp=temp->next;
         }
     }
 }

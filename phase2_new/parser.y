@@ -11,6 +11,8 @@ extern FILE* yyin;
 
 SymTable *stbl[TABLE_SIZE];
 Sym *symbol;
+
+int scope=0;
 %}
 
 %union{
@@ -107,9 +109,19 @@ primary:        lvalue                                  {printf("Found lvalue\n"
                 | const                                 {printf("Found const\n"); }
                 ;
 
-lvalue:         ID                                      {printf("Found id\n"); }
-                | LOCAL ID                              {printf("Found local id\n"); }
-                | CCOLON ID                             {printf("Found ::id\n"); }
+lvalue:         ID                                      {if(scope) symbol = createSymbol($1,scope,yylineno,LLOCAL);
+                                                         else symbol = createSymbol($1,scope,yylineno,GLOBAL);
+                                                         Insert(symbol);
+                                                         printf("Found id\n");
+                                                        }
+                | LOCAL ID                              {symbol=createSymbol($1,scope,yylineno,LLOCAL);
+                                                         Insert(symbol);
+                                                         printf("Found local id\n"); 
+                                                        }
+                | CCOLON ID                             {symbol=createSymbol($1,scope,yylineno,LLOCAL);
+                                                         Insert(symbol);
+                                                         printf("Found ::id\n"); 
+                                                        }
                 | member                                {printf("Found member\n"); }
                 ;
 
@@ -152,7 +164,9 @@ indexed:        indexedelem                             {printf("Found indexed e
 indexedelem:    LBRACE expr COLON expr RBRACE           {printf("Found {expression:expression}\n"); }
                 ;
 
-block:          LBRACE inblock RBRACE                   {printf("Found {statement}\n"); }
+block:          LBRACE {scope++;} inblock RBRACE         {scope--;
+                                                         printf("Found {statement}\n"); 
+                                                        }
                 ;
 
 inblock:        stmt inblock                            {printf("Found statement in block\n");}
@@ -199,7 +213,7 @@ int yyerror (char* yaccProvidedMessage){
 
 int main(int argc, char **argv){
     InitTable();
-    symbol=(Sym*)malloc(sizeof(Sym));
+    //symbol=(Sym*)malloc(sizeof(Sym));
     if(argc>1){
         if(!(yyin=fopen(argv[1],"r"))){
             fprintf(stderr,"Cannot read file: %s\n",argv[1]);
