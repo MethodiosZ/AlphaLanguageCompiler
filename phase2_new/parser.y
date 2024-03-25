@@ -173,8 +173,14 @@ inblock:        stmt inblock                            {printf("Found statement
                 | %empty
                 ;
 
-funcdef:        FUNC ID LPAR idlist RPAR block          {printf("Found function id(id list) block\n"); }
-                | FUNC LPAR idlist RPAR block           {printf("Found function(id list) block\n"); }
+funcdef:        FUNC ID LPAR {scope++;} idlist RPAR {scope--;} block {symbol = createSymbol($2,scope,yylineno,USERFUNC);
+                                                         Insert(symbol);
+                                                         printf("Found function id(id list) block\n"); 
+                                                        }
+                | FUNC LPAR {scope++;} idlist RPAR {scope--;} block { symbol = createSymbol("$0",scope,yylineno,USERFUNC);
+                                                         Insert(symbol);
+                                                         printf("Found function(id list) block\n"); 
+                                                        }
                 ;
 
 const:          INTEGER                                 {printf("Found integer\n"); }
@@ -185,19 +191,33 @@ const:          INTEGER                                 {printf("Found integer\n
                 | FALSE                                 {printf("Found false\n"); }
                 ;
 
-idlist:         ID                                      {printf("Found id\n"); }
-                | idlist COMMA ID                       {printf("Found id list, id\n"); }
+idlist:         ID                                      {symbol=createSymbol($1,scope,yylineno,FORMAL);
+                                                         Insert(symbol);
+                                                         printf("Found id\n"); 
+                                                        }
+                | idlist COMMA ID                       {symbol=createSymbol($3,scope,yylineno,FORMAL);
+                                                         Insert(symbol);
+                                                         printf("Found id list, id\n"); 
+                                                        }
                 | %empty                                
                 ;
 
-ifstmt:         IF LPAR expr RPAR stmt                  {printf("Found if(expression) statement\n"); }
-                | IF LPAR expr RPAR stmt ELSE stmt      {printf("Found if(expression) statement else statement\n"); }
+ifstmt:         IF LPAR expr RPAR {scope++;} stmt       {scope--;
+                                                         printf("Found if(expression) statement\n"); 
+                                                        }
+                | ifstmt ELSE {scope++;} stmt           {scope--;
+                                                         printf("Found if(expression) statement else statement\n"); 
+                                                        }
                 ;
 
-whilestmt:      WHILE LPAR expr RPAR stmt               {printf("Found while(expression) statement\n"); }
+whilestmt:      WHILE LPAR expr RPAR {scope++;} stmt    {scope--;
+                                                         printf("Found while(expression) statement\n"); 
+                                                        }
                 ;
 
-forstmt:        FOR LPAR elist SEMI expr SEMI elist RPAR stmt   {printf("Found for(elist;expression;elist) statement\n"); }
+forstmt:        FOR LPAR elist SEMI expr SEMI elist RPAR {scope++;} stmt    {scope--;
+                                                                             printf("Found for(elist;expression;elist) statement\n"); 
+                                                                            }
                 ;
 
 returnstmt:     RET SEMI                                {printf("Found return;\n"); }
@@ -213,7 +233,6 @@ int yyerror (char* yaccProvidedMessage){
 
 int main(int argc, char **argv){
     InitTable();
-    //symbol=(Sym*)malloc(sizeof(Sym));
     if(argc>1){
         if(!(yyin=fopen(argv[1],"r"))){
             fprintf(stderr,"Cannot read file: %s\n",argv[1]);
