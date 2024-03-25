@@ -32,8 +32,8 @@ Sym *symbol;
 %type <intVal>      expr term
 %type <string>      program stmt assignexpr primary lvalue member
 %type <string>      call callsuffix normcall methodcall elist objectdef
-%type <string>      indexed indexedelem block funcdef const idlist ifstmt
-%type <string>      whilestmt forstmt returnstmt
+%type <string>      indexed indexedelem block inblock funcdef const idlist 
+%type <string>      ifstmt whilestmt forstmt returnstmt
 
 %start program
 
@@ -152,8 +152,11 @@ indexed:        indexedelem                             {printf("Found indexed e
 indexedelem:    LBRACE expr COLON expr RBRACE           {printf("Found {expression:expression}\n"); }
                 ;
 
-block:          LBRACE stmt RBRACE                      {printf("Found {statement}\n"); }
-                | LBRACE RBRACE                         {printf("Found {}\n"); }
+block:          LBRACE inblock RBRACE                   {printf("Found {statement}\n"); }
+                ;
+
+inblock:        stmt inblock                            {printf("Found statement in block\n");}
+                | %empty
                 ;
 
 funcdef:        FUNC ID LPAR idlist RPAR block          {printf("Found function id(id list) block\n"); }

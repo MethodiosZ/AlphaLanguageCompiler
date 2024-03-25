@@ -19,9 +19,9 @@
 %option yylineno
 
 /* Flex macros */
-intconst 	    (0[xX][0-9a-fA-F]+)|[0-9]+
-realconst       [0-9]*\.([0-9](e|E)?[0-9]*)
 ident           [a-zA-Z_][a-zA-Z_0-9]*
+intconst 	    [0-9]+
+realconst       [0-9]*\.([0-9](e|E)?[0-9]*)
 space           [\r\n \t\v]
 comment		    ("//".*)
 
@@ -142,14 +142,14 @@ comment		    ("//".*)
 "or"            {return OR;}
 "="             {return ASSIGN;}
 
+{ident}         { yylval.string = strdup(yytext);
+                  return ID;}
+
 {intconst}      { yylval.intVal = atoi(yytext);
                   return INTEGER;}
 
 {realconst}     { yylval.realVal = atof(yytext);
                   return FLOAT; }
-
-{ident}         { yylval.string = strdup(yytext);
-                  return ID;}
 
 {space}         { }    
 
