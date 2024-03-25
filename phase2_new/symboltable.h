@@ -1,6 +1,6 @@
 #define TABLE_SIZE 16
 typedef enum {
-    GLOBAL, LOCAL, FORMAL, USERFUNC, LIBFUNC
+    GLOBAL, LLOCAL, FORMAL, USERFUNC, LIBFUNC
 } type_t;
 typedef struct Variable{
     const char* name;
