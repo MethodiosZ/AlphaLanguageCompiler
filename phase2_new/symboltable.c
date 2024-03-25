@@ -6,39 +6,36 @@
 
 extern SymTable *stbl[TABLE_SIZE];
 
-Sym *createSymbol(char *name, int scope, int line, type_t type, int id){
+Sym *createSymbol(char *name, int scope, int line, type_t type){
     Sym *new;
     new = (Sym*)malloc(sizeof(Sym)); 
     Var *newvar;
     Func *newfunc;
     new->type=type;
-    if(type){
-        newfunc=createFunction(name,scope,line,id);
-        new->FuncVal=newfunc;
-        new->VarVal=NULL;
+    new->isActive=1;
+    if(type<3){
+        newvar=createVariable(name,scope,line);
+        new->value.VarVal=newvar;
     }
     else{
-        newvar=createVariable(name,scope,line,id);
-        new->VarVal=newvar;
-        new->FuncVal=NULL;
+        newfunc=createFunction(name,scope,line);
+        new->value.FuncVal=newfunc;
     }
     return new;
 }
 
-Var* createVariable(char* name,int scope,int line,var_t id){
+Var* createVariable(char* name,int scope,int line){
     Var *new;
     new = (Var*)malloc(sizeof(Var));
     new->name=strdup(name);
     new->scope=scope;
     new->line=line;
-    new->id=id;
     return new;
 }
 
-Func* createFunction(char* name,int scope,int line,func_t id){
+Func* createFunction(char* name,int scope,int line){
     Func *new;
     new = (Func*)malloc(sizeof(Func));
-    new->id = id;
     new->name = strdup(name);
     new->scope= scope;
     new->line = line;
@@ -49,8 +46,8 @@ void Insert(Sym *nsymbol){
     int index;
     SymTable *head,*temp;
     temp=(SymTable*)malloc(sizeof(SymTable));
-    if(nsymbol->type) index=nsymbol->FuncVal->scope;
-    else index=nsymbol->VarVal->scope;
+    if(nsymbol->value.FuncVal) index=nsymbol->value.FuncVal->scope;
+    else index=nsymbol->value.VarVal->scope;
     head=stbl[index];
     temp->symbol=nsymbol;
     temp->next=NULL;
@@ -72,14 +69,14 @@ Sym* Search(char* name){
     for(i=0;i<TABLE_SIZE;i++){
         head=stbl[i];
         while(head!=NULL){
-            if(head->symbol->type){
-                if(!strcmp(head->symbol->FuncVal->name,name)){
+            if(head->symbol->value.FuncVal){
+                if(!strcmp(head->symbol->value.FuncVal->name,name)){
                     temp=head->symbol;
                     return temp;
                 }
             }
             else{
-                if(!strcmp(head->symbol->VarVal->name,name)){
+                if(!strcmp(head->symbol->value.VarVal->name,name)){
                     temp=head->symbol;
                     return temp;
                 }
@@ -99,29 +96,29 @@ void InitTable(){
     for (i=0;i<TABLE_SIZE;i++){
         stbl[i]=NULL;
     }
-    libfunc = createSymbol("print",0,0,1,0);
+    libfunc = createSymbol("print",0,0,4);
     Insert(libfunc);
-    libfunc = createSymbol("input",0,0,1,0);
+    libfunc = createSymbol("input",0,0,4);
     Insert(libfunc);
-    libfunc = createSymbol("objectmemberkey",0,0,1,0);
+    libfunc = createSymbol("objectmemberkey",0,0,4);
     Insert(libfunc);
-    libfunc = createSymbol("objecttotalmembers",0,0,1,0);
+    libfunc = createSymbol("objecttotalmembers",0,0,4);
     Insert(libfunc);
-    libfunc = createSymbol("objectcopy",0,0,1,0);
+    libfunc = createSymbol("objectcopy",0,0,4);
     Insert(libfunc);
-    libfunc = createSymbol("totalarguments",0,0,1,0);
+    libfunc = createSymbol("totalarguments",0,0,4);
     Insert(libfunc);
-    libfunc = createSymbol("argument",0,0,1,0);
+    libfunc = createSymbol("argument",0,0,4);
     Insert(libfunc);
-    libfunc = createSymbol("typeof",0,0,1,0);
+    libfunc = createSymbol("typeof",0,0,4);
     Insert(libfunc);
-    libfunc = createSymbol("strtonum",0,0,1,0);
+    libfunc = createSymbol("strtonum",0,0,4);
     Insert(libfunc);
-    libfunc = createSymbol("sqrt",0,0,1,0);
+    libfunc = createSymbol("sqrt",0,0,4);
     Insert(libfunc);
-    libfunc = createSymbol("cos",0,0,1,0);
+    libfunc = createSymbol("cos",0,0,4);
     Insert(libfunc);
-    libfunc = createSymbol("sin",0,0,1,0);
+    libfunc = createSymbol("sin",0,0,4);
     Insert(libfunc);
     return;
 }
@@ -133,28 +130,28 @@ void PrintTable(){
         temp=stbl[i];
         printf("---------------     Scope #%d       ---------------\n",i);
         while(temp!=NULL){
-            if(temp->symbol->type){
-                printf("\"%s\" ",temp->symbol->FuncVal->name);
-                if(temp->symbol->FuncVal->id){
+            if(temp->symbol->value.FuncVal){
+                printf("\"%s\" ",temp->symbol->value.FuncVal->name);
+                if(temp->symbol->type==3){
                     printf("[user function] ");
                 }
                 else{
                     printf("[library function] ");
                 }
-                printf("(line %d) (scope %d)\n",temp->symbol->FuncVal->line,temp->symbol->FuncVal->scope);
+                printf("(line %d) (scope %d)\n",temp->symbol->value.FuncVal->line,temp->symbol->value.FuncVal->scope);
             }
             else{
-                printf("\"%s\" ",temp->symbol->VarVal->name);
-                if(temp->symbol->VarVal->id==0){
+                printf("\"%s\" ",temp->symbol->value.VarVal->name);
+                if(temp->symbol->type==0){
                     printf("[global variable] ");
                 }
-                else if(temp->symbol->VarVal->id==1){
+                else if(temp->symbol->type==1){
                     printf("[local variable] ");
                 }
                 else{
                     printf("[formal argument] ");
                 }
-                printf("(line %d) (scope %d)\n",temp->symbol->VarVal->line,temp->symbol->VarVal->scope);
+                printf("(line %d) (scope %d)\n",temp->symbol->value.VarVal->line,temp->symbol->value.VarVal->scope);
             }
         }
     }

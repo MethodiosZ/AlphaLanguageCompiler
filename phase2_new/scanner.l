@@ -96,19 +96,6 @@ comment		    ("//".*)
     .       { }
 }
 
-{intconst}      { yylval.intVal = atoi(yytext);
-                  return INTEGER;}
-
-{realconst}     { yylval.realVal = atof(yytext);
-                  return FLOAT; }
-
-{ident}         { yylval.string = strdup(yytext);
-                  return ID;}
-
-{space}         { }    
-
-{comment}       { }
-
 "true"          {return TRUE;}
 "false"         {return FALSE;}
 "nil"           {return NIL;}
@@ -155,6 +142,18 @@ comment		    ("//".*)
 "or"            {return OR;}
 "="             {return ASSIGN;}
 
+{intconst}      { yylval.intVal = atoi(yytext);
+                  return INTEGER;}
+
+{realconst}     { yylval.realVal = atof(yytext);
+                  return FLOAT; }
+
+{ident}         { yylval.string = strdup(yytext);
+                  return ID;}
+
+{space}         { }    
+
+{comment}       { }
 
 <<EOF>>  {  if (YY_START == BLOCK_COMMENT){
                 fprintf(stderr, "Error: Block comment not closed at end of file\n");
