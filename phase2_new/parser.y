@@ -109,17 +109,23 @@ primary:        lvalue                                  {printf("Found lvalue\n"
                 | const                                 {printf("Found const\n"); }
                 ;
 
-lvalue:         ID                                      {if(scope) symbol = createSymbol($1,scope,yylineno,LLOCAL);
-                                                         else symbol = createSymbol($1,scope,yylineno,GLOBAL);
-                                                         Insert(symbol);
+lvalue:         ID                                      {if(Search($1)==NULL){
+                                                            if(scope) symbol = createSymbol($1,scope,yylineno,LLOCAL);
+                                                            else symbol = createSymbol($1,scope,yylineno,GLOBAL);
+                                                            Insert(symbol);
+                                                         }
                                                          printf("Found id\n");
                                                         }
-                | LOCAL ID                              {symbol=createSymbol($1,scope,yylineno,LLOCAL);
-                                                         Insert(symbol);
+                | LOCAL ID                              {if(Search($2)==NULL){
+                                                            symbol=createSymbol($1,scope,yylineno,LLOCAL);
+                                                            Insert(symbol);
+                                                         }
                                                          printf("Found local id\n"); 
                                                         }
-                | CCOLON ID                             {symbol=createSymbol($1,scope,yylineno,LLOCAL);
-                                                         Insert(symbol);
+                | CCOLON ID                             {if(Search($2)==NULL){
+                                                            symbol=createSymbol($1,scope,yylineno,LLOCAL);
+                                                            Insert(symbol);
+                                                         }
                                                          printf("Found ::id\n"); 
                                                         }
                 | member                                {printf("Found member\n"); }
@@ -164,7 +170,8 @@ indexed:        indexedelem                             {printf("Found indexed e
 indexedelem:    LBRACE expr COLON expr RBRACE           {printf("Found {expression:expression}\n"); }
                 ;
 
-block:          LBRACE {scope++;} inblock RBRACE         {scope--;
+block:          LBRACE {scope++;} inblock RBRACE        {scope--;
+                                                         Hide(scope);                                                    
                                                          printf("Found {statement}\n"); 
                                                         }
                 ;
@@ -173,14 +180,20 @@ inblock:        stmt inblock                            {printf("Found statement
                 | %empty
                 ;
 
-funcdef:        FUNC ID LPAR {scope++;} idlist RPAR {scope--;} block {symbol = createSymbol($2,scope,yylineno,USERFUNC);
-                                                         Insert(symbol);
-                                                         printf("Found function id(id list) block\n"); 
-                                                        }
-                | FUNC LPAR {scope++;} idlist RPAR {scope--;} block { symbol = createSymbol("$0",scope,yylineno,USERFUNC);
-                                                         Insert(symbol);
-                                                         printf("Found function(id list) block\n"); 
-                                                        }
+funcdef:        FUNC ID {if(Search($2)==NULL){
+                            symbol = createSymbol($2,scope,yylineno,USERFUNC);
+                            Insert(symbol);
+                         }
+                        }
+                LPAR {scope++;} idlist RPAR {scope--;} block {Hide(scope);
+                                                              printf("Found function id(id list) block\n"); 
+                                                             }
+                | FUNC {symbol = createSymbol("$0",scope,yylineno,USERFUNC);
+                        Insert(symbol);
+                       }
+                LPAR {scope++;} idlist RPAR {scope--;} block {Hide(scope);
+                                                              printf("Found function(id list) block\n"); 
+                                                             }
                 ;
 
 const:          INTEGER                                 {printf("Found integer\n"); }
@@ -191,31 +204,39 @@ const:          INTEGER                                 {printf("Found integer\n
                 | FALSE                                 {printf("Found false\n"); }
                 ;
 
-idlist:         ID                                      {symbol=createSymbol($1,scope,yylineno,FORMAL);
-                                                         Insert(symbol);
+idlist:         ID                                      {if(Search($1)==NULL){
+                                                            symbol=createSymbol($1,scope,yylineno,FORMAL);
+                                                            Insert(symbol);
+                                                         }
                                                          printf("Found id\n"); 
                                                         }
-                | idlist COMMA ID                       {symbol=createSymbol($3,scope,yylineno,FORMAL);
-                                                         Insert(symbol);
+                | idlist COMMA ID                       {if(Search($3)==NULL){
+                                                            symbol=createSymbol($3,scope,yylineno,FORMAL);
+                                                            Insert(symbol);
+                                                         }
                                                          printf("Found id list, id\n"); 
                                                         }
                 | %empty                                
                 ;
 
 ifstmt:         IF LPAR expr RPAR {scope++;} stmt       {scope--;
+                                                         Hide(scope);
                                                          printf("Found if(expression) statement\n"); 
                                                         }
                 | ifstmt ELSE {scope++;} stmt           {scope--;
+                                                         Hide(scope);
                                                          printf("Found if(expression) statement else statement\n"); 
                                                         }
                 ;
 
 whilestmt:      WHILE LPAR expr RPAR {scope++;} stmt    {scope--;
+                                                         Hide(scope);
                                                          printf("Found while(expression) statement\n"); 
                                                         }
                 ;
 
 forstmt:        FOR LPAR elist SEMI expr SEMI elist RPAR {scope++;} stmt    {scope--;
+                                                                             Hide(scope);
                                                                              printf("Found for(elist;expression;elist) statement\n"); 
                                                                             }
                 ;

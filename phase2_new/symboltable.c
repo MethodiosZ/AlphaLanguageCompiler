@@ -71,16 +71,25 @@ Sym* Search(char* name){
         while(head!=NULL){
             if(head->symbol->type>2){
                 if(!strcmp(head->symbol->value.FuncVal->name,name)){
-                    temp=head->symbol;
-                    return temp;
+                    if(head->symbol->isActive){
+                        temp=head->symbol;
+                        return temp;
+                    }
+                    else{
+                        return NULL;
+                    }
                 }
             }
             else{
                 if(!strcmp(head->symbol->value.VarVal->name,name)){
-                    temp=head->symbol;
-                    return temp;
+                    if(head->symbol->isActive){
+                        temp=head->symbol;
+                        return temp;
+                    }
+                    else{
+                        return NULL;
+                    }
                 }
-
             }
             head=head->next;
         }
@@ -95,8 +104,8 @@ void Hide(int scope){
         list=stbl[i];
         while(list!=NULL){
             list->symbol->isActive=0;
+            list=list->next;
         }
-        list=list->next;
     }
     return;
 }
@@ -140,7 +149,7 @@ void PrintTable(){
     SymTable *temp;
     for(i=0;i<TABLE_SIZE;i++){
         temp=stbl[i];
-        printf("---------------     Scope #%d       ---------------\n",i);
+        printf("\n---------------     Scope #%d       ---------------\n",i);
         while(temp!=NULL){
             if(temp->symbol->type>2){
                 printf("\"%s\" ",temp->symbol->value.FuncVal->name);
