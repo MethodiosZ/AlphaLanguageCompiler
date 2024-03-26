@@ -62,33 +62,36 @@ void Insert(Sym *nsymbol){
     }
 }
 
-Sym* Search(char* name){
+Sym* Search(char* name,int scope){
     int i;
     Sym *temp;
     SymTable *head;
-    for(i=0;i<TABLE_SIZE;i++){
+    for(i=0;i<=scope;i++){
         head=stbl[i];
+        printf("%d\n",i);
         while(head!=NULL){
-            if(head->symbol->type>2){
-                if(!strcmp(head->symbol->value.FuncVal->name,name)){
+            if(head->symbol->type<3){
+                if(!strcmp(head->symbol->value.VarVal->name,name)){
                     if(head->symbol->isActive){
                         temp=head->symbol;
-                        return temp;
+                    return temp;
                     }
                     else{
                         return NULL;
                     }
                 }
             }
-            else{
-                if(!strcmp(head->symbol->value.VarVal->name,name)){
-                    if(head->symbol->isActive){
-                        temp=head->symbol;
-                        return temp;
-                    }
-                    else{
-                        return NULL;
-                    }
+            else if(head->symbol->type==3){
+                if(!strcmp(head->symbol->value.FuncVal->name,name)){
+                    /*temp=head->symbol;
+                    return temp;*/
+                    return NULL;
+                }
+            }
+            else if(head->symbol->type==4){
+                if(!strcmp(head->symbol->value.FuncVal->name,name)){
+                    printf("Error trying to redefine library function\n");
+                    return NULL;
                 }
             }
             head=head->next;

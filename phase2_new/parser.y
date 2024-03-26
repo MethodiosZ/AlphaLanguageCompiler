@@ -109,21 +109,21 @@ primary:        lvalue                                  {printf("Found lvalue\n"
                 | const                                 {printf("Found const\n"); }
                 ;
 
-lvalue:         ID                                      {if(Search($1)==NULL){
+lvalue:         ID                                      {if(Search($1,scope)==NULL){
                                                             if(scope) symbol = createSymbol($1,scope,yylineno,LLOCAL);
                                                             else symbol = createSymbol($1,scope,yylineno,GLOBAL);
                                                             Insert(symbol);
                                                          }
                                                          printf("Found id\n");
                                                         }
-                | LOCAL ID                              {if(Search($2)==NULL){
-                                                            symbol=createSymbol($1,scope,yylineno,LLOCAL);
+                | LOCAL ID                              {if(Search($2,scope)==NULL){
+                                                            symbol=createSymbol($2,scope,yylineno,LLOCAL);
                                                             Insert(symbol);
                                                          }
                                                          printf("Found local id\n"); 
                                                         }
-                | CCOLON ID                             {if(Search($2)==NULL){
-                                                            symbol=createSymbol($1,scope,yylineno,LLOCAL);
+                | CCOLON ID                             {if(Search($2,scope)==NULL){
+                                                            symbol=createSymbol($2,scope,yylineno,LLOCAL);
                                                             Insert(symbol);
                                                          }
                                                          printf("Found ::id\n"); 
@@ -180,9 +180,13 @@ inblock:        stmt inblock                            {printf("Found statement
                 | %empty
                 ;
 
-funcdef:        FUNC ID {if(Search($2)==NULL){
+funcdef:        FUNC ID {if(Search($2,scope)==NULL){
                             symbol = createSymbol($2,scope,yylineno,USERFUNC);
                             Insert(symbol);
+                         }
+                         else{
+                            yyerror("Function already exists\n");
+                            yyerrok;
                          }
                         }
                 LPAR {scope++;} idlist RPAR {scope--;} block {Hide(scope);
@@ -204,15 +208,23 @@ const:          INTEGER                                 {printf("Found integer\n
                 | FALSE                                 {printf("Found false\n"); }
                 ;
 
-idlist:         ID                                      {if(Search($1)==NULL){
+idlist:         ID                                      {if(Search($1,scope)==NULL){
                                                             symbol=createSymbol($1,scope,yylineno,FORMAL);
                                                             Insert(symbol);
                                                          }
+                                                         else{
+                                                            yyerror("Formal argument already exists\n");
+                                                            yyerrok;
+                                                         }
                                                          printf("Found id\n"); 
                                                         }
-                | idlist COMMA ID                       {if(Search($3)==NULL){
+                | idlist COMMA ID                       {if(Search($3,scope)==NULL){
                                                             symbol=createSymbol($3,scope,yylineno,FORMAL);
                                                             Insert(symbol);
+                                                         }
+                                                         else{
+                                                            yyerror("Formal argument already exists\n");
+                                                            yyerrok;
                                                          }
                                                          printf("Found id list, id\n"); 
                                                         }
