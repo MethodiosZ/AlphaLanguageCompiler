@@ -109,20 +109,20 @@ primary:        lvalue                                  {printf("Found lvalue\n"
                 | const                                 {printf("Found const\n"); }
                 ;
 
-lvalue:         ID                                      {if(Search($1,scope)==NULL){
+lvalue:         ID                                      {if(Search($1,scope,LLOCAL)==NULL){
                                                             if(scope) symbol = createSymbol($1,scope,yylineno,LLOCAL);
                                                             else symbol = createSymbol($1,scope,yylineno,GLOBAL);
                                                             Insert(symbol);
                                                          }
                                                          printf("Found id\n");
                                                         }
-                | LOCAL ID                              {if(Search($2,scope)==NULL){
+                | LOCAL ID                              {if(Search($2,scope,LLOCAL)==NULL){
                                                             symbol=createSymbol($2,scope,yylineno,LLOCAL);
                                                             Insert(symbol);
                                                          }
                                                          printf("Found local id\n"); 
                                                         }
-                | CCOLON ID                             {if(Search($2,scope)==NULL){
+                | CCOLON ID                             {if(Search($2,scope,LLOCAL)==NULL){
                                                             symbol=createSymbol($2,scope,yylineno,LLOCAL);
                                                             Insert(symbol);
                                                          }
@@ -180,7 +180,7 @@ inblock:        stmt inblock                            {printf("Found statement
                 | %empty
                 ;
 
-funcdef:        FUNC ID {if(Search($2,scope)==NULL){
+funcdef:        FUNC ID {if(Search($2,scope,USERFUNC)==NULL){
                             symbol = createSymbol($2,scope,yylineno,USERFUNC);
                             Insert(symbol);
                          }
@@ -208,7 +208,7 @@ const:          INTEGER                                 {printf("Found integer\n
                 | FALSE                                 {printf("Found false\n"); }
                 ;
 
-idlist:         ID                                      {if(Search($1,scope)==NULL){
+idlist:         ID                                      {if(Search($1,scope,LLOCAL)==NULL){
                                                             symbol=createSymbol($1,scope,yylineno,FORMAL);
                                                             Insert(symbol);
                                                          }
@@ -218,7 +218,7 @@ idlist:         ID                                      {if(Search($1,scope)==NU
                                                          }
                                                          printf("Found id\n"); 
                                                         }
-                | idlist COMMA ID                       {if(Search($3,scope)==NULL){
+                | idlist COMMA ID                       {if(Search($3,scope,LLOCAL)==NULL){
                                                             symbol=createSymbol($3,scope,yylineno,FORMAL);
                                                             Insert(symbol);
                                                          }

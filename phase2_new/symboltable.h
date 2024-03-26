@@ -28,7 +28,7 @@ Sym* createSymbol(char* name,int scope,int line,type_t type);
 Var* createVariable(char* name,int scope,int line);
 Func* createFunction(char* name,int scope,int line);
 void Insert(Sym *nsymbol);
-Sym* Search(char* name,int scope);
+Sym* Search(char* name,int scope,type_t type);
 void Hide(int scope);
 void InitTable();
 void PrintTable();
