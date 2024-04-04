@@ -13,6 +13,8 @@ SymTable *stbl[TABLE_SIZE];
 Sym *symbol;
 
 int scope=0;
+int counter=0;
+char buffer[8];
 %}
 
 %union{
@@ -192,7 +194,8 @@ funcdef:        FUNC ID {if(Search($2,scope,USERFUNC)==NULL){
                 LPAR {scope++;} idlist RPAR {scope--;} block {Hide(scope);
                                                               printf("Found function id(id list) block\n"); 
                                                              }
-                | FUNC {symbol = createSymbol("$0",scope,yylineno,USERFUNC);
+                | FUNC {snprintf(buffer,sizeof(buffer),"$%d",counter++);
+                        symbol = createSymbol(buffer,scope,yylineno,USERFUNC);
                         Insert(symbol);
                        }
                 LPAR {scope++;} idlist RPAR {scope--;} block {Hide(scope);

@@ -27,44 +27,49 @@ comment		    ("//".*)
 
 %x BLOCK_COMMENT
 %x NESTED_COMMENT
-%x STRING
+%x SSTRING
 %%
 
 \"  {
     string_build = (char*)malloc(1);
     string_build[0] = '\0';
-    BEGIN(STRING);
+    BEGIN(SSTRING);
 }
 
-<STRING>\\\" {
-    string_build = (char*)realloc(string_build, strlen(string_build) + 2);
-    strcat(string_build, "\\\"");
-}
-
-<STRING>\" {
+<SSTRING>\" {
     free(string_build);
     BEGIN(INITIAL);
     return STRING;
 }
 
-<STRING>\\n {
+<SSTRING>\\n {
     string_build = (char*)realloc(string_build, strlen(string_build) + 2);
     strcat(string_build, "\n");
 }
 
-<STRING>\\t {
+<SSTRING>\\t {
     string_build = (char*)realloc(string_build, strlen(string_build) + 2);
     strcat(string_build, "\t");
 }
 
-<STRING>\\\\ {
+<SSTRING>\\\" {
+    string_build = (char*)realloc(string_build, strlen(string_build) + 2);
+    strcat(string_build, "\\\"");
+}
+
+<SSTRING>\\\\ {
     string_build = (char*)realloc(string_build, strlen(string_build) + 2);
     strcat(string_build, "\\");
 }
 
-<STRING>[^\"\\\n]+ {
+<SSTRING>[^\"\\\n]+ {
     string_build = (char*)realloc(string_build, strlen(string_build) + strlen(yytext) + 1);
     strcat(string_build, yytext);
+}
+
+<SSTRING><<EOF>> {
+    printf("Error! Incomplete String!\n");
+    return EOF;
 }
 
 "/*"            { commentbegin=yylineno;  
