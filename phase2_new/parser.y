@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #include "symboltable.h"
 
 int yyerror(char* yaccProvidedMessage);
@@ -9,9 +10,10 @@ extern int yylineno;
 extern char* yytext;
 extern FILE* yyin;
 
-SymTable *stbl[TABLE_SIZE];
+SymTable **stbl; 
 Sym *symbol;
 
+int table_size=0;
 int scope=0;
 int counter=0;
 char buffer[8];
@@ -118,13 +120,11 @@ lvalue:         ID                                      {if(Search($1,scope,LLOC
                                                          }
                                                          printf("Found id\n");
                                                         }
-                | LOCAL ID                              {if(Search($2,scope,LLOCAL)==NULL){
-                                                            symbol=createSymbol($2,scope,yylineno,LLOCAL);
-                                                            Insert(symbol);
-                                                         }
+                | LOCAL ID                              {symbol=createSymbol($2,scope,yylineno,LLOCAL);
+                                                         Insert(symbol);
                                                          printf("Found local id\n"); 
                                                         }
-                | CCOLON ID                             {if(Search($2,scope,LLOCAL)==NULL){
+                | CCOLON ID                             {if(Search($2,0,LLOCAL)==NULL){
                                                             symbol=createSymbol($2,scope,yylineno,LLOCAL);
                                                             Insert(symbol);
                                                          }
@@ -178,7 +178,7 @@ block:          LBRACE {scope++;} inblock RBRACE        {scope--;
                                                         }
                 ;
 
-inblock:        stmt inblock                            {printf("Found statement in block\n");}
+inblock:        inblock stmt                            {printf("Found statement in block\n");}
                 | %empty
                 ;
 
@@ -211,7 +211,7 @@ const:          INTEGER                                 {printf("Found integer\n
                 | FALSE                                 {printf("Found false\n"); }
                 ;
 
-idlist:         ID                                      {if(Search($1,scope,LLOCAL)==NULL){
+idlist:         ID                                      {if(Search($1,scope,FORMAL)==NULL){
                                                             symbol=createSymbol($1,scope,yylineno,FORMAL);
                                                             Insert(symbol);
                                                          }
@@ -221,7 +221,7 @@ idlist:         ID                                      {if(Search($1,scope,LLOC
                                                          }
                                                          printf("Found id\n"); 
                                                         }
-                | idlist COMMA ID                       {if(Search($3,scope,LLOCAL)==NULL){
+                | idlist COMMA ID                       {if(Search($3,scope,FORMAL)==NULL){
                                                             symbol=createSymbol($3,scope,yylineno,FORMAL);
                                                             Insert(symbol);
                                                          }

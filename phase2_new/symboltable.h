@@ -1,4 +1,3 @@
-#define TABLE_SIZE 16
 typedef enum {
     GLOBAL, LLOCAL, FORMAL, USERFUNC, LIBFUNC
 } type_t;
@@ -32,3 +31,4 @@ Sym* Search(char* name,int scope,type_t type);
 void Hide(int scope);
 void InitTable();
 void PrintTable();
+void TableAlloc();

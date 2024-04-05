@@ -4,7 +4,8 @@
 #include <string.h>
 #include "symboltable.h"
 
-extern SymTable *stbl[TABLE_SIZE];
+extern SymTable **stbl;
+extern int table_size;
 
 Sym *createSymbol(char *name, int scope, int line, type_t type){
     Sym *new;
@@ -48,6 +49,7 @@ void Insert(Sym *nsymbol){
     temp=(SymTable*)malloc(sizeof(SymTable));
     if(nsymbol->value.FuncVal) index=nsymbol->value.FuncVal->scope;
     else index=nsymbol->value.VarVal->scope;
+    if(index>table_size) TableAlloc();
     head=stbl[index];
     temp->symbol=nsymbol;
     temp->next=NULL;
@@ -66,7 +68,11 @@ Sym* Search(char* name,int scope,type_t type){
     int i;
     Sym *temp;
     SymTable *head;
+    if(type==2){
+        return NULL;
+    }
     for(i=0;i<=scope;i++){
+        if(i>table_size) return NULL;
         head=stbl[i];
         while(head!=NULL){
             if(head->symbol->type<3){
@@ -102,7 +108,7 @@ Sym* Search(char* name,int scope,type_t type){
 void Hide(int scope){
     int i;
     SymTable *list;
-    for(i=scope;i<TABLE_SIZE;i++){
+    for(i=scope;i<=table_size;i++){
         list=stbl[i];
         while(list!=NULL){
             list->symbol->isActive=0;
@@ -116,9 +122,8 @@ void InitTable(){
     int i;
     Func *nfunc;
     Sym *libfunc;
-    for (i=0;i<TABLE_SIZE;i++){
-        stbl[i]=NULL;
-    }
+    stbl = (SymTable**)malloc(sizeof(SymTable*));
+    stbl[0]=NULL;
     libfunc = createSymbol("print",0,0,4);
     Insert(libfunc);
     libfunc = createSymbol("input",0,0,4);
@@ -149,7 +154,7 @@ void InitTable(){
 void PrintTable(){
     int i;
     SymTable *temp;
-    for(i=0;i<TABLE_SIZE;i++){
+    for(i=0;i<=table_size;i++){
         temp=stbl[i];
         printf("\n---------------     Scope #%d       ---------------\n",i);
         while(temp!=NULL){
@@ -179,4 +184,10 @@ void PrintTable(){
             temp=temp->next;
         }
     }
+}
+
+void TableAlloc(){
+    table_size++;
+    stbl=realloc(stbl,sizeof(SymTable*)*table_size+1);
+    stbl[table_size]=NULL;
 }
