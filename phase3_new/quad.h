@@ -1,0 +1,104 @@
+#include "hashtable.h"
+
+typedef enum opcode{
+	assign, 	add,		sub,
+	mul,		div,		mod,
+	uminus,		and,		or,
+	not,		if_eq,		if_noteq,
+	if_lesseq,	if_greatereq,	if_less,
+	if_greater,	call,		param,
+	ret,		getretval,	funcstart,
+	funcend,		tablecreate,	
+	tablegetelem,	tablesetelem
+} iopcode;
+
+typedef enum expr_t{
+	var_e,
+	tableitem_e,
+	programfunc_e,
+	libraryfunc_e,
+	arithexpr_e,
+	boolexpr_e,
+	assignexpr_e,
+	newtable_e,
+	constnum_e,
+	constbool_e,
+	conststring_e,
+	nil_e
+} expr_t;
+
+typedef struct expr{
+	expr_t 	        type;
+	symbol          *sym;
+	struct expr     *index;
+	double	        numConst;
+	char 	        *strConst;
+	unsigned char   boolConst;
+	struct expr	    *next;
+} expr;
+
+typedef struct quad{
+	iopcode	        op;
+	expr            *result;	
+	expr            *arg1;
+	expr            *arg2;
+	unsigned int    label;
+	unsigned int    line;
+}quad;
+
+typedef enum scopespace{
+	programvar, functionlocal, formalarg
+} scopespace_t;
+
+typedef enum symbol_t{
+	var_s, programfunc_s, libraryfunc_s
+} symbol_t;
+
+typedef struct symbol{
+	symbol_t		type;
+	char 			*name;
+	scopespace_t	space;
+	unsigned		offset;
+	unsigned		scope;
+	unsigned		line;
+} symbol;
+
+typedef struct call{
+	expr			*elist;
+	unsigned char	method;
+	char			*name;
+} call;
+
+typedef struct stmt{
+	int breakList;
+	int contList;
+} stmt_t;
+
+void expand();
+void emit(iopcode op,expr *arg1,expr *arg2,expr *result, unsigned label,unsigned line);
+expr* emit_iftableitem(expr* e);
+scopespace_t currscopespace();
+unsigned currscopeoffset();
+void incurrscopeoffset();
+void enterscopespace();
+void exitscopespace();
+void resetformalargoffset();
+void resetfunctionlocaloffset();
+void restorecurrscopeoffset(unsigned n);
+unsigned nextquad();
+void patchlabel(unsigned quadNo,unsigned label);
+expr* newexpr(expr_t t);
+expr* newexpr_conststring(char *s);
+expr* newexpr_constnum(double i);
+expr* newexpr_constbool(unsigned int b);
+expr* lvalue_expr(symbol *sym);
+expr* member_item(expr *lv,char *name);
+expr* make_call(expr *lv, expr *reversed_elist);
+void comperror(char *format,...);
+void check_arith(expr *e,const char *context);
+unsigned int istempname(char *s);
+unsigned int istempexpr(expr *e);
+void make_stmt(stmt_t *s);
+int newlist(int i);
+int mergelist(int l1,int l2);
+void pathclist(int list,int label);
