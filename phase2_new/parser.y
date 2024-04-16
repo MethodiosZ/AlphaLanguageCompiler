@@ -133,7 +133,7 @@ lvalue:         ID                                      {if(Search($1,scope,GLOB
                                                          printf("Found local id\n"); 
                                                         }
                 | CCOLON ID                             {if(Search($2,0,GLOBAL)==NULL){
-                                                            yyerror("Global variable %s doesn't exist\n",$2);
+                                                            fprintf(yyerror,"Global variable %s doesn't exist\n",$2);
                                                             yyerrok;
                                                          }
                                                          printf("Found ::id\n"); 
