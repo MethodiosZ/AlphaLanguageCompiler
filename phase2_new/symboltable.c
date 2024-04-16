@@ -313,25 +313,25 @@ void PrintTable(){
         printf("\n---------------     Scope #%d       ---------------\n",i);
         while(temp!=NULL){
             if(temp->symbol->type>2){
-                printf("\"%s\" ",temp->symbol->value.FuncVal->name);
+                printf("%-*s \t",20,temp->symbol->value.FuncVal->name);
                 if(temp->symbol->type==3){
-                    printf("[user function] ");
+                    printf("%-*s", 20, "[user function]");
                 }
                 else{
-                    printf("[library function] ");
+                    printf("%-*s", 20, "[library function]");
                 }
                 printf("(line %d) (scope %d)\n",temp->symbol->value.FuncVal->line,temp->symbol->value.FuncVal->scope);
             }
             else{
-                printf("\"%s\" ",temp->symbol->value.VarVal->name);
+                printf("%-*s \t",20,temp->symbol->value.VarVal->name);
                 if(temp->symbol->type==0){
-                    printf("[global variable] ");
+                    printf("%-*s", 20, "[global variable]");
                 }
                 else if(temp->symbol->type==1){
-                    printf("[local variable] ");
+                    printf("%-*s", 20, "[local variable]");
                 }
                 else{
-                    printf("[formal argument] ");
+                    printf("%-*s", 20, "[formal argument]");
                 }
                 printf("(line %d) (scope %d)\n",temp->symbol->value.VarVal->line,temp->symbol->value.VarVal->scope);
             }
