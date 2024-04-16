@@ -68,9 +68,15 @@ stmt:           expr SEMI                               {printf("Found expressio
                 | ifstmt                                {printf("Found if statement\n");}
                 | whilestmt                             {printf("Found while statement\n");}
                 | forstmt                               {printf("Found for statement\n");}
-                | returnstmt                            {printf("Found return statement\n");}
-                | BREAK SEMI                            {printf("Found break\n");}
-                | CONT SEMI                             {printf("Found continue\n");}
+                | returnstmt                            {if(scope==0) printf("Syntax Error in line %d cannot return outside of function",yylineno);
+                                                         printf("Found return statement\n");
+                                                        }
+                | BREAK SEMI                            {if(scope==0) printf("Syntax Error in line %d cannot break outside of loop",yylineno);
+                                                        printf("Found break\n");
+                                                        }
+                | CONT SEMI                             {if(scope==0) printf("Syntax Error in line %d cannot continue outside of function",yylineno);
+                                                        printf("Found continue\n");
+                                                        }
                 | block                                 {printf("Found block\n");}
                 | funcdef                               {printf("Found function definition\n");}
                 | SEMI                                  {printf("Found semicolon\n");}                       
@@ -113,20 +119,22 @@ primary:        lvalue                                  {printf("Found lvalue\n"
                 | const                                 {printf("Found const\n"); }
                 ;
 
-lvalue:         ID                                      {if(Search($1,scope,LLOCAL)==NULL){
+lvalue:         ID                                      {if(Search($1,scope,GLOBAL)==NULL){
                                                             if(scope) symbol = createSymbol($1,scope,yylineno,LLOCAL);
                                                             else symbol = createSymbol($1,scope,yylineno,GLOBAL);
                                                             Insert(symbol);
                                                          }
                                                          printf("Found id\n");
                                                         }
-                | LOCAL ID                              {symbol=createSymbol($2,scope,yylineno,LLOCAL);
-                                                         Insert(symbol);
-                                                         printf("Found local id\n"); 
-                                                        }
-                | CCOLON ID                             {if(Search($2,0,LLOCAL)==NULL){
+                | LOCAL ID                              {if(Search($2,scope,LLOCAL)==NULL){
                                                             symbol=createSymbol($2,scope,yylineno,LLOCAL);
                                                             Insert(symbol);
+                                                         }
+                                                         printf("Found local id\n"); 
+                                                        }
+                | CCOLON ID                             {if(Search($2,0,GLOBAL)==NULL){
+                                                            yyerror("Global variable %s doesn't exist\n",$2);
+                                                            yyerrok;
                                                          }
                                                          printf("Found ::id\n"); 
                                                         }
@@ -140,7 +148,7 @@ member:         lvalue DOT ID                           {printf("Found lvalue.id
                 ;
 
 call:           call LPAR elist RPAR                    {printf("Found call(elist)\n"); }
-                | lvalue callsuffix                     {printf("Found lvalue call suffix\n"); }
+                | lvalue callsuffix                     {printf("Found lvalue callsuffix\n"); }
                 | LPAR funcdef RPAR LPAR elist RPAR     {printf("Found (function definition)(elist)\n"); }
                 ;
 
@@ -159,9 +167,16 @@ elist:          expr                                    {printf("Found expressio
                 | %empty                                
                 ;
 
+const:          INTEGER                                 {printf("Found integer\n"); }
+                | FLOAT                                 {printf("Found float\n"); }
+                | STRING                                {printf("Found string\n"); }
+                | NIL                                   {printf("Found nil\n"); }
+                | TRUE                                  {printf("Found true\n"); }
+                | FALSE                                 {printf("Found false\n"); }
+                ;
+
 objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n"); }
                 | LSQBRACE indexed RSQBRACE             {printf("Found [indexed]\n"); }
-                | LSQBRACE RSQBRACE                     {printf("Found []\n"); }
                 ;
 
 indexed:        indexedelem                             {printf("Found indexed element\n"); }
@@ -172,15 +187,7 @@ indexed:        indexedelem                             {printf("Found indexed e
 indexedelem:    LBRACE expr COLON expr RBRACE           {printf("Found {expression:expression}\n"); }
                 ;
 
-block:          LBRACE {scope++;} inblock RBRACE        {scope--;
-                                                         Hide(scope);                                                    
-                                                         printf("Found {statement}\n"); 
-                                                        }
-                ;
 
-inblock:        inblock stmt                            {printf("Found statement in block\n");}
-                | %empty
-                ;
 
 funcdef:        FUNC ID {if(Search($2,scope,USERFUNC)==NULL){
                             symbol = createSymbol($2,scope,yylineno,USERFUNC);
@@ -201,14 +208,6 @@ funcdef:        FUNC ID {if(Search($2,scope,USERFUNC)==NULL){
                 LPAR {scope++;} idlist RPAR {scope--;} block {Hide(scope);
                                                               printf("Found function(id list) block\n"); 
                                                              }
-                ;
-
-const:          INTEGER                                 {printf("Found integer\n"); }
-                | FLOAT                                 {printf("Found float\n"); }
-                | STRING                                {printf("Found string\n"); }
-                | NIL                                   {printf("Found nil\n"); }
-                | TRUE                                  {printf("Found true\n"); }
-                | FALSE                                 {printf("Found false\n"); }
                 ;
 
 idlist:         ID                                      {if(Search($1,scope,FORMAL)==NULL){
@@ -232,6 +231,16 @@ idlist:         ID                                      {if(Search($1,scope,FORM
                                                          printf("Found id list, id\n"); 
                                                         }
                 | %empty                                
+                ;
+
+inblock:        inblock stmt                            {printf("Found statement in block\n");}
+                | %empty
+                ;
+
+block:          LBRACE {scope++;} inblock RBRACE        {scope--;
+                                                         Hide(scope);                                                    
+                                                         printf("Found {statement}\n"); 
+                                                        }
                 ;
 
 ifstmt:         IF LPAR expr RPAR {scope++;} stmt       {scope--;
