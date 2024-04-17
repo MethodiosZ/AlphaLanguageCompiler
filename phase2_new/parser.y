@@ -16,7 +16,7 @@ Sym *symbol;
 int table_size=0;
 int scope=0;
 int counter=0;
-char buffer[8];
+char buffer[64];
 %}
 
 %union{
@@ -68,13 +68,13 @@ stmt:           expr SEMI                               {printf("Found expressio
                 | ifstmt                                {printf("Found if statement\n");}
                 | whilestmt                             {printf("Found while statement\n");}
                 | forstmt                               {printf("Found for statement\n");}
-                | returnstmt                            {if(scope==0) printf("Syntax Error in line %d cannot return outside of function",yylineno);
+                | returnstmt                            {if(scope==0) printf("Syntax Error in line %d cannot return outside of function\n",yylineno);
                                                          printf("Found return statement\n");
                                                         }
-                | BREAK SEMI                            {if(scope==0) printf("Syntax Error in line %d cannot break outside of loop",yylineno);
+                | BREAK SEMI                            {if(scope==0) printf("Syntax Error in line %d cannot break outside of loop\n",yylineno);
                                                         printf("Found break\n");
                                                         }
-                | CONT SEMI                             {if(scope==0) printf("Syntax Error in line %d cannot continue outside of function",yylineno);
+                | CONT SEMI                             {if(scope==0) printf("Syntax Error in line %d cannot continue outside of function\n",yylineno);
                                                         printf("Found continue\n");
                                                         }
                 | block                                 {printf("Found block\n");}
@@ -133,7 +133,8 @@ lvalue:         ID                                      {if(Search($1,scope,GLOB
                                                          printf("Found local id\n"); 
                                                         }
                 | CCOLON ID                             {if(Search($2,0,GLOBAL)==NULL){
-                                                            fprintf(yyerror,"Global variable %s doesn't exist\n",$2);
+                                                            snprintf(buffer,sizeof(buffer),"Error: No global variable %s exists\n",$2);
+                                                            yyerror(buffer);
                                                             yyerrok;
                                                          }
                                                          printf("Found ::id\n"); 
@@ -198,14 +199,14 @@ funcdef:        FUNC ID {if(Search($2,scope,USERFUNC)==NULL){
                             yyerrok;
                          }
                         }
-                LPAR {scope++;} idlist RPAR {scope--;} block {Hide(scope);
+                LPAR {scope++;} idlist RPAR {scope--;} block {
                                                               printf("Found function id(id list) block\n"); 
                                                              }
                 | FUNC {snprintf(buffer,sizeof(buffer),"$%d",counter++);
                         symbol = createSymbol(buffer,scope,yylineno,USERFUNC);
                         Insert(symbol);
                        }
-                LPAR {scope++;} idlist RPAR {scope--;} block {Hide(scope);
+                LPAR {scope++;} idlist RPAR {scope--;} block {
                                                               printf("Found function(id list) block\n"); 
                                                              }
                 ;
@@ -237,30 +238,30 @@ inblock:        inblock stmt                            {printf("Found statement
                 | %empty
                 ;
 
-block:          LBRACE {scope++;} inblock RBRACE        {scope--;
-                                                         Hide(scope);                                                    
+block:          LBRACE {scope++;} inblock RBRACE        {Hide(scope); 
+                                                         scope--;                                                 
                                                          printf("Found {statement}\n"); 
                                                         }
                 ;
 
-ifstmt:         IF LPAR expr RPAR {scope++;} stmt       {scope--;
-                                                         Hide(scope);
+ifstmt:         IF LPAR expr RPAR {scope++;} stmt       {Hide(scope);
+                                                         scope--;
                                                          printf("Found if(expression) statement\n"); 
                                                         }
-                | ifstmt ELSE {scope++;} stmt           {scope--;
-                                                         Hide(scope);
+                | ifstmt ELSE {scope++;} stmt           {Hide(scope);
+                                                         scope--;
                                                          printf("Found if(expression) statement else statement\n"); 
                                                         }
                 ;
 
-whilestmt:      WHILE LPAR expr RPAR {scope++;} stmt    {scope--;
-                                                         Hide(scope);
+whilestmt:      WHILE LPAR expr RPAR {scope++;} stmt    {Hide(scope);
+                                                         scope--;
                                                          printf("Found while(expression) statement\n"); 
                                                         }
                 ;
 
-forstmt:        FOR LPAR elist SEMI expr SEMI elist RPAR {scope++;} stmt    {scope--;
-                                                                             Hide(scope);
+forstmt:        FOR LPAR elist SEMI expr SEMI elist RPAR {scope++;} stmt    {Hide(scope);
+                                                                             scope--;
                                                                              printf("Found for(elist;expression;elist) statement\n"); 
                                                                             }
                 ;
