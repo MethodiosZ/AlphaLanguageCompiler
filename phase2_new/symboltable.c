@@ -68,6 +68,7 @@ Sym* Search(char* name,int scope,type_t type){
     int i;
     Sym *temp;
     SymTable *head;
+    //global var
     if(type==0&&scope==0){
         head=stbl[0];
         while(head!=NULL){
@@ -87,7 +88,7 @@ Sym* Search(char* name,int scope,type_t type){
             }
             else if(head->symbol->type==4){
                  if(!strcmp(head->symbol->value.FuncVal->name,name)){
-                    printf("Error trying to redefine library function\n");
+                    fprintf(stderr,"Error: Trying to redefine library function: %s\n",name);
                     temp=head->symbol;
                     return temp;
                 }
@@ -96,14 +97,22 @@ Sym* Search(char* name,int scope,type_t type){
         }
         return NULL;
     }
+    //local defined by use
     else if(type==0 && scope>0){
-        if(scope>table_size) return NULL;
+        if(scope>table_size) scope=table_size;
         for(i=0;i<=scope;i++){
             head=stbl[i];
             while(head!=NULL){
                 if(head->symbol->type<3){
                     if(!strcmp(head->symbol->value.VarVal->name,name)){
-                        if(head->symbol->isActive){
+                        //Access global var
+                        if(head->symbol->type==0){
+                            temp=head->symbol;
+                            return temp;
+                        }
+                        else if(head->symbol->isActive){
+                            //trying to access local var out of scope
+                            fprintf(stderr,"Error: Cannot access %s in this scope\n",name);
                             temp=head->symbol;
                             return temp;
                         }
@@ -112,13 +121,14 @@ Sym* Search(char* name,int scope,type_t type){
                 else if(head->symbol->type==3){
                     //possible function call
                     if(!strcmp(head->symbol->value.FuncVal->name,name)){
+                        fprintf(stderr,"Error: Cannot access %s in this scope\n",name);
                         temp=head->symbol;
                         return temp;
                     }
                 }
                 else if(head->symbol->type==4){
                     if(!strcmp(head->symbol->value.FuncVal->name,name)){
-                        printf("Error trying to redefine library function\n");
+                        fprintf(stderr,"Error: Trying to redefine library function: %s\n",name);
                         temp=head->symbol;
                         return temp;
                     }
@@ -128,6 +138,7 @@ Sym* Search(char* name,int scope,type_t type){
         }
         return NULL;
     }
+    //local defined by keyword
     else if(type==1){
         if(scope>table_size) return NULL;
         head = stbl[scope];
@@ -149,7 +160,7 @@ Sym* Search(char* name,int scope,type_t type){
                 }
                 else if(head->symbol->type==4){
                     if(!strcmp(head->symbol->value.FuncVal->name,name)){
-                        printf("Error trying to redefine library function\n");
+                        fprintf(stderr,"Error: Trying to redefine library function: %s\n",name);
                         temp=head->symbol;
                         return temp;
                     }
@@ -158,6 +169,7 @@ Sym* Search(char* name,int scope,type_t type){
         }
         return NULL;
     }
+    //formal argument
     else if(type==2){
         if(scope>table_size) return NULL;
         for(i=0;i<=scope;i++){
@@ -165,7 +177,7 @@ Sym* Search(char* name,int scope,type_t type){
             while(head!=NULL){
                 if(head->symbol->type<3){
                     if(!strcmp(head->symbol->value.VarVal->name,name)){
-                        if(head->symbol->isActive){
+                        if(head->symbol->isActive&&head->symbol->value.VarVal->scope==scope){
                             temp=head->symbol;
                             return temp;
                         }
@@ -180,7 +192,7 @@ Sym* Search(char* name,int scope,type_t type){
                 }
                 else if(head->symbol->type==4){
                     if(!strcmp(head->symbol->value.FuncVal->name,name)){
-                        printf("Error trying to redefine library function\n");
+                        fprintf(stderr,"Error: Trying to redefine library function: %s\n",name);
                         temp=head->symbol;
                         return temp;
                     }
@@ -190,6 +202,7 @@ Sym* Search(char* name,int scope,type_t type){
         }
         return NULL;
     }
+    //user function
     else if(type==3){
         if(scope>table_size) return NULL;
         for(i=0;i<=scope;i++){
@@ -212,7 +225,7 @@ Sym* Search(char* name,int scope,type_t type){
                 }
                 else if(head->symbol->type==4){
                     if(!strcmp(head->symbol->value.FuncVal->name,name)){
-                        printf("Error trying to redefine library function\n");
+                        fprintf(stderr,"Error: Trying to redefine library function: %s\n",name);
                         temp=head->symbol;
                         return temp;
                     }
@@ -222,41 +235,6 @@ Sym* Search(char* name,int scope,type_t type){
         }
         return NULL;
     }
-    /*if(type==2){
-        return NULL;
-    }
-    for(i=0;i<=scope;i++){
-        if(i>table_size) return NULL;
-        head=stbl[i];
-        while(head!=NULL){
-            if(head->symbol->type<3){
-                if(!strcmp(head->symbol->value.VarVal->name,name)){
-                    if(head->symbol->isActive){
-                        temp=head->symbol;
-                        return temp;
-                    }
-                    else{
-                        head->symbol->isActive=1;
-                        return NULL;
-                    }
-                }
-            }
-            else if(head->symbol->type==3&&type==3){
-                if(!strcmp(head->symbol->value.FuncVal->name,name)){
-                    return NULL;
-                }
-            }
-            else if(head->symbol->type==4){
-                if(!strcmp(head->symbol->value.FuncVal->name,name)){
-                    printf("Error trying to redefine library function\n");
-                    temp=head->symbol;
-                    return temp;
-                }
-            }
-            head=head->next;
-        }
-    }
-    return NULL;*/
 }
 
 void Hide(int scope){
@@ -320,7 +298,8 @@ void PrintTable(){
                 else{
                     printf("[library function] ");
                 }
-                printf("(line %d) (scope %d)\n",temp->symbol->value.FuncVal->line,temp->symbol->value.FuncVal->scope);
+                printf("(line %d) (scope %d)",temp->symbol->value.FuncVal->line,temp->symbol->value.FuncVal->scope);
+                printf(" (Active status %d)\n",temp->symbol->isActive);
             }
             else{
                 printf("\"%s\" ",temp->symbol->value.VarVal->name);
@@ -333,7 +312,8 @@ void PrintTable(){
                 else{
                     printf("[formal argument] ");
                 }
-                printf("(line %d) (scope %d)\n",temp->symbol->value.VarVal->line,temp->symbol->value.VarVal->scope);
+                printf("(line %d) (scope %d)",temp->symbol->value.VarVal->line,temp->symbol->value.VarVal->scope);
+                printf(" (Active status %d)\n",temp->symbol->isActive);
             }
             temp=temp->next;
         }
