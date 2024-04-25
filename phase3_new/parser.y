@@ -1,7 +1,8 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include "symboltable.h"
+#include <string.h>
+#include "quad.h"
 
 int yyerror(char* yaccProvidedMessage);
 int alpha_yylex(void);
@@ -15,7 +16,7 @@ Sym *symbol;
 
 int table_size=0;
 int scope=0;
-int counter=0;
+int anonymfcounter=0;
 int status;
 char buffer[64];
 %}
@@ -203,7 +204,7 @@ funcdef:        FUNC ID {if(Search($2,scope,USERFUNC)==NULL){
                 LPAR {scope++;} idlist RPAR {scope--;} block {
                                                               printf("Found function id(id list) block\n"); 
                                                              }
-                | FUNC {snprintf(buffer,sizeof(buffer),"$%d",counter++);
+                | FUNC {snprintf(buffer,sizeof(buffer),"$%d",anonymfcounter++);
                         symbol = createSymbol(buffer,scope,yylineno,USERFUNC);
                         Insert(symbol);
                        }
@@ -291,6 +292,7 @@ int main(int argc, char **argv){
     }
     yyparse();
 
-    PrintTable();
+    //PrintTable();
+    printQuads();
     return 0;
 }

@@ -90,7 +90,7 @@ expr* emit_iftableitem(expr* e){
     else {
         expr *result = newexpr(var_e);
         result->sym = newtemp();
-        //emit(tablegetelem,e,e->index,result);
+        emit(tablegetelem,e,e->index,result,NULL,NULL);
         return result;
     }
 }
@@ -186,17 +186,17 @@ expr* member_item(expr *lv,char *name){
 expr* make_call(expr *lv, expr *reversed_elist){
     expr *func = emit_iftableitem(lv);
     while(reversed_elist){
-        //emit(param,reversed_elist,NULL,NULL);
+        emit(param,reversed_elist,NULL,NULL,NULL,NULL);
         reversed_elist = reversed_elist->next;
     }
-    //emit(call,func,NULL,NULL);
+    emit(call,func,NULL,NULL,NULL,NULL);
     expr *result = newexpr(var_e);
     result->sym = newtemp();
-    //emit(getretval,NULL,NULL,result);
+    emit(getretval,NULL,NULL,result,NULL,NULL);
     return result;
 }
 
-void comperror(char *format,...){
+void comperror(char *format,const char* context){
 
 }
 void check_arith(expr *e,const char *context){
@@ -244,4 +244,12 @@ void pathclist(int list,int label){
         quads[next].label = label;
         list=next;
     }
+}
+
+void printQuads(){
+    int i=1;
+    printf("quad#\topcode\t\tresult\t\targ1\t\targ2\t\tlabel\n");
+    printf("-------------------------------------------------------------\n");
+
+    printf("-------------------------------------------------------------\n");
 }

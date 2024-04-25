@@ -1,4 +1,4 @@
-#include "hashtable.h"
+#include "symboltable.h"
 
 typedef enum opcode{
 	assign, 	add,		sub,
@@ -63,11 +63,11 @@ typedef struct symbol{
 	unsigned		line;
 } symbol;
 
-typedef struct call{
+typedef struct funccall{
 	expr			*elist;
 	unsigned char	method;
 	char			*name;
-} call;
+} fcall;
 
 typedef struct stmt{
 	int breakList;
@@ -94,7 +94,7 @@ expr* newexpr_constbool(unsigned int b);
 expr* lvalue_expr(symbol *sym);
 expr* member_item(expr *lv,char *name);
 expr* make_call(expr *lv, expr *reversed_elist);
-void comperror(char *format,...);
+void comperror(char *format,const char* context);
 void check_arith(expr *e,const char *context);
 unsigned int istempname(char *s);
 unsigned int istempexpr(expr *e);
@@ -102,3 +102,4 @@ void make_stmt(stmt_t *s);
 int newlist(int i);
 int mergelist(int l1,int l2);
 void pathclist(int list,int label);
+void printQuads();
