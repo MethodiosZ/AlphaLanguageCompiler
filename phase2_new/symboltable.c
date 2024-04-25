@@ -49,7 +49,7 @@ void Insert(Sym *nsymbol){
     temp=(SymTable*)malloc(sizeof(SymTable));
     if(nsymbol->value.FuncVal) index=nsymbol->value.FuncVal->scope;
     else index=nsymbol->value.VarVal->scope;
-    if(index>table_size) TableAlloc();
+    while(index>table_size) TableAlloc();
     head=stbl[index];
     temp->symbol=nsymbol;
     temp->next=NULL;

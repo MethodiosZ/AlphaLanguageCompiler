@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "symboltable.h"
 
-int yyerror(char* yaccProvidedMessage);
+int yyerror(const char* yaccProvidedMessage);
 int alpha_yylex(void);
 
 extern int yylineno;
@@ -16,6 +16,7 @@ Sym *symbol;
 int table_size=0;
 int scope=0;
 int counter=0;
+//funcdef=0,call=1,infunction=2,inblock=3
 int status;
 char buffer[64];
 %}
@@ -150,8 +151,8 @@ member:         lvalue DOT ID                           {printf("Found lvalue.id
                 ;
 
 call:           call LPAR elist RPAR                    {printf("Found call(elist)\n"); }
-                | lvalue callsuffix                     {printf("Found lvalue callsuffix\n"); }
-                | LPAR funcdef RPAR LPAR elist RPAR     {printf("Found (function definition)(elist)\n"); }
+                | lvalue{status=1;} callsuffix                     {printf("Found lvalue callsuffix\n"); }
+                | LPAR {status=0;}funcdef RPAR LPAR elist RPAR     {printf("Found (function definition)(elist)\n"); }
                 ;
 
 callsuffix:     normcall                                {printf("Found normal call\n"); }
@@ -182,8 +183,7 @@ objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n
                 ;
 
 indexed:        indexedelem                             {printf("Found indexed element\n"); }
-                | indexed COMMA indexedelem             {printf("Found indexed, indexed element\n"); }
-                | %empty                                
+                | indexed COMMA indexedelem             {printf("Found indexed, indexed element\n"); }                              
                 ;
 
 indexedelem:    LBRACE expr COLON expr RBRACE           {printf("Found {expression:expression}\n"); }
@@ -200,14 +200,14 @@ funcdef:        FUNC ID {if(Search($2,scope,USERFUNC)==NULL){
                             yyerrok;
                          }
                         }
-                LPAR {scope++;} idlist RPAR {scope--;} block {
+                LPAR {scope++;} idlist RPAR {scope--;status=2;} block {
                                                               printf("Found function id(id list) block\n"); 
                                                              }
                 | FUNC {snprintf(buffer,sizeof(buffer),"$%d",counter++);
                         symbol = createSymbol(buffer,scope,yylineno,USERFUNC);
                         Insert(symbol);
                        }
-                LPAR {scope++;} idlist RPAR {scope--;} block {
+                LPAR {scope++;} idlist RPAR {scope--;status=2;} block {
                                                               printf("Found function(id list) block\n"); 
                                                              }
                 ;
@@ -239,32 +239,20 @@ inblock:        inblock stmt                            {printf("Found statement
                 | %empty
                 ;
 
-block:          LBRACE {scope++;} inblock RBRACE        {Hide(scope); 
+block:          LBRACE {scope++;status=3;} inblock RBRACE        {Hide(scope); 
                                                          scope--;                                                 
                                                          printf("Found {statement}\n"); 
                                                         }
                 ;
 
-ifstmt:         IF LPAR expr RPAR {scope++;} stmt       {Hide(scope);
-                                                         scope--;
-                                                         printf("Found if(expression) statement\n"); 
-                                                        }
-                | ifstmt ELSE {scope++;} stmt           {Hide(scope);
-                                                         scope--;
-                                                         printf("Found if(expression) statement else statement\n"); 
-                                                        }
+ifstmt:         IF LPAR expr RPAR  stmt       {printf("Found if(expression) statement\n"); }
+                | ifstmt ELSE stmt           {printf("Found if(expression) statement else statement\n"); }
                 ;
 
-whilestmt:      WHILE LPAR expr RPAR {scope++;} stmt    {Hide(scope);
-                                                         scope--;
-                                                         printf("Found while(expression) statement\n"); 
-                                                        }
+whilestmt:      WHILE LPAR expr RPAR stmt    {printf("Found while(expression) statement\n"); }
                 ;
 
-forstmt:        FOR LPAR elist SEMI expr SEMI elist RPAR {scope++;} stmt    {Hide(scope);
-                                                                             scope--;
-                                                                             printf("Found for(elist;expression;elist) statement\n"); 
-                                                                            }
+forstmt:        FOR LPAR elist SEMI expr SEMI elist RPAR stmt    {printf("Found for(elist;expression;elist) statement\n"); }
                 ;
 
 returnstmt:     RET SEMI                                {printf("Found return;\n"); }
@@ -273,7 +261,7 @@ returnstmt:     RET SEMI                                {printf("Found return;\n
 
 %%
 
-int yyerror (char* yaccProvidedMessage){
+int yyerror (const char* yaccProvidedMessage){
     fprintf(stderr,"%s: at line %d, before token: %s\n",yaccProvidedMessage,yylineno,yytext);
     fprintf(stderr, "INPUT NOT VALID\n");
 }
