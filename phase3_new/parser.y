@@ -10,6 +10,9 @@ int alpha_yylex(void);
 extern int yylineno;
 extern char* yytext;
 extern FILE* yyin;
+extern quad* quads;
+extern unsigned int total;
+extern unsigned int currQuad;
 
 SymTable **stbl; 
 Sym *symbol;
@@ -25,6 +28,8 @@ char buffer[64];
     int intVal;
     char* string;
     double realVal;
+    expr* exprValue;
+    fcall* callValue;
 }
 
 %token <string>     STRING
@@ -37,11 +42,12 @@ char buffer[64];
 %token <string>     ASSIGN EQ NEQ AND OR NOT MORE MOREEQ LESS LESSEQ
 %token <string>     SEMI DOT DDOT COLON CCOLON COMMA
 
-%type <intVal>      expr term
-%type <string>      program stmt assignexpr primary lvalue member
-%type <string>      call callsuffix normcall methodcall elist objectdef
-%type <string>      indexed indexedelem block inblock funcdef const idlist 
-%type <string>      ifstmt whilestmt forstmt returnstmt
+
+%type <exprValue>       lvalue expr assignexpr term primary const funcdef
+%type <exprValue>       ifstmt whilestmt forstmt member elist
+%type <callValue>       methodcall normcall callsuffix  
+%type <string>          program stmt returnstmt funcdef idlist
+%type <string>          call objectdef indexed indexedelem block inblock 
 
 %start program
 
@@ -85,12 +91,32 @@ stmt:           expr SEMI                               {printf("Found expressio
                 ;
 
 expr:           assignexpr                              {printf("Found assignment expression\n");}
-                | expr ADD expr                         {printf("Found expression + expression\n"); $$=$1+$3;}
-                | expr SUB expr                         {printf("Found expression - expression\n"); $$=$1-$3;}
-                | expr MUL expr                         {printf("Found expression * expression\n"); $$=$1*$3;}
-                | expr DIV expr                         {printf("Found expression / expression\n"); $$=$1/$3;}
-                | expr MOD expr                         {printf("Found expression MOD expression\n"); $$=$1%$3;}
-                | expr MORE expr                        {printf("Found expression > expression\n"); $$=($1>$3)?1:0;}
+                | expr ADD expr                         {printf("Found expression + expression\n");
+                                                         $$ = newexpr(arithexpr_e);
+                                                         $$->sym = newtemp(); 
+                                                         emit(add,$1,$3,$$,NULL,yylineno);
+                                                        }
+                | expr SUB expr                         {printf("Found expression - expression\n");
+                                                         $$ = newexpr(arithexpr_e);
+                                                         $$->sym = newtemp(); 
+                                                         emit(sub,$1,$3,$$,NULL,yylineno);
+                                                        }
+                | expr MUL expr                         {printf("Found expression * expression\n");
+                                                         $$ = newexpr(arithexpr_e);
+                                                         $$->sym = newtemp(); 
+                                                         emit(mul,$1,$3,$$,NULL,yylineno);
+                                                        }
+                | expr DIV expr                         {printf("Found expression / expression\n");
+                                                         $$ = newexpr(arithexpr_e);
+                                                         $$->sym = newtemp(); 
+                                                         emit(div,$1,$3,$$,NULL,yylineno);
+                                                        }
+                | expr MOD expr                         {printf("Found expression MOD expression\n");
+                                                         $$ = newexpr(arithexpr_e);
+                                                         $$->sym = newtemp(); 
+                                                         emit(mod,$1,$3,$$,NULL,yylineno);
+                                                        }
+                | expr MORE expr                        {printf("Found expression > expression\n");}
                 | expr MOREEQ expr                      {printf("Found expression >= expression\n"); $$=($1>=$3)?1:0;}
                 | expr LESS expr                        {printf("Found expression < expression\n"); $$=($1<$3)?1:0;}
                 | expr LESSEQ expr                      {printf("Found expression <= expression\n"); $$=($1<=$3)?1:0;}
