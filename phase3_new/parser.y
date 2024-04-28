@@ -16,6 +16,7 @@ extern unsigned int currQuad;
 
 SymTable **stbl; 
 Sym *symbol;
+Var *var;
 
 int table_size=0;
 int scope=0;
@@ -116,34 +117,165 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          $$->sym = newtemp(); 
                                                          emit(mod,$1,$3,$$,NULL,yylineno);
                                                         }
-                | expr MORE expr                        {printf("Found expression > expression\n");}
-                | expr MOREEQ expr                      {printf("Found expression >= expression\n"); $$=($1>=$3)?1:0;}
-                | expr LESS expr                        {printf("Found expression < expression\n"); $$=($1<$3)?1:0;}
-                | expr LESSEQ expr                      {printf("Found expression <= expression\n"); $$=($1<=$3)?1:0;}
-                | expr EQ expr                          {printf("Found expression == expression\n"); $$=($1==$3)?1:0;}
-                | expr NEQ expr                         {printf("Found expression != expression\n"); $$=($1!=$3)?1:0;}
-                | expr AND expr                         {printf("Found expression && expression\n"); $$=($1 && $3)?1:0;}
-                | expr OR expr                          {printf("Found expression || expression\n"); $$=($1 || $3)?1:0;}
-                | term                                  {printf("Found term\n"); }
+                | expr MORE expr                        {printf("Found expression > expression\n");
+                                                         $$ = newexpr(boolexpr_e);
+                                                         $$->sym newtemp();
+                                                         emit(if_greater,$1,$3,$$,NULL,yylineno);
+                                                         emit(assign,newexpr_constbool(0),NULL,$$,NULL,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+2,yylineno);
+                                                         emit(assign,newexpr_constbool(1),NULL,$$,NULL,yylineno);
+                                                        }
+                | expr MOREEQ expr                      {printf("Found expression >= expression\n"); 
+                                                         $$ = newexpr(boolexpr_e);
+                                                         $$->sym newtemp();
+                                                         emit(if_greatereq,$1,$3,$$,NULL,yylineno);
+                                                         emit(assign,newexpr_constbool(0),NULL,$$,NULL,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+2,yylineno);
+                                                         emit(assign,newexpr_constbool(1),NULL,$$,NULL,yylineno);
+                                                        }
+                | expr LESS expr                        {printf("Found expression < expression\n"); 
+                                                         $$ = newexpr(boolexpr_e);
+                                                         $$->sym newtemp();
+                                                         emit(if_less,$1,$3,$$,NULL,yylineno);
+                                                         emit(assign,newexpr_constbool(0),NULL,$$,NULL,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+2,yylineno);
+                                                         emit(assign,newexpr_constbool(1),NULL,$$,NULL,yylineno);
+                                                        }
+                | expr LESSEQ expr                      {printf("Found expression <= expression\n"); 
+                                                         $$ = newexpr(boolexpr_e);
+                                                         $$->sym newtemp();
+                                                         emit(if_lesseq,$1,$3,$$,NULL,yylineno);
+                                                         emit(assign,newexpr_constbool(0),NULL,$$,NULL,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+2,yylineno);
+                                                         emit(assign,newexpr_constbool(1),NULL,$$,NULL,yylineno);
+                                                        }
+                | expr EQ expr                          {printf("Found expression == expression\n");
+                                                         $$ = newexpr(boolexpr_e);
+                                                         $$->sym newtemp();
+                                                         emit(if_eq,$1,$3,$$,NULL,yylineno);
+                                                         emit(assign,newexpr_constbool(0),NULL,$$,NULL,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+2,yylineno);
+                                                         emit(assign,newexpr_constbool(1),NULL,$$,NULL,yylineno);
+                                                        }
+                | expr NEQ expr                         {printf("Found expression != expression\n");
+                                                         $$ = newexpr(boolexpr_e);
+                                                         $$->sym newtemp();
+                                                         emit(if_noteq,$1,$3,$$,NULL,yylineno);
+                                                         emit(assign,newexpr_constbool(0),NULL,$$,NULL,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+2,yylineno);
+                                                         emit(assign,newexpr_constbool(1),NULL,$$,NULL,yylineno);
+                                                        }
+                | expr AND expr                         {printf("Found expression && expression\n");
+                                                         $$ = newexpr(boolexpr_e);
+                                                         $$->sym = newtemp();
+                                                         emit(and,$1,$3,$$,NULL,yylineno);
+                                                        }
+                | expr OR expr                          {printf("Found expression || expression\n");
+                                                         $$ = newexpr(boolexpr_e);
+                                                         $$->sym = newtemp();
+                                                         emit(or,$1,$3,$$,NULL,yylineno);
+                                                        }
+                | term                                  {printf("Found term\n"); 
+                                                         $$ = $1;
+                                                        }
                 ;
 
-term:           LPAR expr RPAR                          {printf("Found (expression)\n"); $$ = $2;}
-                | SUB expr %prec UMINUS                 {printf("Found -expression\n"); $$ = -$2;}
-                | NOT expr                              {printf("Found !expression\n"); $$= $2?0:1; }
-                | PPLUS lvalue                          {printf("Found ++lvalue\n"); /*$$=$2+1;*/ }
-                | lvalue PPLUS                          {printf("Found lvalue++\n"); /*$$=$1+1;*/}
-                | MMINUS lvalue                         {printf("Found --lvalue\n"); /*$$=$2-1;*/}
-                | lvalue MMINUS                         {printf("Found lvalue--\n"); /*$$=$1-1;*/}
-                | primary                               {printf("Found primary\n"); }
+term:           LPAR expr RPAR                          {printf("Found (expression)\n");
+                                                         $$ = $2;
+                                                        }
+                | SUB expr %prec UMINUS                 {printf("Found -expression\n");
+                                                         check_arith($2,"");
+                                                         $$ = newexpr(arithexpr_e);
+                                                         $$->sym = istempexpr($2) ? $2->sym : newtemp();
+                                                         emit(uminus,$2,NULL,$$,NULL,yylineno);
+                                                        }
+                | NOT expr                              {printf("Found !expression\n"); 
+                                                         $$ = newexpr(boolexpr_e);
+                                                         $$->sym = newtemp();
+                                                         emit(not,$2,NULL,$$,NULL,yylineno);
+                                                        }
+                | PPLUS lvalue                          {printf("Found ++lvalue\n"); 
+                                                         check_arith($2,NULL);
+                                                         if($2->type == tableitem_e){
+                                                            $$ = emit_iftableitem($2);
+                                                            emit(add,$2, newexpr_constnum(1),$$,NULL,yylineno);
+                                                            emit(tablesetelem,$2,$2->index,$$,NULL,yylineno);
+                                                         } else {
+                                                            emit(add,$2,newexpr_constnum(1),$1,NULL,yylineno);
+                                                            $$ = newexpr(arithexpr_e);
+                                                            $$->sym = newtemp();
+                                                            emit(assign,$2,NULL,$2,NULL,yylineno);
+                                                         }
+                                                        }
+                | lvalue PPLUS                          {printf("Found lvalue++\n"); 
+                                                         check_arith($1,NULL);
+                                                         $$ = newexpr(var_e);
+                                                         $$->sym = newtemp();
+                                                         if($1->type == tableitem_e){
+                                                            expr* val = emit_iftableitem($1);
+                                                            emit(assign, val, NULL, $$, NULL, yylineno);
+                                                            emit(add, val, newexpr_constnum(1), val, NULL,yylineno);
+                                                            emit(tablesetelem,$1,$1->index,val,NULL,yylineno);
+                                                         } else {
+                                                            emit(assign,$1,NULL,$1,NULL,yylineno);
+                                                            emit(add,$1,newexpr_constnum(1),$1,NULL,yylineno);
+                                                         }
+                                                        }
+                | MMINUS lvalue                         {printf("Found --lvalue\n"); 
+                                                         check_arith($2,NULL);
+                                                         if($2->type == tableitem_e){
+                                                            $$ = emit_iftableitem($2);
+                                                            emit(sub,$2, newexpr_constnum(1),$$,NULL,yylineno);
+                                                            emit(tablesetelem,$2,$2->index,$$,NULL,yylineno);
+                                                         } else {
+                                                            emit(sub,$2,newexpr_constnum(1),$1,NULL,yylineno);
+                                                            $$ = newexpr(arithexpr_e);
+                                                            $$->sym = newtemp();
+                                                            emit(assign,$2,NULL,$2,NULL,yylineno);
+                                                         }
+                                                        }
+                | lvalue MMINUS                         {printf("Found lvalue--\n"); 
+                                                         check_arith($1,NULL);
+                                                         $$ = newexpr(var_e);
+                                                         $$->sym = newtemp();
+                                                         if($1->type == tableitem_e){
+                                                            expr* val = emit_iftableitem($1);
+                                                            emit(assign, val, NULL, $$, NULL, yylineno);
+                                                            emit(sub, val, newexpr_constnum(1), val, NULL,yylineno);
+                                                            emit(tablesetelem,$1,$1->index,val,NULL,yylineno);
+                                                         } else {
+                                                            emit(assign,$1,NULL,$1,NULL,yylineno);
+                                                            emit(sub,$1,newexpr_constnum(1),$1,NULL,yylineno);
+                                                         }
+                                                        }
+                | primary                               {printf("Found primary\n"); 
+                                                         $$ = $1;
+                                                        }
                 ;
 
-assignexpr:     lvalue ASSIGN expr                      {printf("Found lvalue=expression\n"); /*$1=$3;*/}
+assignexpr:     lvalue ASSIGN expr                      {printf("Found lvalue=expression\n");
+                                                         if($1->type==tableitem_e){
+                                                            emit(tablesetelem,$1,$1->index,$3,NULL,yylineno);
+                                                            $$=emit_iftableitem($1);
+                                                            $$->type = assignexpr_e;
+                                                         } else {
+                                                            emit(assign,$3,NULL,$1,NULL,yylineno);
+                                                            $$ = newexpr(assignexpr_e);
+                                                            $$->sym = newtemp();
+                                                            emit(assign,$1,NULL,$$,NULL,yylineno);
+                                                         }
+                                                        }
                 ;
 
-primary:        lvalue                                  {printf("Found lvalue\n"); }         
+primary:        lvalue                                  {printf("Found lvalue\n"); 
+                                                         $$ = emit_iftableitem($1);
+                                                        }         
                 | call                                  {printf("Found call\n"); }
                 | objectdef                             {printf("Found object definition\n"); }
-                | LPAR funcdef RPAR                     {printf("Found (function definition)\n"); }
+                | LPAR funcdef RPAR                     {printf("Found (function definition)\n"); 
+                                                         $$ = newexpr(programfunc_e);
+                                                         $$->sym = $2;
+                                                        }
                 | const                                 {printf("Found const\n"); }
                 ;
 
@@ -151,13 +283,23 @@ lvalue:         ID                                      {if(Search($1,scope,GLOB
                                                             if(scope) symbol = createSymbol($1,scope,yylineno,LLOCAL);
                                                             else symbol = createSymbol($1,scope,yylineno,GLOBAL);
                                                             Insert(symbol);
+                                                            var = newsymbol($1);
+                                                            var->scopespace = currscopespace();
+                                                            var->offset = currscopeoffset();
+                                                            incurrscopeoffset();
                                                          }
+                                                         $1 = lvalue_expr(var);
                                                          printf("Found id\n");
                                                         }
                 | LOCAL ID                              {if(Search($2,scope,LLOCAL)==NULL){
                                                             symbol=createSymbol($2,scope,yylineno,LLOCAL);
                                                             Insert(symbol);
+                                                            var = newsymbol($2);
+                                                            var->scopespace = currscopespace();
+                                                            var->offset = currscopeoffset();
+                                                            incurrscopeoffset();
                                                          }
+                                                         $2 = lvalue_expr(var);
                                                          printf("Found local id\n"); 
                                                         }
                 | CCOLON ID                             {if(Search($2,0,GLOBAL)==NULL){
@@ -165,30 +307,72 @@ lvalue:         ID                                      {if(Search($1,scope,GLOB
                                                             yyerror(buffer);
                                                             yyerrok;
                                                          }
+                                                         else{
+                                                            var = newsymbol($2);
+                                                            var->scopespace = currscopespace();
+                                                            var->offset = currscopeoffset();
+                                                            incurrscopeoffset();
+                                                            $2  = lvalue_expr(var);
+                                                         }
                                                          printf("Found ::id\n"); 
                                                         }
-                | member                                {printf("Found member\n"); }
+                | member                                {printf("Found member\n"); 
+                                                         $$ = $1;
+                                                        }
                 ;
 
-member:         lvalue DOT ID                           {printf("Found lvalue.id\n"); }
-                | lvalue LSQBRACE expr RSQBRACE         {printf("Found lvalue[expression]\n"); }
+member:         lvalue DOT ID                           {printf("Found lvalue.id\n"); 
+                                                         $$ = member_item($1,$3);
+                                                        }
+                | lvalue LSQBRACE expr RSQBRACE         {printf("Found lvalue[expression]\n"); 
+                                                         $1 = emit_iftableitem($1);
+                                                         $$ = newexpr(tableitem_e);
+                                                         $$->sym = $1->sym;
+                                                         $$->index = $3;
+                                                        }
                 | call DOT ID                           {printf("Found call.id\n"); }
                 | call LSQBRACE expr RSQBRACE           {printf("Found call[expression]\n"); }
                 ;
 
-call:           call LPAR elist RPAR                    {printf("Found call(elist)\n"); }
-                | lvalue callsuffix                     {printf("Found lvalue callsuffix\n"); }
-                | LPAR funcdef RPAR LPAR elist RPAR     {printf("Found (function definition)(elist)\n"); }
+call:           call LPAR elist RPAR                    {printf("Found call(elist)\n");
+                                                         $1 = make_call($1,$3);
+                                                        }
+                | lvalue callsuffix                     {printf("Found lvalue callsuffix\n"); 
+                                                         $1 = emit_iftableitem($1);
+                                                         if($2->method){
+                                                            expr* t = $1;
+                                                            $1 = emit_iftableitem(member_item(t,$2->name));
+                                                            $2->elist->next = t;
+                                                         }
+                                                         $$ = make_call($1,$2->elist);
+                                                        }
+                | LPAR funcdef RPAR LPAR elist RPAR     {printf("Found (function definition)(elist)\n"); 
+                                                         expr* func = newexpr(programfunc_e);
+                                                         func->sym = $2;
+                                                         $$ = make_call(func,$5);
+                                                        }
                 ;
 
-callsuffix:     normcall                                {printf("Found normal call\n"); }
-                | methodcall                            {printf("Found method call\n"); }
+callsuffix:     normcall                                {printf("Found normal call\n"); 
+                                                         $$ = $1;
+                                                        }
+                | methodcall                            {printf("Found method call\n"); 
+                                                         $$ = $1;
+                                                        }
                 ;
 
-normcall:       LPAR elist RPAR                         {printf("Found (elist)\n"); }
+normcall:       LPAR elist RPAR                         {printf("Found (elist)\n"); 
+                                                         $$->elist = $2;
+                                                         $$->method = 0;
+                                                         $$->name = NULL;
+                                                        }
                 ;
 
-methodcall:     DDOT ID LPAR elist RPAR                 {printf("Found ..id(elist)\n"); }
+methodcall:     DDOT ID LPAR elist RPAR                 {printf("Found ..id(elist)\n"); 
+                                                         $$->elist= $4;
+                                                         $$->method = 1;
+                                                         $$->name = $2;
+                                                        }
                 ;
 
 elist:          expr                                    {printf("Found expression\n"); } 
@@ -204,8 +388,24 @@ const:          INTEGER                                 {printf("Found integer\n
                 | FALSE                                 {printf("Found false\n"); }
                 ;
 
-objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n"); }
-                | LSQBRACE indexed RSQBRACE             {printf("Found [indexed]\n"); }
+objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n"); 
+                                                         expr* t = newexpr(newtable_e);
+                                                         t->sym = newtemp();
+                                                         emit(tablecreate,t,NULL,NULL,NULL,yylineno);
+                                                         for(int i=0;$2;$2=$2->next){
+                                                            emit(tablesetelem,t,newexpr_constnum(i++),$2,NULL,yylineno);
+                                                         }
+                                                         $$ = t;
+                                                        }
+                | LSQBRACE indexed RSQBRACE             {printf("Found [indexed]\n"); 
+                                                         expr* t = newexpr(newtable_e);
+                                                         t->sym = newtemp();
+                                                         emit(tablecreate,t,NULL,NULL,NULL,yylineno);
+                                                         for(int i=0;i<$2;i++){
+                                                            emit(tablesetelem,t,i,$2,NULL,yylineno);
+                                                         }
+                                                         $$ = t;
+                                                        }
                 ;
 
 indexed:        indexedelem                             {printf("Found indexed element\n"); }
@@ -294,8 +494,12 @@ forstmt:        FOR LPAR elist SEMI expr SEMI elist RPAR {scope++;} stmt    {Hid
                                                                             }
                 ;
 
-returnstmt:     RET SEMI                                {printf("Found return;\n"); }
-                | RET expr SEMI                         {printf("Found return expression;\n"); }
+returnstmt:     RET SEMI                                {printf("Found return;\n"); 
+                                                         emit(ret,NULL,NULL,NULL,NULL,yylineno);
+                                                        }
+                | RET expr SEMI                         {printf("Found return expression;\n"); 
+                                                         emit(ret,$2,NULL,NULL,NULL,yylineno);
+                                                        }
                 ;
 
 %%
