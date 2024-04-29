@@ -1,15 +1,18 @@
+#ifndef QUAD_H_
+#define QUAD_H_
+
 #include "symboltable.h"
 
 typedef enum opcode{
 	assign, 	add,		sub,
-	mul,		div,		mod,
+	mul,		divd,		mod,
 	uminus,		and,		or,
 	not,		if_eq,		if_noteq,
 	if_lesseq,	if_greatereq,	if_less,
 	if_greater,	call,		param,
 	ret,		getretval,	funcstart,
 	funcend,		tablecreate,	
-	tablegetelem,	tablesetelem
+	tablegetelem,	tablesetelem, jump
 } iopcode;
 
 typedef enum expr_t{
@@ -27,25 +30,6 @@ typedef enum expr_t{
 	nil_e
 } expr_t;
 
-typedef struct expr{
-	expr_t 	        type;
-	symbol          *sym;
-	struct expr     *index;
-	double	        numConst;
-	char 	        *strConst;
-	unsigned char   boolConst;
-	struct expr	    *next;
-} expr;
-
-typedef struct quad{
-	iopcode	        op;
-	expr            *result;	
-	expr            *arg1;
-	expr            *arg2;
-	unsigned int    label;
-	unsigned int    line;
-}quad;
-
 typedef enum scopespace{
 	programvar, functionlocal, formalarg
 } scopespace_t;
@@ -61,7 +45,26 @@ typedef struct symbol{
 	unsigned		offset;
 	unsigned		scope;
 	unsigned		line;
-} symbol;
+} symb;
+
+typedef struct expr{
+	expr_t 	        type;
+	symb            *sym;
+	struct expr     *index;
+	double	        numConst;
+	char 	        *strConst;
+	unsigned char   boolConst;
+	struct expr	    *next;
+} expr;
+
+typedef struct quad{
+	iopcode	        op;
+	expr            *result;	
+	expr            *arg1;
+	expr            *arg2;
+	unsigned int    label;
+	unsigned int    line;
+}quad;
 
 typedef struct funccall{
 	expr			*elist;
@@ -91,7 +94,7 @@ expr* newexpr(expr_t t);
 expr* newexpr_conststring(char *s);
 expr* newexpr_constnum(double i);
 expr* newexpr_constbool(unsigned int b);
-expr* lvalue_expr(symbol *sym);
+expr* lvalue_expr(symb *sym);
 expr* member_item(expr *lv,char *name);
 expr* make_call(expr *lv, expr *reversed_elist);
 void comperror(char *format,const char* context);
@@ -103,3 +106,9 @@ int newlist(int i);
 int mergelist(int l1,int l2);
 void pathclist(int list,int label);
 void printQuads();
+const char* getopcode(iopcode op);
+const char* getlabel(unsigned label);
+symb* newtemp();
+symb* newsymbol(char *name);
+
+#endif

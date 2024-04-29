@@ -3,6 +3,7 @@
     #include <stdlib.h>
     #include <string.h>
     #include "parser.tab.h"
+    #include "quad.h"
 
     extern YYSTYPE yylval;
 

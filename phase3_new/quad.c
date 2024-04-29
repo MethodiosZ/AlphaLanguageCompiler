@@ -15,6 +15,7 @@ unsigned programVarOffset = 0;
 unsigned functionLocalOffset = 0;
 unsigned formalArgOffset = 0;
 unsigned scopeSpaceCounter = 1;
+int tempcounter = 0;
 
 void expand(){
     assert(total==currQuad);
@@ -153,7 +154,7 @@ expr* newexpr_constbool(unsigned int b){
     return e;
 }
 
-expr* lvalue_expr(symbol *sym){
+expr* lvalue_expr(symb *sym){
     assert(sym);
     expr *e = (expr*)malloc(sizeof(expr));
     memset(e,0,sizeof(expr));
@@ -247,9 +248,64 @@ void pathclist(int list,int label){
 }
 
 void printQuads(){
-    int i=1;
+    int i;
     printf("quad#\topcode\t\tresult\t\targ1\t\targ2\t\tlabel\n");
     printf("-------------------------------------------------------------\n");
-
+    for(i=0;i<currQuad;i++){
+        printf("%d:\t%s\t\t%s\t\t%s\t\t%s\t\t%s\n",i+1,getopcode(quads[i].op),quads[i].result,
+        quads[i].arg1,quads[i].arg2,getlabel(quads[i].label));
+    }
     printf("-------------------------------------------------------------\n");
+}
+
+const char* getopcode(iopcode op){
+    switch (op)
+	{
+		case assign: return "assign";
+		case add: return "add";
+		case sub: return "sub";
+		case mul: return "mul";
+		case divd: return "div";
+		case mod: return "mod";
+		case uminus: return "uminus";
+		case and: return "and";
+		case or: return "or";
+		case not: return "not";
+		case if_eq: return "if_eq";
+		case if_noteq: return "if_noteq";
+		case if_lesseq: return "if_lesseq";
+		case if_greatereq: return "if_greatereq";
+		case if_less: return "if_less";
+		case if_greater: return "if_greater";
+		case call: return "call";
+		case param: return "param";
+		case ret: return "ret";
+		case getretval: return "getredval";
+		case funcstart: return "funcstart";
+		case funcend: return "funcend";
+		case tablecreate: return "tablecreate";
+		case tablegetelem: return "tablegetelem";
+		case tablesetelem: return "tablesetelem";
+        case jump: return "jump";
+	}
+}
+
+const char* getlabel(unsigned label){
+    char *str = (char*)malloc(10*sizeof(char));
+    sprintf(str,"%d",label);
+    if(label==0) return " ";
+    else return (char*)str;
+}
+
+symb* newtemp(){
+    char name[10];
+    snprintf(name,sizeof(name),"$%d",tempcounter++);
+    return newsymbol(name);
+}
+
+symb* newsymbol(char *name){
+    symb* e = (symb*)malloc(sizeof(symb));
+    memset(e,0,sizeof(symb));
+    e->name = name;
+    return e;
 }
