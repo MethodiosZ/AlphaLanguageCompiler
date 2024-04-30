@@ -269,14 +269,13 @@ void printQuads(){
         if(quads[i].op==assign){
             printexpr(quads[i].result);
             printexpr(quads[i].arg1);
-            printf("\t\t%s\n",getlabel(quads[i].label));
         }
-        else if(quads[i].op==add){
+        else if(quads[i].op==add||quads[i].op==sub||quads[i].op==mul||quads[i].op==divd||quads[i].op==mod){
             printexpr(quads[i].result);
             printexpr(quads[i].arg1);
             printexpr(quads[i].arg2);
-            printf("\t\t%s\n",getlabel(quads[i].label));
         }
+        printf("%s\n",getlabel(quads[i].label));
     }
     printf("------------------------------------------------------------------------------\n");
 }
