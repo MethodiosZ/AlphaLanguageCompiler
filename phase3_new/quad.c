@@ -254,7 +254,9 @@ void printQuads(){
     for(i=0;i<currQuad;i++){
         printf("%d:\t%s\t\t",i+1,getopcode(quads[i].op));
         if(quads[i].op==assign){
-            printf("%s\t\t%s\t\t%s\t\t%s\n",quads[i].result->sym->name,quads[i].result->sym->name,getlabel(quads[i].label));
+            printexpr(quads[i].result);
+            printexpr(quads[i].arg1);
+            printf("\t\t%s\n",getlabel(quads[i].label));
         }
     }
     printf("------------------------------------------------------------------------------\n");
@@ -295,13 +297,13 @@ const char* getopcode(iopcode op){
 const char* getlabel(unsigned label){
     char *str = (char*)malloc(10*sizeof(char));
     sprintf(str,"%d",label);
-    if(label==0 || label==NULL) return " ";
+    if(label==0 || label==(int)NULL) return " ";
     else return (char*)str;
 }
 
 symb* newtemp(){
-    char name[10];
-    snprintf(name,sizeof(name),"$%d",tempcounter++);
+    char *name = (char*)malloc(10*sizeof(char));
+    sprintf(name,"^%d",tempcounter++);
     return newsymbol(name);
 }
 
@@ -313,5 +315,18 @@ symb* newsymbol(char *name){
 }
 
 void printexpr(expr *item){
-    
+    if(item==NULL){
+        printf("%-*s\t",10,"\t");
+    } 
+    else{
+        if(item->type==var_e){
+            printf("%s\t\t",item->sym->name);
+        }
+        else if(item->type==assignexpr_e){
+            printf("%s\t\t",item->sym->name);
+        }
+        else if(item->type==constnum_e){
+            printf("%f\t\t",item->numConst);
+        }
+    }
 }
