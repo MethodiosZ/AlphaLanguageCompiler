@@ -275,6 +275,44 @@ void printQuads(){
             printexpr(quads[i].arg1);
             printexpr(quads[i].arg2);
         }
+        else if(quads[i].op==and||quads[i].op==or){
+            printexpr(quads[i].result);
+            printexpr(quads[i].arg1);
+            printexpr(quads[i].arg2);
+        }
+        else if(quads[i].op==not||quads[i].op==uminus){
+            printexpr(quads[i].result);
+            printexpr(quads[i].arg1);
+        }
+        else if(quads[i].op==if_eq||quads[i].op==if_noteq){
+            printexpr(quads[i].result);
+            printexpr(quads[i].arg1);
+            printexpr(quads[i].arg2);
+        }
+        else if(quads[i].op==if_greater||quads[i].op==if_greatereq){
+            printexpr(quads[i].result);
+            printexpr(quads[i].arg1);
+            printexpr(quads[i].arg2);
+        }
+        else if(quads[i].op==if_less||quads[i].op==if_lesseq){
+            printexpr(quads[i].result);
+            printexpr(quads[i].arg1);
+            printexpr(quads[i].arg2);
+        }
+        else if(quads[i].op==call||quads[i].op==ret||quads[i].op==param){
+            printexpr(quads[i].result);
+        }
+        else if(quads[i].op==getretval||quads[i].op==tablecreate||quads[i].op==jump||quads[i].op==funcend){
+            printexpr(quads[i].result);
+        }
+        else if(quads[i].op==funcstart){
+            printexpr(quads[i].result);
+        }
+        else if(quads[i].op==tablegetelem||quads[i].op==tablesetelem){
+            printexpr(quads[i].result);
+            printexpr(quads[i].arg1);
+            printexpr(quads[i].arg2);
+        }
         printf("%s\n",getlabel(quads[i].label));
     }
     printf("------------------------------------------------------------------------------\n");
@@ -348,6 +386,9 @@ void printexpr(expr *item){
         }
         else if(item->type==constdouble_e){
             printf("%f\t\t",item->doubleConst);
+        }
+        if(item->type==arithexpr_e){
+            printf("%s\t\t",item->sym->name);
         }
     }
 }
