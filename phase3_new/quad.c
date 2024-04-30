@@ -359,7 +359,7 @@ const char* getlabel(unsigned label){
 
 symb* newtemp(){
     char *name = (char*)malloc(10*sizeof(char));
-    sprintf(name,"^%d",tempcounter++);
+    sprintf(name,"^%d",tempcounter);
     return newsymbol(name);
 }
 
@@ -387,7 +387,33 @@ void printexpr(expr *item){
         else if(item->type==constdouble_e){
             printf("%f\t\t",item->doubleConst);
         }
-        if(item->type==arithexpr_e){
+        else if(item->type==conststring_e){
+            printf("%s\t\t",item->strConst);
+        }
+        else if(item->type==constbool_e){
+            char *tmp =malloc(10);
+            item->boolConst=='T'? strcat(tmp,"true\0"):strcat(tmp,"false\0");
+            printf("%s\t\t",tmp);
+        }
+        else if(item->type==arithexpr_e){
+            printf("%s\t\t",item->sym->name);
+        }
+        else if(item->type==boolexpr_e){
+            printf("%s\t\t",item->sym->name);
+        }
+        else if(item->type==nil_e){
+            printf("NIL\t\t");
+        }
+        else if(item->type==tableitem_e){
+            printf("%s\t\t",item->sym->name);
+        }
+        else if(item->type==programfunc_e){
+            printf("%s\t\t",item->sym->name);
+        }
+        else if(item->type==libraryfunc_e){
+            printf("%s\t\t",item->sym->name);
+        }
+        else if(item->type==newtable_e){
             printf("%s\t\t",item->sym->name);
         }
     }

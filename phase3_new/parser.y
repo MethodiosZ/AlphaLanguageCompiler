@@ -396,10 +396,10 @@ const:          INTEGER                                  {printf("Found integer\
                                                           $$ = newexpr_constnil();
                                                          }
                 | TRUE                                   {printf("Found true\n"); 
-                                                          $$ = newexpr_constbool('t');
+                                                          $$ = newexpr_constbool('T');
                                                          }
                 | FALSE                                  {printf("Found false\n"); 
-                                                          $$ = newexpr_constbool('f');
+                                                          $$ = newexpr_constbool('F');
                                                          }
                 ;
 
