@@ -24,7 +24,8 @@ typedef enum expr_t{
 	boolexpr_e,
 	assignexpr_e,
 	newtable_e,
-	constnum_e,
+	constint_e,
+	constdouble_e,
 	constbool_e,
 	conststring_e,
 	nil_e
@@ -51,7 +52,8 @@ typedef struct expr{
 	expr_t 	        type;
 	symb            *sym;
 	struct expr     *index;
-	double	        numConst;
+	int				intConst;
+	double	        doubleConst;
 	char 	        *strConst;
 	unsigned char   boolConst;
 	struct expr	    *next;
@@ -92,8 +94,10 @@ unsigned nextquad();
 void patchlabel(unsigned quadNo,unsigned label);
 expr* newexpr(expr_t t);
 expr* newexpr_conststring(char *s);
-expr* newexpr_constnum(double i);
-expr* newexpr_constbool(unsigned int b);
+expr* newexpr_constint(int i);
+expr* newexpr_constdouble(double d);
+expr* newexpr_constnil();
+expr* newexpr_constbool(unsigned char b);
 expr* lvalue_expr(symb *sym);
 expr* member_item(expr *lv,char *name);
 expr* make_call(expr *lv, expr *reversed_elist);

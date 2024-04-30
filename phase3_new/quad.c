@@ -31,6 +31,7 @@ void expand(){
 void emit(iopcode op,expr *arg1,expr *arg2,expr *result, unsigned label,unsigned line){
     if(currQuad==total) expand();
     quad *p = quads+currQuad++;
+    p->op = op;
     p->arg1 = arg1;
     p->arg2 = arg2;
     p->result = result;
@@ -142,13 +143,25 @@ expr* newexpr_conststring(char *s){
     return e;
 }
 
-expr* newexpr_constnum(double i){
-    expr *e = newexpr(constnum_e);
-    e->numConst = i;
+expr* newexpr_constint(int i){
+    expr *e = newexpr(constint_e);
+    e->intConst = i;
     return e;
 }
 
-expr* newexpr_constbool(unsigned int b){
+expr* newexpr_constdouble(double i){
+    expr *e = newexpr(constdouble_e);
+    e->doubleConst = i;
+    return e;
+}
+
+expr* newexpr_constnil(){
+    expr *e = newexpr(nil_e);
+    e->sym=NULL;
+    return e;
+}
+
+expr* newexpr_constbool(unsigned char b){
     expr *e = newexpr(constbool_e);
     e->boolConst = !!b;
     return e;
@@ -258,6 +271,12 @@ void printQuads(){
             printexpr(quads[i].arg1);
             printf("\t\t%s\n",getlabel(quads[i].label));
         }
+        else if(quads[i].op==add){
+            printexpr(quads[i].result);
+            printexpr(quads[i].arg1);
+            printexpr(quads[i].arg2);
+            printf("\t\t%s\n",getlabel(quads[i].label));
+        }
     }
     printf("------------------------------------------------------------------------------\n");
 }
@@ -316,7 +335,7 @@ symb* newsymbol(char *name){
 
 void printexpr(expr *item){
     if(item==NULL){
-        printf("%-*s\t",10,"\t");
+        printf("  \t\t");
     } 
     else{
         if(item->type==var_e){
@@ -325,8 +344,11 @@ void printexpr(expr *item){
         else if(item->type==assignexpr_e){
             printf("%s\t\t",item->sym->name);
         }
-        else if(item->type==constnum_e){
-            printf("%f\t\t",item->numConst);
+        else if(item->type==constint_e){
+            printf("%d\t\t",item->intConst);
+        }
+        else if(item->type==constdouble_e){
+            printf("%f\t\t",item->doubleConst);
         }
     }
 }

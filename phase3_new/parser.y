@@ -201,10 +201,10 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                          check_arith($2,NULL);
                                                          if($2->type == tableitem_e){
                                                             $$ = emit_iftableitem($2);
-                                                            emit(add,$2, newexpr_constnum(1),$$,0,yylineno);
+                                                            emit(add,$2, newexpr_constint(1),$$,0,yylineno);
                                                             emit(tablesetelem,$2,$2->index,$$,0,yylineno);
                                                          } else {
-                                                            emit(add,$2,newexpr_constnum(1),$$,0,yylineno);
+                                                            emit(add,$2,newexpr_constint(1),$$,0,yylineno);
                                                             $$ = newexpr(arithexpr_e);
                                                             $$->sym = newtemp();
                                                             emit(assign,$2,NULL,$2,0,yylineno);
@@ -217,21 +217,21 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                          if($1->type == tableitem_e){
                                                             expr* val = emit_iftableitem($1);
                                                             emit(assign, val, NULL, $$, 0, yylineno);
-                                                            emit(add, val, newexpr_constnum(1), val, 0,yylineno);
+                                                            emit(add, val, newexpr_constint(1), val, 0,yylineno);
                                                             emit(tablesetelem,$1,$1->index,val,0,yylineno);
                                                          } else {
                                                             emit(assign,$1,NULL,$1,0,yylineno);
-                                                            emit(add,$1,newexpr_constnum(1),$1,0,yylineno);
+                                                            emit(add,$1,newexpr_constint(1),$1,0,yylineno);
                                                          }
                                                         }
                 | MMINUS lvalue                         {printf("Found --lvalue\n"); 
                                                          check_arith($2,NULL);
                                                          if($2->type == tableitem_e){
                                                             $$ = emit_iftableitem($2);
-                                                            emit(sub,$2, newexpr_constnum(1),$$,0,yylineno);
+                                                            emit(sub,$2, newexpr_constint(1),$$,0,yylineno);
                                                             emit(tablesetelem,$2,$2->index,$$,0,yylineno);
                                                          } else {
-                                                            emit(sub,$2,newexpr_constnum(1),$$,0,yylineno);
+                                                            emit(sub,$2,newexpr_constint(1),$$,0,yylineno);
                                                             $$ = newexpr(arithexpr_e);
                                                             $$->sym = newtemp();
                                                             emit(assign,$2,NULL,$2,0,yylineno);
@@ -244,11 +244,11 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                          if($1->type == tableitem_e){
                                                             expr* val = emit_iftableitem($1);
                                                             emit(assign, val, NULL, $$, 0, yylineno);
-                                                            emit(sub, val, newexpr_constnum(1), val, 0,yylineno);
+                                                            emit(sub, val, newexpr_constint(1), val, 0,yylineno);
                                                             emit(tablesetelem,$1,$1->index,val,0,yylineno);
                                                          } else {
                                                             emit(assign,$1,NULL,$1,0,yylineno);
-                                                            emit(sub,$1,newexpr_constnum(1),$1,0,yylineno);
+                                                            emit(sub,$1,newexpr_constint(1),$1,0,yylineno);
                                                          }
                                                         }
                 | primary                               {printf("Found primary\n"); 
@@ -384,20 +384,22 @@ elist:          expr                                    {printf("Found expressio
                 ;
 
 const:          INTEGER                                  {printf("Found integer\n"); 
-                                                          $$ = newexpr_constnum($1); 
+                                                          $$ = newexpr_constint($1); 
                                                          }
                 | FLOAT                                  {printf("Found float\n"); 
-                                                          $$ = newexpr_constnum($1);
+                                                          $$ = newexpr_constdouble($1);
                                                          }
                 | STRING                                 {printf("Found string\n"); 
                                                           $$ = newexpr_conststring($1);
                                                          }
-                | NIL                                    {printf("Found nil\n"); }
+                | NIL                                    {printf("Found nil\n"); 
+                                                          $$ = newexpr_constnil();
+                                                         }
                 | TRUE                                   {printf("Found true\n"); 
-                                                          $$ = newexpr_constbool(1);
+                                                          $$ = newexpr_constbool('t');
                                                          }
                 | FALSE                                  {printf("Found false\n"); 
-                                                          $$ = newexpr_constbool(0);
+                                                          $$ = newexpr_constbool('f');
                                                          }
                 ;
 
@@ -406,7 +408,7 @@ objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n
                                                          t->sym = newtemp();
                                                          emit(tablecreate,t,NULL,NULL,0,yylineno);
                                                          for(int i=0;$2;$2=$2->next){
-                                                            emit(tablesetelem,t,newexpr_constnum(i++),$2,0,yylineno);
+                                                            emit(tablesetelem,t,newexpr_constint(i++),$2,0,yylineno);
                                                          }
                                                          $$ = t;
                                                         }
@@ -414,7 +416,7 @@ objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n
                                                          expr* t = newexpr(newtable_e);
                                                          t->sym = newtemp();
                                                          emit(tablecreate,t,NULL,NULL,0,yylineno);
-                                                         emit(tablesetelem,t,newexpr_constnum(1),$2,0,yylineno);
+                                                         emit(tablesetelem,t,newexpr_constint(1),$2,0,yylineno);
                                                          /*for(int i=0;i<$2;i++){
                                                             
                                                          }*/
