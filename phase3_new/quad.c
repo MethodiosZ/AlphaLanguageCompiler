@@ -91,7 +91,7 @@ expr* emit_iftableitem(expr* e){
     else {
         expr *result = newexpr(var_e);
         result->sym = newtemp();
-        emit(tablegetelem,e,e->index,result,NULL,NULL);
+        emit(tablegetelem,e,e->index,result,0,0);
         return result;
     }
 }
@@ -187,13 +187,13 @@ expr* member_item(expr *lv,char *name){
 expr* make_call(expr *lv, expr *reversed_elist){
     expr *func = emit_iftableitem(lv);
     while(reversed_elist){
-        emit(param,reversed_elist,NULL,NULL,NULL,NULL);
+        emit(param,reversed_elist,NULL,NULL,0,0);
         reversed_elist = reversed_elist->next;
     }
-    emit(call,func,NULL,NULL,NULL,NULL);
+    emit(call,func,NULL,NULL,0,0);
     expr *result = newexpr(var_e);
     result->sym = newtemp();
-    emit(getretval,NULL,NULL,result,NULL,NULL);
+    emit(getretval,NULL,NULL,result,0,0);
     return result;
 }
 
@@ -250,12 +250,14 @@ void pathclist(int list,int label){
 void printQuads(){
     int i;
     printf("quad#\topcode\t\tresult\t\targ1\t\targ2\t\tlabel\n");
-    printf("-------------------------------------------------------------\n");
+    printf("------------------------------------------------------------------------------\n");
     for(i=0;i<currQuad;i++){
-        printf("%d:\t%s\t\t%s\t\t%s\t\t%s\t\t%s\n",i+1,getopcode(quads[i].op),quads[i].result,
-        quads[i].arg1,quads[i].arg2,getlabel(quads[i].label));
+        printf("%d:\t%s\t\t",i+1,getopcode(quads[i].op));
+        if(quads[i].op==assign){
+            printf("%s\t\t%s\t\t%s\t\t%s\n",quads[i].result->sym->name,quads[i].result->sym->name,getlabel(quads[i].label));
+        }
     }
-    printf("-------------------------------------------------------------\n");
+    printf("------------------------------------------------------------------------------\n");
 }
 
 const char* getopcode(iopcode op){
@@ -293,7 +295,7 @@ const char* getopcode(iopcode op){
 const char* getlabel(unsigned label){
     char *str = (char*)malloc(10*sizeof(char));
     sprintf(str,"%d",label);
-    if(label==0) return " ";
+    if(label==0 || label==NULL) return " ";
     else return (char*)str;
 }
 
@@ -308,4 +310,8 @@ symb* newsymbol(char *name){
     memset(e,0,sizeof(symb));
     e->name = name;
     return e;
+}
+
+void printexpr(expr *item){
+    
 }

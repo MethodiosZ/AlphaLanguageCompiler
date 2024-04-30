@@ -31,13 +31,15 @@ char buffer[64];
     double realVal;
     struct expr* exprValue;
     struct funccall* callValue;
+    struct stmt* stmtValue;
 }
 
 %token <string>     STRING
 %token <string>     ID
 %token <intVal>     INTEGER 
 %token <realVal>    FLOAT
-%token <string>     IF ELSE WHILE FOR BREAK CONT RET TRUE FALSE NIL FUNC LOCAL
+%token <stmtValue>   BREAK CONT
+%token <string>     IF ELSE WHILE FOR RET TRUE FALSE NIL FUNC LOCAL
 %token <string>     LPAR RPAR LBRACE RBRACE LSQBRACE RSQBRACE 
 %token <string>     ADD SUB MUL DIV MOD PPLUS MMINUS UMINUS
 %token <string>     ASSIGN EQ NEQ AND OR NOT MORE MOREEQ LESS LESSEQ
@@ -45,10 +47,11 @@ char buffer[64];
 
 
 %type <exprValue>       lvalue expr assignexpr term primary const funcdef
-%type <exprValue>       ifstmt whilestmt forstmt member elist
+%type <exprValue>       ifstmt whilestmt forstmt member elist call objectdef
+%type <exprValue>       indexed
 %type <callValue>       methodcall normcall callsuffix  
 %type <string>          program stmt returnstmt idlist
-%type <string>          call objectdef indexed indexedelem block inblock 
+%type <string>          indexedelem block inblock 
 
 %start program
 
@@ -201,7 +204,7 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                             emit(add,$2, newexpr_constnum(1),$$,0,yylineno);
                                                             emit(tablesetelem,$2,$2->index,$$,0,yylineno);
                                                          } else {
-                                                            emit(add,$2,newexpr_constnum(1),$1,0,yylineno);
+                                                            emit(add,$2,newexpr_constnum(1),$$,0,yylineno);
                                                             $$ = newexpr(arithexpr_e);
                                                             $$->sym = newtemp();
                                                             emit(assign,$2,NULL,$2,0,yylineno);
@@ -228,7 +231,7 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                             emit(sub,$2, newexpr_constnum(1),$$,0,yylineno);
                                                             emit(tablesetelem,$2,$2->index,$$,0,yylineno);
                                                          } else {
-                                                            emit(sub,$2,newexpr_constnum(1),$1,0,yylineno);
+                                                            emit(sub,$2,newexpr_constnum(1),$$,0,yylineno);
                                                             $$ = newexpr(arithexpr_e);
                                                             $$->sym = newtemp();
                                                             emit(assign,$2,NULL,$2,0,yylineno);
@@ -274,7 +277,7 @@ primary:        lvalue                                  {printf("Found lvalue\n"
                 | objectdef                             {printf("Found object definition\n"); }
                 | LPAR funcdef RPAR                     {printf("Found (function definition)\n"); 
                                                          $$ = newexpr(programfunc_e);
-                                                         $$->sym = $2;
+                                                         $$->sym = $2->sym;
                                                         }
                 | const                                 {printf("Found const\n"); }
                 ;
@@ -287,8 +290,8 @@ lvalue:         ID                                      {if(Search($1,scope,GLOB
                                                             var->space = currscopespace();
                                                             var->offset = currscopeoffset();
                                                             incurrscopeoffset();
+                                                            $$ = lvalue_expr(var);
                                                          }
-                                                         $1 = lvalue_expr(var);
                                                          printf("Found id\n");
                                                         }
                 | LOCAL ID                              {if(Search($2,scope,LLOCAL)==NULL){
@@ -298,8 +301,8 @@ lvalue:         ID                                      {if(Search($1,scope,GLOB
                                                             var->space = currscopespace();
                                                             var->offset = currscopeoffset();
                                                             incurrscopeoffset();
+                                                            $$ = lvalue_expr(var);
                                                          }
-                                                         $2 = lvalue_expr(var);
                                                          printf("Found local id\n"); 
                                                         }
                 | CCOLON ID                             {if(Search($2,0,GLOBAL)==NULL){
@@ -312,7 +315,7 @@ lvalue:         ID                                      {if(Search($1,scope,GLOB
                                                             var->space = currscopespace();
                                                             var->offset = currscopeoffset();
                                                             incurrscopeoffset();
-                                                            $2  = lvalue_expr(var);
+                                                            $$  = lvalue_expr(var);
                                                          }
                                                          printf("Found ::id\n"); 
                                                         }
@@ -348,7 +351,7 @@ call:           call LPAR elist RPAR                    {printf("Found call(elis
                                                         }
                 | LPAR funcdef RPAR LPAR elist RPAR     {printf("Found (function definition)(elist)\n"); 
                                                          expr* func = newexpr(programfunc_e);
-                                                         func->sym = $2;
+                                                         func->sym = $2->sym;
                                                          $$ = make_call(func,$5);
                                                         }
                 ;
@@ -380,12 +383,22 @@ elist:          expr                                    {printf("Found expressio
                 | %empty                                
                 ;
 
-const:          INTEGER                                 {printf("Found integer\n"); }
-                | FLOAT                                 {printf("Found float\n"); }
-                | STRING                                {printf("Found string\n"); }
-                | NIL                                   {printf("Found nil\n"); }
-                | TRUE                                  {printf("Found true\n"); }
-                | FALSE                                 {printf("Found false\n"); }
+const:          INTEGER                                  {printf("Found integer\n"); 
+                                                          $$ = newexpr_constnum($1); 
+                                                         }
+                | FLOAT                                  {printf("Found float\n"); 
+                                                          $$ = newexpr_constnum($1);
+                                                         }
+                | STRING                                 {printf("Found string\n"); 
+                                                          $$ = newexpr_conststring($1);
+                                                         }
+                | NIL                                    {printf("Found nil\n"); }
+                | TRUE                                   {printf("Found true\n"); 
+                                                          $$ = newexpr_constbool(1);
+                                                         }
+                | FALSE                                  {printf("Found false\n"); 
+                                                          $$ = newexpr_constbool(0);
+                                                         }
                 ;
 
 objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n"); 
@@ -401,9 +414,10 @@ objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n
                                                          expr* t = newexpr(newtable_e);
                                                          t->sym = newtemp();
                                                          emit(tablecreate,t,NULL,NULL,0,yylineno);
-                                                         for(int i=0;i<$2;i++){
-                                                            emit(tablesetelem,t,i,$2,0,yylineno);
-                                                         }
+                                                         emit(tablesetelem,t,newexpr_constnum(1),$2,0,yylineno);
+                                                         /*for(int i=0;i<$2;i++){
+                                                            
+                                                         }*/
                                                          $$ = t;
                                                         }
                 ;

@@ -110,5 +110,6 @@ const char* getopcode(iopcode op);
 const char* getlabel(unsigned label);
 symb* newtemp();
 symb* newsymbol(char *name);
+void printexpr(expr *item);
 
 #endif
