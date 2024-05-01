@@ -22,6 +22,7 @@ int table_size=0;
 int scope=0;
 int anonymfcounter=0;
 int status;
+int tempcount=0;
 char buffer[64];
 %}
 
@@ -97,31 +98,37 @@ stmt:           expr SEMI                               {printf("Found expressio
 expr:           assignexpr                              {printf("Found assignment expression\n");}
                 | expr ADD expr                         {printf("Found expression + expression\n");
                                                          $$ = newexpr(arithexpr_e);
+                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp(); 
                                                          emit(add,$1,$3,$$,0,yylineno);
                                                         }
                 | expr SUB expr                         {printf("Found expression - expression\n");
                                                          $$ = newexpr(arithexpr_e);
+                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp(); 
                                                          emit(sub,$1,$3,$$,0,yylineno);
                                                         }
                 | expr MUL expr                         {printf("Found expression * expression\n");
                                                          $$ = newexpr(arithexpr_e);
+                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp(); 
                                                          emit(mul,$1,$3,$$,0,yylineno);
                                                         }
                 | expr DIV expr                         {printf("Found expression / expression\n");
                                                          $$ = newexpr(arithexpr_e);
+                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp(); 
                                                          emit(divd,$1,$3,$$,0,yylineno);
                                                         }
                 | expr MOD expr                         {printf("Found expression MOD expression\n");
                                                          $$ = newexpr(arithexpr_e);
+                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp(); 
                                                          emit(mod,$1,$3,$$,0,yylineno);
                                                         }
                 | expr MORE expr                        {printf("Found expression > expression\n");
                                                          $$ = newexpr(boolexpr_e);
+                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
                                                          emit(if_greater,$1,$3,$$,0,yylineno);
                                                          emit(assign,newexpr_constbool(0),NULL,$$,0,yylineno);
@@ -130,6 +137,7 @@ expr:           assignexpr                              {printf("Found assignmen
                                                         }
                 | expr MOREEQ expr                      {printf("Found expression >= expression\n"); 
                                                          $$ = newexpr(boolexpr_e);
+                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
                                                          emit(if_greatereq,$1,$3,$$,0,yylineno);
                                                          emit(assign,newexpr_constbool(0),NULL,$$,0,yylineno);
@@ -138,6 +146,7 @@ expr:           assignexpr                              {printf("Found assignmen
                                                         }
                 | expr LESS expr                        {printf("Found expression < expression\n"); 
                                                          $$ = newexpr(boolexpr_e);
+                                                          if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
                                                          emit(if_less,$1,$3,$$,0,yylineno);
                                                          emit(assign,newexpr_constbool(0),NULL,$$,0,yylineno);
@@ -146,6 +155,7 @@ expr:           assignexpr                              {printf("Found assignmen
                                                         }
                 | expr LESSEQ expr                      {printf("Found expression <= expression\n"); 
                                                          $$ = newexpr(boolexpr_e);
+                                                          if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
                                                          emit(if_lesseq,$1,$3,$$,0,yylineno);
                                                          emit(assign,newexpr_constbool(0),NULL,$$,0,yylineno);
@@ -154,6 +164,7 @@ expr:           assignexpr                              {printf("Found assignmen
                                                         }
                 | expr EQ expr                          {printf("Found expression == expression\n");
                                                          $$ = newexpr(boolexpr_e);
+                                                          if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
                                                          emit(if_eq,$1,$3,$$,0,yylineno);
                                                          emit(assign,newexpr_constbool(0),NULL,$$,0,yylineno);
@@ -162,6 +173,7 @@ expr:           assignexpr                              {printf("Found assignmen
                                                         }
                 | expr NEQ expr                         {printf("Found expression != expression\n");
                                                          $$ = newexpr(boolexpr_e);
+                                                          if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
                                                          emit(if_noteq,$1,$3,$$,0,yylineno);
                                                          emit(assign,newexpr_constbool(0),NULL,$$,0,yylineno);
@@ -170,11 +182,13 @@ expr:           assignexpr                              {printf("Found assignmen
                                                         }
                 | expr AND expr                         {printf("Found expression && expression\n");
                                                          $$ = newexpr(boolexpr_e);
+                                                          if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
                                                          emit(and,$1,$3,$$,0,yylineno);
                                                         }
                 | expr OR expr                          {printf("Found expression || expression\n");
                                                          $$ = newexpr(boolexpr_e);
+                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
                                                          emit(or,$1,$3,$$,0,yylineno);
                                                         }
@@ -264,6 +278,13 @@ assignexpr:     lvalue ASSIGN expr                      {printf("Found lvalue=ex
                                                          } else {
                                                             emit(assign,$3,NULL,$1,0,yylineno);
                                                             $$ = newexpr(assignexpr_e);
+                                                            if(istempexpr($1)||istempexpr($3)){
+                                                               tempcount=1;
+                                                            }
+                                                            else if(tempcount){
+                                                               tempcount=0;
+                                                               resettemp();
+                                                            }
                                                             $$->sym = newtemp();
                                                             emit(assign,$1,NULL,$$,0,yylineno);
                                                          }
@@ -287,6 +308,14 @@ lvalue:         ID                                      {if(Search($1,scope,GLOB
                                                             else symbol = createSymbol($1,scope,yylineno,GLOBAL);
                                                             Insert(symbol);
                                                             var = newsymbol($1);
+                                                            var->space = currscopespace();
+                                                            var->offset = currscopeoffset();
+                                                            incurrscopeoffset();
+                                                            $$ = lvalue_expr(var);
+                                                         }
+                                                         else{
+                                                            symbol = Search($1,scope,GLOBAL);
+                                                            var = SymTableItemtoQuadItem(symbol);
                                                             var->space = currscopespace();
                                                             var->offset = currscopeoffset();
                                                             incurrscopeoffset();

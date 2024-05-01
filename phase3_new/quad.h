@@ -113,7 +113,9 @@ void printQuads();
 const char* getopcode(iopcode op);
 const char* getlabel(unsigned label);
 symb* newtemp();
+void resettemp();
 symb* newsymbol(char *name);
 void printexpr(expr *item);
+symb* SymTableItemtoQuadItem(Sym *item);
 
 #endif

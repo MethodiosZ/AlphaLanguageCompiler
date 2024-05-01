@@ -213,6 +213,7 @@ expr* make_call(expr *lv, expr *reversed_elist){
 void comperror(char *format,const char* context){
 
 }
+
 void check_arith(expr *e,const char *context){
     if(e->type==constbool_e||e->type==conststring_e||e->type==nil_e||
     e->type==newtable_e||e->type==programfunc_e||e->type==libraryfunc_e||
@@ -222,7 +223,7 @@ void check_arith(expr *e,const char *context){
 }
 
 unsigned int istempname(char *s){
-    return *s == '_';
+    return *s == '^';
 }
 
 unsigned int istempexpr(expr *e){
@@ -359,8 +360,12 @@ const char* getlabel(unsigned label){
 
 symb* newtemp(){
     char *name = (char*)malloc(10*sizeof(char));
-    sprintf(name,"^%d",tempcounter);
+    sprintf(name,"^%d",tempcounter++);
     return newsymbol(name);
+}
+
+void resettemp(){
+    tempcounter=0;
 }
 
 symb* newsymbol(char *name){
@@ -416,5 +421,29 @@ void printexpr(expr *item){
         else if(item->type==newtable_e){
             printf("%s\t\t",item->sym->name);
         }
+        else{
+            printf("Not valid item\t");
+        }
     }
+}
+
+symb* SymTableItemtoQuadItem(Sym *item){
+    symb* e = (symb*)malloc(sizeof(symb));
+    memset(e,0,sizeof(symb));
+    if(item->type<3){
+        e->type = var_s;
+        e->line=item->value.VarVal->line;
+        e->name=item->value.VarVal->name;
+    }
+    else if(item->type==3){
+        e->type = programfunc_s;
+        e->line = item->value.FuncVal->line;
+        e->name = item->value.FuncVal->name;
+    }
+    else{
+        e->type = libraryfunc_s;
+        e->line = item->value.FuncVal->line;
+        e->name = item->value.FuncVal->name;
+    }
+    return e;
 }
