@@ -163,7 +163,7 @@ expr* newexpr_constnil(){
 
 expr* newexpr_constbool(unsigned char b){
     expr *e = newexpr(constbool_e);
-    e->boolConst = !!b;
+    e->boolConst = b;
     return e;
 }
 
@@ -211,7 +211,7 @@ expr* make_call(expr *lv, expr *reversed_elist){
 }
 
 void comperror(char *format,const char* context){
-
+    printf("%s,%s\n",format,context);
 }
 
 void check_arith(expr *e,const char *context){
@@ -393,7 +393,7 @@ void printexpr(expr *item){
             printf("%f\t\t",item->doubleConst);
         }
         else if(item->type==conststring_e){
-            printf("%s\t\t",item->strConst);
+            printf("\"%s\"\t\t",item->strConst);
         }
         else if(item->type==constbool_e){
             char *tmp =malloc(10);
@@ -407,10 +407,10 @@ void printexpr(expr *item){
             printf("%s\t\t",item->sym->name);
         }
         else if(item->type==nil_e){
-            printf("NIL\t\t");
+            printf("nil\t\t");
         }
         else if(item->type==tableitem_e){
-            printf("%s\t\t",item->sym->name);
+            printf("%s\t",item->sym->name);
         }
         else if(item->type==programfunc_e){
             printf("%s\t\t",item->sym->name);
@@ -419,7 +419,7 @@ void printexpr(expr *item){
             printf("%s\t\t",item->sym->name);
         }
         else if(item->type==newtable_e){
-            printf("%s\t\t",item->sym->name);
+            printf("%s\t",item->sym->name);
         }
         else{
             printf("Not valid item\t");

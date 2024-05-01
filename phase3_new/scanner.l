@@ -38,8 +38,9 @@ comment		    ("//".*)
 }
 
 <SSTRING>\" {
-    free(string_build);
     BEGIN(INITIAL);
+    yylval.string = strdup(string_build);
+    free(string_build);
     return STRING;
 }
 

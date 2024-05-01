@@ -22,7 +22,6 @@ int table_size=0;
 int scope=0;
 int anonymfcounter=0;
 int status;
-int tempcount=0;
 char buffer[64];
 %}
 
@@ -213,15 +212,16 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                         }
                 | PPLUS lvalue                          {printf("Found ++lvalue\n"); 
                                                          check_arith($2,NULL);
+                                                         $$ = newexpr(arithexpr_e);
+                                                         $$->sym = newtemp();
                                                          if($2->type == tableitem_e){
                                                             $$ = emit_iftableitem($2);
                                                             emit(add,$2, newexpr_constint(1),$$,0,yylineno);
                                                             emit(tablesetelem,$2,$2->index,$$,0,yylineno);
                                                          } else {
-                                                            emit(add,$2,newexpr_constint(1),$$,0,yylineno);
-                                                            $$ = newexpr(arithexpr_e);
-                                                            $$->sym = newtemp();
-                                                            emit(assign,$2,NULL,$2,0,yylineno);
+                                                            emit(add,$2,newexpr_constint(1),$2,0,yylineno);
+                                                            emit(assign,$2,NULL,$$,0,yylineno);
+                                                            resettemp();
                                                          }
                                                         }
                 | lvalue PPLUS                          {printf("Found lvalue++\n"); 
@@ -234,21 +234,23 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                             emit(add, val, newexpr_constint(1), val, 0,yylineno);
                                                             emit(tablesetelem,$1,$1->index,val,0,yylineno);
                                                          } else {
-                                                            emit(assign,$1,NULL,$1,0,yylineno);
+                                                            emit(assign,$1,NULL,$$,0,yylineno);
                                                             emit(add,$1,newexpr_constint(1),$1,0,yylineno);
+                                                            resettemp();
                                                          }
                                                         }
                 | MMINUS lvalue                         {printf("Found --lvalue\n"); 
                                                          check_arith($2,NULL);
+                                                         $$ = newexpr(arithexpr_e);
+                                                         $$->sym = newtemp();
                                                          if($2->type == tableitem_e){
                                                             $$ = emit_iftableitem($2);
                                                             emit(sub,$2, newexpr_constint(1),$$,0,yylineno);
                                                             emit(tablesetelem,$2,$2->index,$$,0,yylineno);
                                                          } else {
-                                                            emit(sub,$2,newexpr_constint(1),$$,0,yylineno);
-                                                            $$ = newexpr(arithexpr_e);
-                                                            $$->sym = newtemp();
-                                                            emit(assign,$2,NULL,$2,0,yylineno);
+                                                            emit(sub,$2,newexpr_constint(1),$2,0,yylineno);
+                                                            emit(assign,$2,NULL,$$,0,yylineno);
+                                                            resettemp();
                                                          }
                                                         }
                 | lvalue MMINUS                         {printf("Found lvalue--\n"); 
@@ -261,8 +263,9 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                             emit(sub, val, newexpr_constint(1), val, 0,yylineno);
                                                             emit(tablesetelem,$1,$1->index,val,0,yylineno);
                                                          } else {
-                                                            emit(assign,$1,NULL,$1,0,yylineno);
+                                                            emit(assign,$1,NULL,$$,0,yylineno);
                                                             emit(sub,$1,newexpr_constint(1),$1,0,yylineno);
+                                                            resettemp();
                                                          }
                                                         }
                 | primary                               {printf("Found primary\n"); 
@@ -278,15 +281,9 @@ assignexpr:     lvalue ASSIGN expr                      {printf("Found lvalue=ex
                                                          } else {
                                                             emit(assign,$3,NULL,$1,0,yylineno);
                                                             $$ = newexpr(assignexpr_e);
-                                                            if(istempexpr($1)||istempexpr($3)){
-                                                               tempcount=1;
-                                                            }
-                                                            else if(tempcount){
-                                                               tempcount=0;
-                                                               resettemp();
-                                                            }
                                                             $$->sym = newtemp();
                                                             emit(assign,$1,NULL,$$,0,yylineno);
+                                                            resettemp();
                                                          }
                                                         }
                 ;
