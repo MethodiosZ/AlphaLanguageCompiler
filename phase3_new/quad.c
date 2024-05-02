@@ -263,13 +263,15 @@ void pathclist(int list,int label){
 
 void printQuads(){
     int i;
-    printf("quad#\topcode\t\tresult\t\targ1\t\targ2\t\tlabel\n");
-    printf("------------------------------------------------------------------------------\n");
+    printf("quad#\t\topcode\t\t\tresult\t\t\targ1\t\t\targ2\t\t\tlabel\n");
+    printf("---------------------------------------------------------------------------------------------------------------------------\n");
     for(i=0;i<currQuad;i++){
-        printf("%d:\t%s\t\t",i+1,getopcode(quads[i].op));
+        printf("%-*d \t",10,i+1);
+        printf("%-*s \t",20,getopcode(quads[i].op));
         if(quads[i].op==assign){
             printexpr(quads[i].result);
             printexpr(quads[i].arg1);
+            printf("%-*s \t",20,"\t");
         }
         else if(quads[i].op==add||quads[i].op==sub||quads[i].op==mul||quads[i].op==divd||quads[i].op==mod){
             printexpr(quads[i].result);
@@ -284,6 +286,7 @@ void printQuads(){
         else if(quads[i].op==not||quads[i].op==uminus){
             printexpr(quads[i].result);
             printexpr(quads[i].arg1);
+            printf("%-*s \t",20,"\t");
         }
         else if(quads[i].op==if_eq||quads[i].op==if_noteq){
             printexpr(quads[i].result);
@@ -302,21 +305,28 @@ void printQuads(){
         }
         else if(quads[i].op==call||quads[i].op==ret||quads[i].op==param){
             printexpr(quads[i].result);
+            printf("%-*s \t",20,"\t");
+            printf("%-*s \t",20,"\t");
         }
         else if(quads[i].op==getretval||quads[i].op==tablecreate||quads[i].op==jump||quads[i].op==funcend){
             printexpr(quads[i].result);
+            printf("%-*s \t",20,"\t");
+            printf("%-*s \t",20,"\t");
         }
         else if(quads[i].op==funcstart){
             printexpr(quads[i].result);
+            printf("%-*s \t",20,"\t");
+            printf("%-*s \t",20,"\t");
         }
         else if(quads[i].op==tablegetelem||quads[i].op==tablesetelem){
             printexpr(quads[i].result);
             printexpr(quads[i].arg1);
             printexpr(quads[i].arg2);
         }
-        printf("%s\n",getlabel(quads[i].label));
+        printf("%-*s",20,getlabel(quads[i].label));
+        printf("\n");
     }
-    printf("------------------------------------------------------------------------------\n");
+    printf("---------------------------------------------------------------------------------------------------------------------------\n");
 }
 
 const char* getopcode(iopcode op){
@@ -377,52 +387,52 @@ symb* newsymbol(char *name){
 
 void printexpr(expr *item){
     if(item==NULL){
-        printf("  \t\t");
+        printf("%-*s \t",20,"\t");
     } 
     else{
         if(item->type==var_e){
-            printf("%s\t\t",item->sym->name);
+            printf("%-*s \t",20,item->sym->name);
         }
         else if(item->type==assignexpr_e){
-            printf("%s\t\t",item->sym->name);
+            printf("%-*s \t",20,item->sym->name);
         }
         else if(item->type==constint_e){
-            printf("%d\t\t",item->intConst);
+            printf("%-*d \t",20,item->intConst);
         }
         else if(item->type==constdouble_e){
-            printf("%f\t\t",item->doubleConst);
+            printf("%-*f \t",20,item->doubleConst);
         }
         else if(item->type==conststring_e){
-            printf("\"%s\"\t\t",item->strConst);
+            printf("\"%-*s\" \t",20,item->strConst);
         }
         else if(item->type==constbool_e){
             char *tmp =malloc(10);
             item->boolConst=='T'? strcat(tmp,"true\0"):strcat(tmp,"false\0");
-            printf("%s\t\t",tmp);
+            printf("%-*s \t",20,tmp);
         }
         else if(item->type==arithexpr_e){
-            printf("%s\t\t",item->sym->name);
+            printf("%-*s \t",20,item->sym->name);
         }
         else if(item->type==boolexpr_e){
-            printf("%s\t\t",item->sym->name);
+            printf("%-*s \t",20,item->sym->name);
         }
         else if(item->type==nil_e){
-            printf("nil\t\t");
+            printf("%-*s \t",20,"nil");
         }
         else if(item->type==tableitem_e){
-            printf("%s\t",item->sym->name);
+            printf("%-*s \t",20,item->sym->name);
         }
         else if(item->type==programfunc_e){
-            printf("%s\t\t",item->sym->name);
+            printf("%-*s \t",20,item->sym->name);
         }
         else if(item->type==libraryfunc_e){
-            printf("%s\t\t",item->sym->name);
+            printf("%-*s \t",20,item->sym->name);
         }
         else if(item->type==newtable_e){
-            printf("%s\t",item->sym->name);
+            printf("%-*s \t",20,item->sym->name);
         }
         else{
-            printf("Not valid item\t");
+            printf("%-*s \t",20,"Not valid item\t");
         }
     }
 }

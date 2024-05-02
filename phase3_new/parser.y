@@ -48,10 +48,10 @@ char buffer[64];
 
 %type <exprValue>       lvalue expr assignexpr term primary const funcdef
 %type <exprValue>       ifstmt whilestmt forstmt member elist call objectdef
-%type <exprValue>       indexed
+%type <exprValue>       indexed indexedelem
 %type <callValue>       methodcall normcall callsuffix  
 %type <string>          program stmt returnstmt idlist
-%type <string>          indexedelem block inblock 
+%type <string>          block inblock 
 
 %start program
 
@@ -204,11 +204,13 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                          $$ = newexpr(arithexpr_e);
                                                          $$->sym = istempexpr($2) ? $2->sym : newtemp();
                                                          emit(uminus,$2,NULL,$$,0,yylineno);
+                                                         resettemp();
                                                         }
                 | NOT expr                              {printf("Found !expression\n"); 
                                                          $$ = newexpr(boolexpr_e);
                                                          $$->sym = newtemp();
                                                          emit(not,$2,NULL,$$,0,yylineno);
+                                                         resettemp();
                                                         }
                 | PPLUS lvalue                          {printf("Found ++lvalue\n"); 
                                                          check_arith($2,NULL);
@@ -404,9 +406,29 @@ methodcall:     DDOT ID LPAR elist RPAR                 {printf("Found ..id(elis
                                                         }
                 ;
 
-elist:          expr                                    {printf("Found expression\n"); } 
-                | elist COMMA expr                      {printf("Found elist,expression\n"); }
-                | %empty                                
+elist:          expr                                     {printf("Found expression\n"); 
+                                                          if($1->type==boolexpr_e){
+                                                            //handle boolean
+                                                          }
+                                                          $$ = $1;
+                                                          $$->next = NULL;
+                                                         } 
+                | elist COMMA expr                       {printf("Found elist,expression\n"); 
+                                                          expr *t;
+                                                          if($1!=NULL&&$3!=NULL){
+                                                            t=$1;
+                                                            while(t->next){
+                                                               t=t->next;
+                                                            }
+                                                            if($3->type==boolexpr_e){
+                                                               //handle boolean
+                                                            }
+                                                            t->next=$3;
+                                                            $3->next=NULL;
+                                                            $$=$1;
+                                                          }
+                                                         }
+                | %empty                                 {$$=NULL;}
                 ;
 
 const:          INTEGER                                  {printf("Found integer\n"); 
@@ -432,30 +454,40 @@ const:          INTEGER                                  {printf("Found integer\
 objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n"); 
                                                          expr* t = newexpr(newtable_e);
                                                          t->sym = newtemp();
-                                                         emit(tablecreate,t,NULL,NULL,0,yylineno);
+                                                         emit(tablecreate,NULL,NULL,t,0,yylineno);
                                                          for(int i=0;$2;$2=$2->next){
-                                                            emit(tablesetelem,t,newexpr_constint(i++),$2,0,yylineno);
+                                                            emit(tablesetelem,newexpr_constint(i++),$2,t,0,yylineno);
                                                          }
                                                          $$ = t;
+                                                         resettemp();
                                                         }
                 | LSQBRACE indexed RSQBRACE             {printf("Found [indexed]\n"); 
                                                          expr* t = newexpr(newtable_e);
                                                          t->sym = newtemp();
-                                                         emit(tablecreate,t,NULL,NULL,0,yylineno);
-                                                         emit(tablesetelem,t,newexpr_constint(1),$2,0,yylineno);
-                                                         /*for(int i=0;i<$2;i++){
-                                                            
-                                                         }*/
+                                                         emit(tablecreate,NULL,NULL,t,0,yylineno);
+                                                         for(int i=0;$2;$2=$2->next){
+                                                            emit(tablesetelem,$2->index,$2,t,0,yylineno);
+                                                         }
                                                          $$ = t;
+                                                         resettemp();
                                                         }
                 ;
 
-indexed:        indexedelem                             {printf("Found indexed element\n"); }
-                | indexed COMMA indexedelem             {printf("Found indexed, indexed element\n"); }
+indexed:        indexedelem                              {printf("Found indexed element\n"); 
+                                                          $$ = $1;
+                                                         }
+                | indexed COMMA indexedelem              {printf("Found indexed, indexed element\n"); 
+                                                          while($1->next){
+                                                            $1 = $1->next;
+                                                          }
+                                                          $1->next = $3;
+                                                         }
                 | %empty                                
                 ;
 
-indexedelem:    LBRACE expr COLON expr RBRACE           {printf("Found {expression:expression}\n"); }
+indexedelem:    LBRACE expr COLON expr RBRACE            {printf("Found {expression:expression}\n"); 
+                                                          $$ = $4;
+                                                         }
                 ;
 
 
