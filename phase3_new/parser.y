@@ -76,53 +76,105 @@ program:        stmt program                            {printf("Found statement
                 | %empty                                
                 ;
 
-stmt:           expr SEMI                               {printf("Found expression\n");}
-                | ifstmt                                {printf("Found if statement\n");}
-                | whilestmt                             {printf("Found while statement\n");}
-                | forstmt                               {printf("Found for statement\n");}
+stmt:           expr SEMI                                {printf("Found expression\n");
+                                                          resettemp();
+                                                         }
+                | ifstmt                                 {printf("Found if statement\n");
+                                                          resettemp();
+                                                         }
+                | whilestmt                              {printf("Found while statement\n");
+                                                          resettemp();
+                                                         }
+                | forstmt                                {printf("Found for statement\n");
+                                                          resettemp();
+                                                         }
                 | returnstmt                            {if(scope==0) printf("Syntax Error in line %d cannot return outside of function\n",yylineno);
                                                          printf("Found return statement\n");
+                                                         resettemp();
                                                         }
                 | BREAK SEMI                            {if(scope==0) printf("Syntax Error in line %d cannot break outside of loop\n",yylineno);
                                                         printf("Found break\n");
+                                                        resettemp();
                                                         }
                 | CONT SEMI                             {if(scope==0) printf("Syntax Error in line %d cannot continue outside of function\n",yylineno);
                                                         printf("Found continue\n");
+                                                        resettemp();
                                                         }
-                | block                                 {printf("Found block\n");}
-                | funcdef                               {printf("Found function definition\n");}
-                | SEMI                                  {printf("Found semicolon\n");}                       
+                | block                                  {printf("Found block\n");
+                                                          resettemp();
+                                                         }
+                | funcdef                                {printf("Found function definition\n");
+                                                          resettemp();
+                                                         }
+                | SEMI                                   {printf("Found semicolon\n");
+                                                          resettemp();
+                                                         }                       
                 ;
 
 expr:           assignexpr                              {printf("Found assignment expression\n");}
                 | expr ADD expr                         {printf("Found expression + expression\n");
-                                                         $$ = newexpr(arithexpr_e);
-                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
-                                                         $$->sym = newtemp(); 
+                                                         if(istempexpr($1)){
+                                                            $$ = $1;
+                                                         }
+                                                         else if(istempexpr($3)){
+                                                            $$ = $3;
+                                                         } 
+                                                         else{
+                                                            $$ = newexpr(arithexpr_e);
+                                                            $$->sym = newtemp(); 
+                                                         }
                                                          emit(add,$1,$3,$$,0,yylineno);
                                                         }
                 | expr SUB expr                         {printf("Found expression - expression\n");
-                                                         $$ = newexpr(arithexpr_e);
-                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
-                                                         $$->sym = newtemp(); 
+                                                         if(istempexpr($1)){
+                                                            $$ = $1;
+                                                         }
+                                                         else if(istempexpr($3)){
+                                                            $$ = $3;
+                                                         }  
+                                                         else{
+                                                            $$ = newexpr(arithexpr_e);
+                                                            $$->sym = newtemp(); 
+                                                         }
                                                          emit(sub,$1,$3,$$,0,yylineno);
                                                         }
                 | expr MUL expr                         {printf("Found expression * expression\n");
-                                                         $$ = newexpr(arithexpr_e);
-                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
-                                                         $$->sym = newtemp(); 
+                                                         if(istempexpr($1)){
+                                                            $$ = $1;
+                                                         }
+                                                         else if(istempexpr($3)){
+                                                            $$ = $3;
+                                                         }  
+                                                         else{
+                                                            $$ = newexpr(arithexpr_e);
+                                                            $$->sym = newtemp(); 
+                                                         }
                                                          emit(mul,$1,$3,$$,0,yylineno);
                                                         }
                 | expr DIV expr                         {printf("Found expression / expression\n");
-                                                         $$ = newexpr(arithexpr_e);
-                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
-                                                         $$->sym = newtemp(); 
+                                                         if(istempexpr($1)){
+                                                            $$ = $1;
+                                                         }
+                                                         else if(istempexpr($3)){
+                                                            $$ = $3;
+                                                         }  
+                                                         else{
+                                                            $$ = newexpr(arithexpr_e);
+                                                            $$->sym = newtemp(); 
+                                                         }
                                                          emit(divd,$1,$3,$$,0,yylineno);
                                                         }
                 | expr MOD expr                         {printf("Found expression MOD expression\n");
-                                                         $$ = newexpr(arithexpr_e);
-                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
-                                                         $$->sym = newtemp(); 
+                                                         if(istempexpr($1)){
+                                                            $$ = $1;
+                                                         }
+                                                         else if(istempexpr($3)){
+                                                            $$ = $3;
+                                                         }  
+                                                         else{
+                                                            $$ = newexpr(arithexpr_e);
+                                                            $$->sym = newtemp(); 
+                                                         }
                                                          emit(mod,$1,$3,$$,0,yylineno);
                                                         }
                 | expr MORE expr                        {printf("Found expression > expression\n");
@@ -145,7 +197,7 @@ expr:           assignexpr                              {printf("Found assignmen
                                                         }
                 | expr LESS expr                        {printf("Found expression < expression\n"); 
                                                          $$ = newexpr(boolexpr_e);
-                                                          if(!istempexpr($1)||!istempexpr($3)) resettemp();
+                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
                                                          emit(if_less,$1,$3,$$,0,yylineno);
                                                          emit(assign,newexpr_constbool(0),NULL,$$,0,yylineno);
@@ -154,7 +206,7 @@ expr:           assignexpr                              {printf("Found assignmen
                                                         }
                 | expr LESSEQ expr                      {printf("Found expression <= expression\n"); 
                                                          $$ = newexpr(boolexpr_e);
-                                                          if(!istempexpr($1)||!istempexpr($3)) resettemp();
+                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
                                                          emit(if_lesseq,$1,$3,$$,0,yylineno);
                                                          emit(assign,newexpr_constbool(0),NULL,$$,0,yylineno);
@@ -163,7 +215,7 @@ expr:           assignexpr                              {printf("Found assignmen
                                                         }
                 | expr EQ expr                          {printf("Found expression == expression\n");
                                                          $$ = newexpr(boolexpr_e);
-                                                          if(!istempexpr($1)||!istempexpr($3)) resettemp();
+                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
                                                          emit(if_eq,$1,$3,$$,0,yylineno);
                                                          emit(assign,newexpr_constbool(0),NULL,$$,0,yylineno);
@@ -172,7 +224,7 @@ expr:           assignexpr                              {printf("Found assignmen
                                                         }
                 | expr NEQ expr                         {printf("Found expression != expression\n");
                                                          $$ = newexpr(boolexpr_e);
-                                                          if(!istempexpr($1)||!istempexpr($3)) resettemp();
+                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
                                                          emit(if_noteq,$1,$3,$$,0,yylineno);
                                                          emit(assign,newexpr_constbool(0),NULL,$$,0,yylineno);
@@ -181,7 +233,7 @@ expr:           assignexpr                              {printf("Found assignmen
                                                         }
                 | expr AND expr                         {printf("Found expression && expression\n");
                                                          $$ = newexpr(boolexpr_e);
-                                                          if(!istempexpr($1)||!istempexpr($3)) resettemp();
+                                                         if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
                                                          emit(and,$1,$3,$$,0,yylineno);
                                                         }
@@ -204,13 +256,13 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                          $$ = newexpr(arithexpr_e);
                                                          $$->sym = istempexpr($2) ? $2->sym : newtemp();
                                                          emit(uminus,$2,NULL,$$,0,yylineno);
-                                                         resettemp();
+                                                         //resettemp();
                                                         }
                 | NOT expr                              {printf("Found !expression\n"); 
                                                          $$ = newexpr(boolexpr_e);
                                                          $$->sym = newtemp();
                                                          emit(not,$2,NULL,$$,0,yylineno);
-                                                         resettemp();
+                                                         //resettemp();
                                                         }
                 | PPLUS lvalue                          {printf("Found ++lvalue\n"); 
                                                          check_arith($2,NULL);
@@ -223,7 +275,7 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                          } else {
                                                             emit(add,$2,newexpr_constint(1),$2,0,yylineno);
                                                             emit(assign,$2,NULL,$$,0,yylineno);
-                                                            resettemp();
+                                                            //resettemp();
                                                          }
                                                         }
                 | lvalue PPLUS                          {printf("Found lvalue++\n"); 
@@ -238,7 +290,7 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                          } else {
                                                             emit(assign,$1,NULL,$$,0,yylineno);
                                                             emit(add,$1,newexpr_constint(1),$1,0,yylineno);
-                                                            resettemp();
+                                                            //resettemp();
                                                          }
                                                         }
                 | MMINUS lvalue                         {printf("Found --lvalue\n"); 
@@ -252,7 +304,7 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                          } else {
                                                             emit(sub,$2,newexpr_constint(1),$2,0,yylineno);
                                                             emit(assign,$2,NULL,$$,0,yylineno);
-                                                            resettemp();
+                                                            //resettemp();
                                                          }
                                                         }
                 | lvalue MMINUS                         {printf("Found lvalue--\n"); 
@@ -267,7 +319,7 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                          } else {
                                                             emit(assign,$1,NULL,$$,0,yylineno);
                                                             emit(sub,$1,newexpr_constint(1),$1,0,yylineno);
-                                                            resettemp();
+                                                            //resettemp();
                                                          }
                                                         }
                 | primary                               {printf("Found primary\n"); 
@@ -285,7 +337,7 @@ assignexpr:     lvalue ASSIGN expr                      {printf("Found lvalue=ex
                                                             $$ = newexpr(assignexpr_e);
                                                             $$->sym = newtemp();
                                                             emit(assign,$1,NULL,$$,0,yylineno);
-                                                            resettemp();
+                                                            //resettemp();
                                                          }
                                                         }
                 ;
@@ -459,7 +511,7 @@ objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n
                                                             emit(tablesetelem,newexpr_constint(i++),$2,t,0,yylineno);
                                                          }
                                                          $$ = t;
-                                                         resettemp();
+                                                         //resettemp();
                                                         }
                 | LSQBRACE indexed RSQBRACE             {printf("Found [indexed]\n"); 
                                                          expr* t = newexpr(newtable_e);
@@ -469,7 +521,7 @@ objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n
                                                             emit(tablesetelem,$2->index,$2,t,0,yylineno);
                                                          }
                                                          $$ = t;
-                                                         resettemp();
+                                                         //resettemp();
                                                         }
                 ;
 

@@ -403,7 +403,7 @@ void printexpr(expr *item){
             printf("%-*f \t",20,item->doubleConst);
         }
         else if(item->type==conststring_e){
-            printf("\"%-*s\" \t",20,item->strConst);
+            printf("\"%s\" \t",item->strConst);
         }
         else if(item->type==constbool_e){
             char *tmp =malloc(10);
