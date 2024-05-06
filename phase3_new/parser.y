@@ -235,13 +235,28 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          $$ = newexpr(boolexpr_e);
                                                          if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
-                                                         emit(and,$1,$3,$$,0,yylineno);
+                                                         emit(if_eq, $2, newexpr_constbool(1), NULL, 0, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(if_eq, $2, newexpr_constbool(1), NULL, 0, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(assign, $$, newexpr_constbool(0), NULL, 0, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(assign, $$, newexpr_constbool(0), NULL, 0, yylineno);
+                                                         //emit(and,$1,$3,$$,0,yylineno);
                                                         }
                 | expr OR expr                          {printf("Found expression || expression\n");
                                                          $$ = newexpr(boolexpr_e);
                                                          if(!istempexpr($1)||!istempexpr($3)) resettemp();
                                                          $$->sym = newtemp();
-                                                         emit(or,$1,$3,$$,0,yylineno);
+                                                         emit(if_eq, $2, newexpr_constbool(1), NULL, 0, yylineno);                                                         emit(if_eq, $2, newexpr_constbool(1), NULL, 0, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(if_eq, $2, newexpr_constbool(1), NULL, 0, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(assign, $$, newexpr_constbool(0), NULL, 0, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(assign, $$, newexpr_constbool(0), NULL, 0, yylineno);
+                                                         
+                                                         //emit(or,$1,$3,$$,0,yylineno);
                                                         }
                 | term                                  {printf("Found term\n"); 
                                                          $$ = $1;
@@ -261,7 +276,11 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                 | NOT expr                              {printf("Found !expression\n"); 
                                                          $$ = newexpr(boolexpr_e);
                                                          $$->sym = newtemp();
-                                                         emit(not,$2,NULL,$$,0,yylineno);
+                                                         emit(if_eq, $2, newexpr_constbool(1), NULL, 0, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(assign, $$, newexpr_constbool(0), NULL, 0, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(assign, $$, newexpr_constbool(1), NULL, 0, yylineno);
                                                          //resettemp();
                                                         }
                 | PPLUS lvalue                          {printf("Found ++lvalue\n"); 
