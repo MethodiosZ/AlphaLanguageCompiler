@@ -682,11 +682,21 @@ block:          LBRACE {scope++;} inblock RBRACE        {Hide(scope);
                                                         }
                 ;
 
-ifstmt:         IF LPAR expr RPAR {scope++;} stmt       {Hide(scope);
+ifstmt:         IF LPAR expr RPAR                        {scope++;
+                                                          //emit boolean
+                                                          emit(if_eq,$3,newexpr_constbool('T'),NULL,nextquad()+3,yylineno);
+                                                          $$ = nextquad();
+                                                          emit(jump,NULL,NULL,NULL,0,yylineno); 
+                                                         }
+               stmt                                      {Hide(scope);
                                                          scope--;
                                                          printf("Found if(expression) statement\n"); 
-                                                        }
-                | ifstmt ELSE {scope++;} stmt           {Hide(scope);
+                                                         }
+                | ifstmt ELSE                            {scope++;
+                                                          $1 = nextquad();
+                                                          emit(jump,NULL,NULL,NULL,0,yylineno); 
+                                                         } 
+                stmt                                     {Hide(scope);
                                                          scope--;
                                                          printf("Found if(expression) statement else statement\n"); 
                                                         }
