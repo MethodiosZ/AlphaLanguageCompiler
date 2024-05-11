@@ -108,7 +108,7 @@ unsigned int istempexpr(expr *e);
 void make_stmt(stmt_t *s);
 int newlist(int i);
 int mergelist(int l1,int l2);
-void pathclist(int list,int label);
+void patchlist(int list,int label);
 void printQuads();
 const char* getopcode(iopcode op);
 const char* getlabel(unsigned label);
@@ -117,5 +117,6 @@ void resettemp();
 symb* newsymbol(char *name);
 void printexpr(expr *item);
 symb* SymTableItemtoQuadItem(Sym *item);
+expr* emitifboolean(expr *e);
 
 #endif

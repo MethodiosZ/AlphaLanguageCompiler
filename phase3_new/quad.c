@@ -253,7 +253,7 @@ int mergelist(int l1,int l2){
     }
 }
 
-void pathclist(int list,int label){
+void patchlist(int list,int label){
     while(list){
         int next = quads[list].label;
         quads[next].label = label;
@@ -461,4 +461,20 @@ symb* SymTableItemtoQuadItem(Sym *item){
         e->name = item->value.FuncVal->name;
     }
     return e;
+}
+
+expr* emitifboolean(expr *e){
+    if(e->type==boolexpr_e){
+        //patchlist(e.)
+        expr *tmp = newexpr(boolexpr_e);
+        tmp->sym = newtemp();
+        emit(assign,newexpr_constbool('T'),NULL,tmp,0,0);
+        emit(jump,NULL,NULL,NULL,nextquad()+2,0);
+        //patchlist
+        emit(assign,newexpr_constbool('F'),NULL,tmp,0,0);
+        return tmp;
+    }
+    else{
+        return e;
+    }
 }
