@@ -113,6 +113,8 @@ stmt:           expr SEMI                                {printf("Found expressi
 
 expr:           assignexpr                              {printf("Found assignment expression\n");}
                 | expr ADD expr                         {printf("Found expression + expression\n");
+                                                         check_arith($1,"");
+                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -126,6 +128,8 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          emit(add,$1,$3,$$,0,yylineno);
                                                         }
                 | expr SUB expr                         {printf("Found expression - expression\n");
+                                                         check_arith($1,"");
+                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -139,6 +143,8 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          emit(sub,$1,$3,$$,0,yylineno);
                                                         }
                 | expr MUL expr                         {printf("Found expression * expression\n");
+                                                         check_arith($1,"");
+                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -152,6 +158,8 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          emit(mul,$1,$3,$$,0,yylineno);
                                                         }
                 | expr DIV expr                         {printf("Found expression / expression\n");
+                                                         check_arith($1,"");
+                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -165,6 +173,8 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          emit(divd,$1,$3,$$,0,yylineno);
                                                         }
                 | expr MOD expr                         {printf("Found expression MOD expression\n");
+                                                         check_arith($1,"");
+                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -178,6 +188,8 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          emit(mod,$1,$3,$$,0,yylineno);
                                                         }
                 | expr MORE expr                        {printf("Found expression > expression\n");
+                                                         check_arith($1,"");
+                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -507,9 +519,18 @@ call:           call LPAR elist RPAR                    {printf("Found call(elis
                 | lvalue callsuffix                     {printf("Found lvalue callsuffix\n"); 
                                                          $1 = emit_iftableitem($1);
                                                          if($2->method){
-                                                            expr* t = $1;
+                                                            expr *t = $1;
                                                             $1 = emit_iftableitem(member_item(t,$2->name));
-                                                            $2->elist->next = t;
+                                                            expr *tmp;
+                                                            if($2->elist != NULL){
+                                                               tmp = $2->elist;
+                                                               while(tmp->next != NULL){
+                                                                  tmp = tmp->next;
+                                                               }
+                                                               tmp->next = NULL;
+                                                               t->next = $2->elist;
+                                                               $2->elist = t;
+                                                            }
                                                          }
                                                          $$ = make_call($1,$2->elist);
                                                         }
@@ -529,6 +550,7 @@ callsuffix:     normcall                                {printf("Found normal ca
                 ;
 
 normcall:       LPAR elist RPAR                         {printf("Found (elist)\n"); 
+                                                         $$  = malloc(sizeof(fcall));
                                                          $$->elist = $2;
                                                          $$->method = 0;
                                                          $$->name = NULL;

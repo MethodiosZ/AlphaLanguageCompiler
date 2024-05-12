@@ -465,12 +465,12 @@ symb* SymTableItemtoQuadItem(Sym *item){
 
 expr* emitifboolean(expr *e){
     if(e->type==boolexpr_e){
-        //patchlist(e.)
+        patchlist(e->truelabel,nextquad());
         expr *tmp = newexpr(boolexpr_e);
         tmp->sym = newtemp();
         emit(assign,newexpr_constbool('T'),NULL,tmp,0,0);
         emit(jump,NULL,NULL,NULL,nextquad()+2,0);
-        //patchlist
+        patchlist(e->falselabel,nextquad());
         emit(assign,newexpr_constbool('F'),NULL,tmp,0,0);
         return tmp;
     }

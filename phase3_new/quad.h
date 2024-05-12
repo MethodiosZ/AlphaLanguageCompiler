@@ -57,6 +57,8 @@ typedef struct expr{
 	char 	        *strConst;
 	unsigned char   boolConst;
 	struct expr	    *next;
+	int 			truelabel;
+	int 			falselabel;
 } expr;
 
 typedef struct quad{
