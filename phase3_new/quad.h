@@ -57,8 +57,6 @@ typedef struct expr{
 	char 	        *strConst;
 	unsigned char   boolConst;
 	struct expr	    *next;
-	int 			truelabel;
-	int 			falselabel;
 } expr;
 
 typedef struct quad{
@@ -119,6 +117,5 @@ void resettemp();
 symb* newsymbol(char *name);
 void printexpr(expr *item);
 symb* SymTableItemtoQuadItem(Sym *item);
-expr* emitifboolean(expr *e);
 
 #endif

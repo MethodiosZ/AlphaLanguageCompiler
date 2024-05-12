@@ -200,13 +200,15 @@ expr:           assignexpr                              {printf("Found assignmen
                                                             $$ = newexpr(boolexpr_e);
                                                             $$->sym = newtemp(); 
                                                          }
-                                                         emit(if_greater,$3,NULL,$1,0,yylineno);
-                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
+                                                         emit(if_greater,$1,$3,NULL,nextquad()+3,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+4,yylineno);
                                                          emit(assign,newexpr_constbool('T'),NULL,$$,0,yylineno);
-                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+3,yylineno);
                                                          emit(assign,newexpr_constbool('F'),NULL,$$,0,yylineno);
                                                         }
                 | expr MOREEQ expr                      {printf("Found expression >= expression\n"); 
+                                                         check_arith($1,"");
+                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -217,13 +219,15 @@ expr:           assignexpr                              {printf("Found assignmen
                                                             $$ = newexpr(boolexpr_e);
                                                             $$->sym = newtemp(); 
                                                          }
-                                                         emit(if_greatereq,$3,NULL,$1,0,yylineno);
-                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
+                                                         emit(if_greatereq,$1,$3,NULL,nextquad()+3,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+4,yylineno);
                                                          emit(assign,newexpr_constbool('T'),NULL,$$,0,yylineno);
-                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+3,yylineno);
                                                          emit(assign,newexpr_constbool('F'),NULL,$$,0,yylineno);
                                                         }
                 | expr LESS expr                        {printf("Found expression < expression\n"); 
+                                                         check_arith($1,"");
+                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -234,13 +238,15 @@ expr:           assignexpr                              {printf("Found assignmen
                                                             $$ = newexpr(boolexpr_e);
                                                             $$->sym = newtemp(); 
                                                          }
-                                                         emit(if_less,$3,NULL,$1,0,yylineno);
-                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
+                                                         emit(if_less,$1,$3,NULL,nextquad()+3,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+4,yylineno);
                                                          emit(assign,newexpr_constbool('T'),NULL,$$,0,yylineno);
-                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+3,yylineno);
                                                          emit(assign,newexpr_constbool('F'),NULL,$$,0,yylineno);
                                                         }
                 | expr LESSEQ expr                      {printf("Found expression <= expression\n"); 
+                                                         check_arith($1,"");
+                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -251,13 +257,15 @@ expr:           assignexpr                              {printf("Found assignmen
                                                             $$ = newexpr(boolexpr_e);
                                                             $$->sym = newtemp(); 
                                                          }
-                                                         emit(if_lesseq,$3,NULL,$1,0,yylineno);
-                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
+                                                         emit(if_lesseq,$1,$3,NULL,nextquad()+3,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+4,yylineno);
                                                          emit(assign,newexpr_constbool('T'),NULL,$$,0,yylineno);
-                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+3,yylineno);
                                                          emit(assign,newexpr_constbool('F'),NULL,$$,0,yylineno);
                                                         }
                 | expr EQ expr                          {printf("Found expression == expression\n");
+                                                         check_arith($1,"");
+                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -268,13 +276,15 @@ expr:           assignexpr                              {printf("Found assignmen
                                                             $$ = newexpr(boolexpr_e);
                                                             $$->sym = newtemp(); 
                                                          }
-                                                         emit(if_eq,$3,NULL,$1,0,yylineno);
-                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
+                                                         emit(if_eq,$1,$3,NULL,nextquad()+3,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+4,yylineno);
                                                          emit(assign,newexpr_constbool('T'),NULL,$$,0,yylineno);
-                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+3,yylineno);
                                                          emit(assign,newexpr_constbool('F'),NULL,$$,0,yylineno);
                                                         }
                 | expr NEQ expr                         {printf("Found expression != expression\n");
+                                                         check_arith($1,"");
+                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -285,13 +295,15 @@ expr:           assignexpr                              {printf("Found assignmen
                                                             $$ = newexpr(boolexpr_e);
                                                             $$->sym = newtemp(); 
                                                          }
-                                                         emit(if_noteq,$3,NULL,$1,0,yylineno);
-                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
+                                                         emit(if_noteq,$1,$3,NULL,nextquad()+3,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+4,yylineno);
                                                          emit(assign,newexpr_constbool('T'),NULL,$$,0,yylineno);
-                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+3,yylineno);
                                                          emit(assign,newexpr_constbool('F'),NULL,$$,0,yylineno);
                                                         }
-                | expr AND expr                         {printf("Found expression && expression\n");
+                | expr AND expr                         {printf("Found expression and expression\n");
+                                                         check_arith($1,"");
+                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -302,15 +314,17 @@ expr:           assignexpr                              {printf("Found assignmen
                                                             $$ = newexpr(boolexpr_e);
                                                             $$->sym = newtemp(); 
                                                          }
-                                                         emit(if_eq,newexpr_constbool('T'),NULL,$1, 0, yylineno);
-                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
-                                                         emit(if_eq,newexpr_constbool('T'),NULL,$3, 0, yylineno);
-                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(if_eq,newexpr_constbool('T'),NULL,$1, nextquad()+3, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, nextquad()+6, yylineno);
+                                                         emit(if_eq,newexpr_constbool('T'),NULL,$3, nextquad()+3, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, nextquad()+4, yylineno);
                                                          emit(assign, newexpr_constbool('T'),NULL,$$, 0, yylineno);
-                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, nextquad()+3, yylineno);
                                                          emit(assign,newexpr_constbool('F'),NULL,$$, 0, yylineno);
                                                         }
-                | expr OR expr                          {printf("Found expression || expression\n");
+                | expr OR expr                          {printf("Found expression or expression\n");
+                                                         check_arith($1,"");
+                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -321,12 +335,12 @@ expr:           assignexpr                              {printf("Found assignmen
                                                             $$ = newexpr(boolexpr_e);
                                                             $$->sym = newtemp(); 
                                                          }
-                                                         emit(if_eq, newexpr_constbool('T'),NULL,$1, 0, yylineno);
-                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
-                                                         emit(if_eq, newexpr_constbool('T'),NULL,$3, 0, yylineno);
-                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(if_eq, newexpr_constbool('T'),NULL,$1, nextquad()+5, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, nextquad()+2, yylineno);
+                                                         emit(if_eq, newexpr_constbool('T'),NULL,$3, nextquad()+3, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, nextquad()+4, yylineno);
                                                          emit(assign, newexpr_constbool('T'),NULL,$$, 0, yylineno);
-                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, nextquad()+3, yylineno);
                                                          emit(assign, newexpr_constbool('F'),NULL,$$, 0, yylineno);
                                                         }
                 | term                                  {printf("Found term\n"); 
@@ -343,7 +357,7 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                          $$->sym = istempexpr($2) ? $2->sym : newtemp();
                                                          emit(uminus,$2,NULL,$$,0,yylineno);
                                                         }
-                | NOT expr                              {printf("Found !expression\n"); 
+                | NOT expr                              {printf("Found not expression\n"); 
                                                          if(istempexpr($2)){
                                                             $$ = $2;
                                                          }
@@ -351,10 +365,10 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
                                                             $$ = newexpr(boolexpr_e);
                                                             $$->sym = newtemp(); 
                                                          }
-                                                         emit(if_eq, newexpr_constbool('T'), NULL,$2, 0, yylineno);
-                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(if_eq, newexpr_constbool('T'), NULL,$2, nextquad()+5, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, nextquad()+2, yylineno);
                                                          emit(assign,newexpr_constbool('T'),NULL, $$, 0, yylineno);
-                                                         emit(jump, NULL, NULL, NULL, 0, yylineno);
+                                                         emit(jump, NULL, NULL, NULL, nextquad()+3, yylineno);
                                                          emit(assign,newexpr_constbool('F'), NULL,$$, 0, yylineno);
                                                         }
                 | PPLUS lvalue                          {printf("Found ++lvalue\n"); 
@@ -418,7 +432,7 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
 
 assignexpr:     lvalue ASSIGN expr                      {printf("Found lvalue=expression\n");
                                                          if($1->type==tableitem_e){
-                                                            emit(tablesetelem,$1,$1->index,$3,0,yylineno);
+                                                            emit(tablesetelem,$3,$1->index,$1,0,yylineno);
                                                             $$=emit_iftableitem($1);
                                                             $$->type = assignexpr_e;
                                                          } else {
@@ -426,7 +440,6 @@ assignexpr:     lvalue ASSIGN expr                      {printf("Found lvalue=ex
                                                             $$ = newexpr(assignexpr_e);
                                                             $$->sym = newtemp();
                                                             emit(assign,$1,NULL,$$,0,yylineno);
-                                                            //resettemp();
                                                          }
                                                         }
                 ;
@@ -558,6 +571,7 @@ normcall:       LPAR elist RPAR                         {printf("Found (elist)\n
                 ;
 
 methodcall:     DDOT ID LPAR elist RPAR                 {printf("Found ..id(elist)\n"); 
+                                                         $$  = malloc(sizeof(fcall));
                                                          $$->elist= $4;
                                                          $$->method = 1;
                                                          $$->name = $2;

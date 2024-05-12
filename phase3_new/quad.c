@@ -271,7 +271,7 @@ void printQuads(){
         if(quads[i].op==assign){
             printexpr(quads[i].result);
             printexpr(quads[i].arg1);
-            printf("%-*s \t",20,"\t");
+            printf("%-*s \t",10,"\t");
         }
         else if(quads[i].op==add||quads[i].op==sub||quads[i].op==mul||quads[i].op==divd||quads[i].op==mod){
             printexpr(quads[i].result);
@@ -286,7 +286,7 @@ void printQuads(){
         else if(quads[i].op==not||quads[i].op==uminus){
             printexpr(quads[i].result);
             printexpr(quads[i].arg1);
-            printf("%-*s \t",20,"\t");
+            printf("%-*s \t",10,"\t");
         }
         else if(quads[i].op==if_eq||quads[i].op==if_noteq){
             printexpr(quads[i].result);
@@ -305,18 +305,18 @@ void printQuads(){
         }
         else if(quads[i].op==call||quads[i].op==ret||quads[i].op==param){
             printexpr(quads[i].result);
-            printf("%-*s \t",20,"\t");
-            printf("%-*s \t",20,"\t");
+            printf("%-*s \t",10,"\t");
+            printf("%-*s \t",10,"\t");
         }
         else if(quads[i].op==getretval||quads[i].op==tablecreate||quads[i].op==jump||quads[i].op==funcend){
             printexpr(quads[i].result);
-            printf("%-*s \t",20,"\t");
-            printf("%-*s \t",20,"\t");
+            printf("%-*s \t",10,"\t");
+            printf("%-*s \t",10,"\t");
         }
         else if(quads[i].op==funcstart){
             printexpr(quads[i].result);
-            printf("%-*s \t",20,"\t");
-            printf("%-*s \t",20,"\t");
+            printf("%-*s \t",10,"\t");
+            printf("%-*s \t",10,"\t");
         }
         else if(quads[i].op==tablegetelem||quads[i].op==tablesetelem){
             printexpr(quads[i].result);
@@ -387,7 +387,7 @@ symb* newsymbol(char *name){
 
 void printexpr(expr *item){
     if(item==NULL){
-        printf("%-*s \t",20,"\t");
+        printf("%-*s \t",10,"\t");
     } 
     else{
         if(item->type==var_e){
@@ -461,20 +461,4 @@ symb* SymTableItemtoQuadItem(Sym *item){
         e->name = item->value.FuncVal->name;
     }
     return e;
-}
-
-expr* emitifboolean(expr *e){
-    if(e->type==boolexpr_e){
-        patchlist(e->truelabel,nextquad());
-        expr *tmp = newexpr(boolexpr_e);
-        tmp->sym = newtemp();
-        emit(assign,newexpr_constbool('T'),NULL,tmp,0,0);
-        emit(jump,NULL,NULL,NULL,nextquad()+2,0);
-        patchlist(e->falselabel,nextquad());
-        emit(assign,newexpr_constbool('F'),NULL,tmp,0,0);
-        return tmp;
-    }
-    else{
-        return e;
-    }
 }
