@@ -432,7 +432,7 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
 
 assignexpr:     lvalue ASSIGN expr                      {printf("Found lvalue=expression\n");
                                                          if($1->type==tableitem_e){
-                                                            emit(tablesetelem,$3,$1->index,$1,0,yylineno);
+                                                            emit(tablesetelem,$1->index,$3,$1,0,yylineno);
                                                             $$=emit_iftableitem($1);
                                                             $$->type = assignexpr_e;
                                                          } else {
