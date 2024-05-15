@@ -23,6 +23,10 @@ int scope=0;
 int anonymfcounter=0;
 int status;
 char buffer[64];
+int whilestartquad;
+int forstartquad;
+int jumpstart;
+int jumpend;
 %}
 
 %union{
@@ -188,8 +192,6 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          emit(mod,$1,$3,$$,0,yylineno);
                                                         }
                 | expr MORE expr                        {printf("Found expression > expression\n");
-                                                         check_arith($1,"");
-                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -207,8 +209,6 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          emit(assign,newexpr_constbool('F'),NULL,$$,0,yylineno);
                                                         }
                 | expr MOREEQ expr                      {printf("Found expression >= expression\n"); 
-                                                         check_arith($1,"");
-                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -226,8 +226,6 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          emit(assign,newexpr_constbool('F'),NULL,$$,0,yylineno);
                                                         }
                 | expr LESS expr                        {printf("Found expression < expression\n"); 
-                                                         check_arith($1,"");
-                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -245,8 +243,6 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          emit(assign,newexpr_constbool('F'),NULL,$$,0,yylineno);
                                                         }
                 | expr LESSEQ expr                      {printf("Found expression <= expression\n"); 
-                                                         check_arith($1,"");
-                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -264,8 +260,6 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          emit(assign,newexpr_constbool('F'),NULL,$$,0,yylineno);
                                                         }
                 | expr EQ expr                          {printf("Found expression == expression\n");
-                                                         check_arith($1,"");
-                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -283,8 +277,6 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          emit(assign,newexpr_constbool('F'),NULL,$$,0,yylineno);
                                                         }
                 | expr NEQ expr                         {printf("Found expression != expression\n");
-                                                         check_arith($1,"");
-                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -302,8 +294,6 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          emit(assign,newexpr_constbool('F'),NULL,$$,0,yylineno);
                                                         }
                 | expr AND expr                         {printf("Found expression and expression\n");
-                                                         check_arith($1,"");
-                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -323,8 +313,6 @@ expr:           assignexpr                              {printf("Found assignmen
                                                          emit(assign,newexpr_constbool('F'),NULL,$$, 0, yylineno);
                                                         }
                 | expr OR expr                          {printf("Found expression or expression\n");
-                                                         check_arith($1,"");
-                                                         check_arith($3,"");
                                                          if(istempexpr($1)){
                                                             $$ = $1;
                                                          }
@@ -432,7 +420,7 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
 
 assignexpr:     lvalue ASSIGN expr                      {printf("Found lvalue=expression\n");
                                                          if($1->type==tableitem_e){
-                                                            emit(tablesetelem,$3,$1->index,$1,0,yylineno);
+                                                            emit(tablesetelem,$1->index,$3,$1,0,yylineno);
                                                             $$=emit_iftableitem($1);
                                                             $$->type = assignexpr_e;
                                                          } else {
@@ -631,7 +619,6 @@ objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n
                                                             emit(tablesetelem,newexpr_constint(i++),$2,t,0,yylineno);
                                                          }
                                                          $$ = t;
-                                                         //resettemp();
                                                         }
                 | LSQBRACE indexed RSQBRACE             {printf("Found [indexed]\n"); 
                                                          expr* t = newexpr(newtable_e);
@@ -641,7 +628,6 @@ objectdef:      LSQBRACE elist RSQBRACE                 {printf("Found [elist]\n
                                                             emit(tablesetelem,$2->index,$2,t,0,yylineno);
                                                          }
                                                          $$ = t;
-                                                         //resettemp();
                                                         }
                 ;
 
@@ -738,23 +724,41 @@ ifstmt:         IF LPAR expr RPAR                        {scope++;
                                                         }
                 ;
 
-whilestmt:      WHILE LPAR expr RPAR {scope++;} stmt    {Hide(scope);
+whilestmt:      WHILE LPAR                              {whilestartquad=nextquad()+1;}
+                expr RPAR                               {scope++;
+                                                         emit(if_eq,newexpr_constbool('T'),NULL,$4,nextquad()+3,yylineno);
+                                                         jumpend=nextquad();
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+3,yylineno);
+                                                        } 
+                stmt                                    {Hide(scope);
                                                          scope--;
-                                                         printf("Found while(expression) statement\n"); 
+                                                         printf("Found while(expression) statement\n");
+                                                         emit(jump,NULL,NULL,NULL,whilestartquad,yylineno);
+                                                         if(nextquad()+1!=quads[jumpend].label){
+                                                            patchlabel(jumpend,nextquad()+1);
+                                                         } 
                                                         }
                 ;
 
-forstmt:        FOR LPAR elist SEMI expr SEMI elist RPAR {scope++;} stmt    {Hide(scope);
-                                                                             scope--;
-                                                                             printf("Found for(elist;expression;elist) statement\n"); 
-                                                                            }
+forstmt:        FOR LPAR                                {forstartquad=nextquad()+1;}
+                elist SEMI expr SEMI                    {emit(if_eq,newexpr_constbool('T'),NULL,$6,nextquad()+6,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+6,yylineno);
+                                                        }
+                elist RPAR                              {scope++;
+                                                         emit(jump,NULL,NULL,NULL,nextquad()-8,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()-2,yylineno);
+                                                        } 
+                stmt                                    {Hide(scope);
+                                                         scope--;
+                                                         printf("Found for(elist;expression;elist) statement\n"); 
+                                                        }
                 ;
 
 returnstmt:     RET SEMI                                {printf("Found return;\n"); 
                                                          emit(ret,NULL,NULL,NULL,0,yylineno);
                                                         }
                 | RET expr SEMI                         {printf("Found return expression;\n"); 
-                                                         emit(ret,$2,NULL,NULL,0,yylineno);
+                                                         emit(ret,NULL,NULL,$2,0,yylineno);
                                                         }
                 ;
 

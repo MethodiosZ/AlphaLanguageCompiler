@@ -126,7 +126,7 @@ unsigned nextquad(){
 }
 
 void patchlabel(unsigned quadNo,unsigned label){
-    assert(quadNo < currQuad && !quads[quadNo].label);
+    assert(quadNo < currQuad);
     quads[quadNo].label = label;
 }
 
