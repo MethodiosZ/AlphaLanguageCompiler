@@ -717,7 +717,7 @@ ifstmt:         IF LPAR expr RPAR                        {scope++;
                stmt                                      {Hide(scope);
                                                          scope--;
                                                          printf("Found if(expression) statement\n");
-                                                         quads[if_jump_index].label = nextquad()+2; 
+                                                         patchlabel(quads[if_jump_index],nextquad()+2); 
                                                          }
                 | ifstmt ELSE                            {scope++;
                                                           else_jump_index = nextquad();
@@ -725,7 +725,7 @@ ifstmt:         IF LPAR expr RPAR                        {scope++;
                                                           emit(jump,NULL,NULL,NULL,0,yylineno); 
                                                          } 
                 stmt                                     {Hide(scope);
-                                                         quads[else_jump_index].label = nextquad()+1;
+                                                         patchlabel(quads[else_jump_index],nextquad()+1); 
                                                          scope--;
                                                          printf("Found if(expression) statement else statement\n"); 
                                                         }
