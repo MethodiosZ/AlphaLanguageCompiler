@@ -27,7 +27,6 @@ int if_jump_index = 0;
 int else_jump_index = 0;
 int whilestartquad;
 int forstartquad;
-int jumpstart;
 int jumpend;
 %}
 
@@ -747,16 +746,20 @@ whilestmt:      WHILE LPAR                              {whilestartquad=nextquad
                                                         }
                 ;
 
-forstmt:        FOR LPAR                                {forstartquad=nextquad()+1;}
-                elist SEMI expr SEMI                    {emit(if_eq,newexpr_constbool('T'),NULL,$6,nextquad()+6,yylineno);
+forstmt:        FOR LPAR elist SEMI expr SEMI           {emit(if_eq,newexpr_constbool('T'),NULL,$5,nextquad()+6,yylineno);
+                                                         jumpend=nextquad();
                                                          emit(jump,NULL,NULL,NULL,nextquad()+6,yylineno);
+                                                         forstartquad=nextquad()+1;
                                                         }
                 elist RPAR                              {scope++;
                                                          emit(jump,NULL,NULL,NULL,nextquad()-8,yylineno);
-                                                         emit(jump,NULL,NULL,NULL,nextquad()-2,yylineno);
                                                         } 
                 stmt                                    {Hide(scope);
                                                          scope--;
+                                                         emit(jump,NULL,NULL,NULL,forstartquad,yylineno);
+                                                         if(nextquad()+1!=quads[jumpend].label){
+                                                            patchlabel(jumpend,nextquad()+1);
+                                                         }
                                                          printf("Found for(elist;expression;elist) statement\n"); 
                                                         }
                 ;
