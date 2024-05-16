@@ -707,24 +707,22 @@ block:          LBRACE {scope++;} inblock RBRACE        {Hide(scope);
                 ;
 
 ifstmt:         IF LPAR expr RPAR                        {scope++;
-                                                          //emit boolean
                                                           emit(if_eq,$3,newexpr_constbool('T'),NULL,nextquad()+3,yylineno);
-                                                          //$$ = nextquad();
                                                           if_jump_index = nextquad();
                                                           emit(jump,NULL,NULL,NULL,0,yylineno); 
                                                          }
                stmt                                      {Hide(scope);
                                                          scope--;
                                                          printf("Found if(expression) statement\n");
-                                                         patchlabel(quads[if_jump_index],nextquad()+2); 
+                                                         patchlabel(if_jump_index,nextquad()+1); 
                                                          }
                 | ifstmt ELSE                            {scope++;
                                                           else_jump_index = nextquad();
-                                                          //$1 = nextquad();
-                                                          emit(jump,NULL,NULL,NULL,0,yylineno); 
+                                                          emit(jump,NULL,NULL,NULL,0,yylineno);
+                                                          patchlabel(if_jump_index,nextquad()+1); 
                                                          } 
                 stmt                                     {Hide(scope);
-                                                         patchlabel(quads[else_jump_index],nextquad()+1); 
+                                                         patchlabel(else_jump_index,nextquad()+1); 
                                                          scope--;
                                                          printf("Found if(expression) statement else statement\n"); 
                                                         }
