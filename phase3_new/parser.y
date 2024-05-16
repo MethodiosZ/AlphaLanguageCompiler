@@ -23,11 +23,12 @@ int scope=0;
 int anonymfcounter=0;
 int status;
 char buffer[64];
-int if_jump_index = 0;
+int *if_jump_index; 
 int else_jump_index = 0;
 int whilestartquad;
 int forstartquad;
 int jumpend;
+int ifcounter=0;
 %}
 
 %union{
@@ -496,10 +497,22 @@ lvalue:         ID                                      {if(Search($1,scope,GLOB
                                                         }
                 ;
 
-member:         lvalue DOT ID                           {printf("Found lvalue.id\n"); 
+member:         lvalue DOT ID                           {printf("Found lvalue.id\n");
+                                                         if($1==NULL){
+                                                            printf("lvalue at line %d not declared\n",yylineno);
+                                                         }
+                                                         else if($1->sym->type == programfunc_s || $1->sym->type == libraryfunc_s ){
+                                                            printf("Invalid member call at line %d, function name \n",yylineno);
+                                                         }
                                                          $$ = member_item($1,$3);
                                                         }
                 | lvalue LSQBRACE expr RSQBRACE         {printf("Found lvalue[expression]\n"); 
+                                                         if($1==NULL){
+                                                            printf("lvalue at line %d not declared\n",yylineno);
+                                                         }
+                                                         else if($1->sym->type == programfunc_s || $1->sym->type == libraryfunc_s ){
+                                                            printf("Invalid lvalue array at line %d, function name \n",yylineno);
+                                                         }
                                                          $1 = emit_iftableitem($1);
                                                          $$ = newexpr(tableitem_e);
                                                          $$->sym = $1->sym;
@@ -569,9 +582,6 @@ methodcall:     DDOT ID LPAR elist RPAR                 {printf("Found ..id(elis
                 ;
 
 elist:          expr                                     {printf("Found expression\n"); 
-                                                          if($1->type==boolexpr_e){
-                                                            //handle boolean
-                                                          }
                                                           $$ = $1;
                                                           $$->next = NULL;
                                                          } 
@@ -581,9 +591,6 @@ elist:          expr                                     {printf("Found expressi
                                                             t=$1;
                                                             while(t->next){
                                                                t=t->next;
-                                                            }
-                                                            if($3->type==boolexpr_e){
-                                                               //handle boolean
                                                             }
                                                             t->next=$3;
                                                             $3->next=NULL;
@@ -708,18 +715,24 @@ block:          LBRACE {scope++;} inblock RBRACE        {Hide(scope);
 
 ifstmt:         IF LPAR expr RPAR                        {scope++;
                                                           emit(if_eq,$3,newexpr_constbool('T'),NULL,nextquad()+3,yylineno);
-                                                          if_jump_index = nextquad();
+                                                          if(ifcounter==0){
+                                                            if_jump_index = (int*)calloc(1,sizeof(int));
+                                                          }
+                                                          else if(ifcounter>0){
+                                                            if_jump_index = realloc(if_jump_index,sizeof(int)*ifcounter+1);
+                                                          }
+                                                          if_jump_index[ifcounter++] = nextquad();
                                                           emit(jump,NULL,NULL,NULL,0,yylineno); 
                                                          }
                stmt                                      {Hide(scope);
                                                          scope--;
                                                          printf("Found if(expression) statement\n");
-                                                         patchlabel(if_jump_index,nextquad()+1); 
+                                                         patchlabel(if_jump_index[--ifcounter],nextquad()+1); 
                                                          }
                 | ifstmt ELSE                            {scope++;
                                                           else_jump_index = nextquad();
                                                           emit(jump,NULL,NULL,NULL,0,yylineno);
-                                                          patchlabel(if_jump_index,nextquad()+1); 
+                                                          patchlabel(if_jump_index[ifcounter],nextquad()+1); 
                                                          } 
                 stmt                                     {Hide(scope);
                                                          patchlabel(else_jump_index,nextquad()+1); 
