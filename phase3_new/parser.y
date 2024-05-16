@@ -25,10 +25,13 @@ int status;
 char buffer[64];
 int *if_jump_index; 
 int else_jump_index = 0;
-int whilestartquad;
-int forstartquad;
-int jumpend;
+int *whilestartquad;
+int *whileendjump;
+int *forstartquad;
+int *forjumpend;
 int ifcounter=0;
+int whilecounter=0;
+int forcounter=0;
 %}
 
 %union{
@@ -741,36 +744,49 @@ ifstmt:         IF LPAR expr RPAR                        {scope++;
                                                         }
                 ;
 
-whilestmt:      WHILE LPAR                              {whilestartquad=nextquad()+1;}
+whilestmt:      WHILE LPAR                              {if(whilecounter==0){
+                                                            whilestartquad = (int*)calloc(1,sizeof(int));
+                                                            whileendjump = (int*)calloc(1,sizeof(int));
+                                                          }
+                                                          else if(whilecounter>0){
+                                                            whilestartquad = realloc(whilestartquad,sizeof(int)*whilecounter+1);
+                                                            whileendjump = realloc(whileendjump,sizeof(int)*whilecounter+1);
+                                                          }
+                                                         whilestartquad[whilecounter]=nextquad()+1;
+                                                        }
                 expr RPAR                               {scope++;
                                                          emit(if_eq,newexpr_constbool('T'),NULL,$4,nextquad()+3,yylineno);
-                                                         jumpend=nextquad();
+                                                         whileendjump[whilecounter++]=nextquad();
                                                          emit(jump,NULL,NULL,NULL,nextquad()+3,yylineno);
                                                         } 
                 stmt                                    {Hide(scope);
                                                          scope--;
                                                          printf("Found while(expression) statement\n");
-                                                         emit(jump,NULL,NULL,NULL,whilestartquad,yylineno);
-                                                         if(nextquad()+1!=quads[jumpend].label){
-                                                            patchlabel(jumpend,nextquad()+1);
-                                                         } 
+                                                         emit(jump,NULL,NULL,NULL,whilestartquad[--whilecounter],yylineno);
+                                                         patchlabel(whileendjump[whilecounter],nextquad()+1);
                                                         }
                 ;
 
-forstmt:        FOR LPAR elist SEMI expr SEMI           {emit(if_eq,newexpr_constbool('T'),NULL,$5,nextquad()+6,yylineno);
-                                                         jumpend=nextquad();
+forstmt:        FOR LPAR elist SEMI expr SEMI           {if(forcounter==0){
+                                                            forstartquad = (int*)calloc(1,sizeof(int));
+                                                            forjumpend = (int*)calloc(1,sizeof(int));
+                                                          }
+                                                          else if(forcounter>0){
+                                                            forstartquad = realloc(forstartquad,sizeof(int)*forcounter+1);
+                                                            forjumpend = realloc(forjumpend,sizeof(int)*forcounter+1);
+                                                          }
+                                                         emit(if_eq,newexpr_constbool('T'),NULL,$5,nextquad()+6,yylineno);
+                                                         forjumpend[forcounter]=nextquad();
                                                          emit(jump,NULL,NULL,NULL,nextquad()+6,yylineno);
-                                                         forstartquad=nextquad()+1;
+                                                         forstartquad[forcounter++]=nextquad()+1;
                                                         }
                 elist RPAR                              {scope++;
                                                          emit(jump,NULL,NULL,NULL,nextquad()-8,yylineno);
                                                         } 
                 stmt                                    {Hide(scope);
                                                          scope--;
-                                                         emit(jump,NULL,NULL,NULL,forstartquad,yylineno);
-                                                         if(nextquad()+1!=quads[jumpend].label){
-                                                            patchlabel(jumpend,nextquad()+1);
-                                                         }
+                                                         emit(jump,NULL,NULL,NULL,forstartquad[--forcounter],yylineno);
+                                                         patchlabel(forjumpend[forcounter],nextquad()+1);
                                                          printf("Found for(elist;expression;elist) statement\n"); 
                                                         }
                 ;
