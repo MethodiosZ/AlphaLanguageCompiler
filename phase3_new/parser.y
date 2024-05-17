@@ -32,6 +32,8 @@ int *forjumpend;
 int ifcounter=0;
 int whilecounter=0;
 int forcounter=0;
+int breakquad=0;
+expr *funcname;
 %}
 
 %union{
@@ -55,9 +57,10 @@ int forcounter=0;
 %token <string>     SEMI DOT DDOT COLON CCOLON COMMA
 
 
-%type <exprValue>       lvalue expr assignexpr term primary const funcdef
+%type <exprValue>       lvalue expr assignexpr term primary const 
 %type <exprValue>       ifstmt whilestmt forstmt member elist call objectdef
-%type <exprValue>       indexed indexedelem
+%type <exprValue>       indexed indexedelem 
+%type <exprValue>       funcdef
 %type <callValue>       methodcall normcall callsuffix  
 %type <string>          program stmt returnstmt idlist
 %type <string>          block inblock 
@@ -101,11 +104,31 @@ stmt:           expr SEMI                                {printf("Found expressi
                                                          printf("Found return statement\n");
                                                          resettemp();
                                                         }
-                | BREAK SEMI                            {if(scope==0) printf("Syntax Error in line %d cannot break outside of loop\n",yylineno);
-                                                        printf("Found break\n");
-                                                        resettemp();
+                | BREAK SEMI                            {if(whilecounter!=scope && forcounter != scope){
+                                                            printf("Syntax Error in line %d cannot break outside of loop\n",yylineno);
+                                                         }
+                                                         if(whilecounter>0 || forcounter>0){
+                                                            breakquad = nextquad();
+                                                            emit(jump,NULL,NULL,NULL,0,yylineno);           
+                                                         }
+                                                         else{
+                                                            printf("Syntax Error in line %d cannot break outside of loop\n",yylineno);
+                                                         }
+                                                         printf("Found break\n");
+                                                         resettemp();
                                                         }
-                | CONT SEMI                             {if(scope==0) printf("Syntax Error in line %d cannot continue outside of function\n",yylineno);
+                | CONT SEMI                             {if(whilecounter!=scope && forcounter != scope){
+                                                            printf("Syntax Error in line %d cannot continue outside of loop\n",yylineno);
+                                                         }
+                                                         if(whilecounter>0){
+                                                            emit(jump,NULL,NULL,NULL,whilestartquad[whilecounter-1],yylineno);            
+                                                         }
+                                                         else if(forcounter>0){
+                                                            emit(jump,NULL,NULL,NULL,forstartquad[forcounter-1],yylineno);
+                                                         }
+                                                         else{
+                                                            printf("Syntax Error in line %d cannot continue outside of loop\n",yylineno);
+                                                         }
                                                         printf("Found continue\n");
                                                         resettemp();
                                                         }
@@ -665,20 +688,42 @@ indexedelem:    LBRACE expr COLON expr RBRACE            {printf("Found {express
 funcdef:        FUNC ID {if(Search($2,scope,USERFUNC)==NULL){
                             symbol = createSymbol($2,scope,yylineno,USERFUNC);
                             Insert(symbol);
+                            var = newsymbol($2);
+                            var->space = currscopespace();
+                            var->offset = currscopeoffset();
+                            incurrscopeoffset();
+                            funcname = newexpr(programfunc_e);
+                            funcname->sym = var;
+                            emit(jump,NULL,NULL,NULL,0,yylineno);
+                            emit(funcstart,NULL,NULL,funcname,0,yylineno);
                          }
                          else{
                             yyerror("Function already exists\n");
                             yyerrok;
+                            symbol = Search($2,scope,USERFUNC);
+                            var = SymTableItemtoQuadItem(symbol);
+                            funcname = newexpr(programfunc_e);
+                            funcname->sym = var;
+                            emit(jump,NULL,NULL,NULL,0,yylineno);
+                            emit(funcstart,NULL,NULL,funcname,0,yylineno);
                          }
                         }
-                LPAR {scope++;} idlist RPAR {scope--;} block {
-                                                              printf("Found function id(id list) block\n"); 
-                                                             }
+                LPAR {scope++;} idlist RPAR {scope--;} block   {emit(funcend,NULL,NULL,funcname,0,yylineno);
+                                                                $$=funcname;
+                                                                printf("Found function id(id list) block\n"); 
+                                                               }
+
                 | FUNC {snprintf(buffer,sizeof(buffer),"$%d",anonymfcounter++);
                         symbol = createSymbol(buffer,scope,yylineno,USERFUNC);
                         Insert(symbol);
+                        var = SymTableItemtoQuadItem(symbol);
+                        funcname = newexpr(programfunc_e);
+                        funcname->sym = var;
+                        emit(jump,NULL,NULL,NULL,0,yylineno);
+                        emit(funcstart,NULL,NULL,funcname,0,yylineno);
                        }
-                LPAR {scope++;} idlist RPAR {scope--;} block {
+                LPAR {scope++;} idlist RPAR {scope--;} block {emit(funcend,NULL,NULL,funcname,0,yylineno);
+                                                              $$=funcname;
                                                               printf("Found function(id list) block\n"); 
                                                              }
                 ;
@@ -764,6 +809,10 @@ whilestmt:      WHILE LPAR                              {if(whilecounter==0){
                                                          printf("Found while(expression) statement\n");
                                                          emit(jump,NULL,NULL,NULL,whilestartquad[--whilecounter],yylineno);
                                                          patchlabel(whileendjump[whilecounter],nextquad()+1);
+                                                         if(breakquad!=0){
+                                                            patchlabel(breakquad,nextquad()+1);
+                                                            breakquad=0;
+                                                         }
                                                         }
                 ;
 
@@ -775,18 +824,22 @@ forstmt:        FOR LPAR elist SEMI expr SEMI           {if(forcounter==0){
                                                             forstartquad = realloc(forstartquad,sizeof(int)*forcounter+1);
                                                             forjumpend = realloc(forjumpend,sizeof(int)*forcounter+1);
                                                           }
-                                                         emit(if_eq,newexpr_constbool('T'),NULL,$5,nextquad()+6,yylineno);
+                                                         emit(if_eq,newexpr_constbool('T'),NULL,$5,nextquad()+5,yylineno);
                                                          forjumpend[forcounter]=nextquad();
-                                                         emit(jump,NULL,NULL,NULL,nextquad()+6,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()+3,yylineno);
                                                          forstartquad[forcounter++]=nextquad()+1;
                                                         }
                 elist RPAR                              {scope++;
-                                                         emit(jump,NULL,NULL,NULL,nextquad()-8,yylineno);
+                                                         emit(jump,NULL,NULL,NULL,nextquad()-2,yylineno);
                                                         } 
                 stmt                                    {Hide(scope);
                                                          scope--;
                                                          emit(jump,NULL,NULL,NULL,forstartquad[--forcounter],yylineno);
                                                          patchlabel(forjumpend[forcounter],nextquad()+1);
+                                                         if(breakquad!=0) {
+                                                            patchlabel(breakquad,nextquad()+1);
+                                                            breakquad=0;
+                                                         }
                                                          printf("Found for(elist;expression;elist) statement\n"); 
                                                         }
                 ;

@@ -412,7 +412,7 @@ void printexpr(expr *item){
         }
         else if(item->type==constbool_e){
             char *tmp =malloc(10);
-            item->boolConst=='T'? strcat(tmp,"true\0"):strcat(tmp,"false\0");
+            item->boolConst=='T'? strcat(tmp,"'true'\0"):strcat(tmp,"'false'\0");
             printf("%-*s \t",20,tmp);
         }
         else if(item->type==arithexpr_e){
