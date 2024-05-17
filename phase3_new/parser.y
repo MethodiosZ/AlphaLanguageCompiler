@@ -34,6 +34,8 @@ int whilecounter=0;
 int forcounter=0;
 int breakquad=0;
 expr *funcname;
+int *funcendjump;
+int funccounter=0;
 %}
 
 %union{
@@ -60,9 +62,9 @@ expr *funcname;
 %type <exprValue>       lvalue expr assignexpr term primary const 
 %type <exprValue>       ifstmt whilestmt forstmt member elist call objectdef
 %type <exprValue>       indexed indexedelem 
-%type <exprValue>       funcdef
+%type <exprValue>       funcdef idlist
 %type <callValue>       methodcall normcall callsuffix  
-%type <string>          program stmt returnstmt idlist
+%type <string>          program stmt returnstmt 
 %type <string>          block inblock 
 
 %start program
@@ -100,7 +102,7 @@ stmt:           expr SEMI                                {printf("Found expressi
                 | forstmt                                {printf("Found for statement\n");
                                                           resettemp();
                                                          }
-                | returnstmt                            {if(scope==0) printf("Syntax Error in line %d cannot return outside of function\n",yylineno);
+                | returnstmt                            {if(funccounter==0) printf("Syntax Error in line %d cannot return outside of function\n",yylineno);
                                                          printf("Found return statement\n");
                                                          resettemp();
                                                         }
@@ -685,7 +687,13 @@ indexedelem:    LBRACE expr COLON expr RBRACE            {printf("Found {express
 
 
 
-funcdef:        FUNC ID {if(Search($2,scope,USERFUNC)==NULL){
+funcdef:        FUNC ID {if(funccounter==0){
+                           funcendjump = (int*)calloc(1,sizeof(int));
+                         }
+                         else if(funccounter>0){
+                           funcendjump = realloc(funcendjump,sizeof(int)*funccounter+1);
+                         }
+                         if(Search($2,scope,USERFUNC)==NULL){
                             symbol = createSymbol($2,scope,yylineno,USERFUNC);
                             Insert(symbol);
                             var = newsymbol($2);
@@ -694,6 +702,7 @@ funcdef:        FUNC ID {if(Search($2,scope,USERFUNC)==NULL){
                             incurrscopeoffset();
                             funcname = newexpr(programfunc_e);
                             funcname->sym = var;
+                            funcendjump[funccounter++]=nextquad();
                             emit(jump,NULL,NULL,NULL,0,yylineno);
                             emit(funcstart,NULL,NULL,funcname,0,yylineno);
                          }
@@ -704,25 +713,35 @@ funcdef:        FUNC ID {if(Search($2,scope,USERFUNC)==NULL){
                             var = SymTableItemtoQuadItem(symbol);
                             funcname = newexpr(programfunc_e);
                             funcname->sym = var;
+                            funcendjump[funccounter++]=nextquad();
                             emit(jump,NULL,NULL,NULL,0,yylineno);
                             emit(funcstart,NULL,NULL,funcname,0,yylineno);
                          }
                         }
                 LPAR {scope++;} idlist RPAR {scope--;} block   {emit(funcend,NULL,NULL,funcname,0,yylineno);
+                                                                patchlabel(funcendjump[--funccounter],nextquad()+1);
                                                                 $$=funcname;
                                                                 printf("Found function id(id list) block\n"); 
                                                                }
 
-                | FUNC {snprintf(buffer,sizeof(buffer),"$%d",anonymfcounter++);
+                | FUNC {if(funccounter==0){
+                           funcendjump = (int*)calloc(1,sizeof(int));
+                         }
+                         else if(funccounter>0){
+                           funcendjump = realloc(funcendjump,sizeof(int)*funccounter+1);
+                         }
+                        snprintf(buffer,sizeof(buffer),"$%d",anonymfcounter++);
                         symbol = createSymbol(buffer,scope,yylineno,USERFUNC);
                         Insert(symbol);
                         var = SymTableItemtoQuadItem(symbol);
                         funcname = newexpr(programfunc_e);
                         funcname->sym = var;
+                        funcendjump[funccounter++]=nextquad();
                         emit(jump,NULL,NULL,NULL,0,yylineno);
                         emit(funcstart,NULL,NULL,funcname,0,yylineno);
                        }
                 LPAR {scope++;} idlist RPAR {scope--;} block {emit(funcend,NULL,NULL,funcname,0,yylineno);
+                                                              patchlabel(funcendjump[--funccounter],nextquad()+1);
                                                               $$=funcname;
                                                               printf("Found function(id list) block\n"); 
                                                              }
@@ -731,10 +750,20 @@ funcdef:        FUNC ID {if(Search($2,scope,USERFUNC)==NULL){
 idlist:         ID                                      {if(Search($1,scope,FORMAL)==NULL){
                                                             symbol=createSymbol($1,scope,yylineno,FORMAL);
                                                             Insert(symbol);
+                                                            var = newsymbol($1);
+                                                            var->space = currscopespace();
+                                                            var->offset = currscopeoffset();
+                                                            incurrscopeoffset();
+                                                            $$ = newexpr(var_e);
+                                                            $$->sym = var;
                                                          }
                                                          else{
                                                             yyerror("Formal argument already exists\n");
                                                             yyerrok;
+                                                            symbol=Search($1,scope,FORMAL);
+                                                            var = SymTableItemtoQuadItem(symbol);
+                                                            $$ = newexpr(var_e);
+                                                            $$->sym = var;
                                                          }
                                                          printf("Found id\n"); 
                                                         }

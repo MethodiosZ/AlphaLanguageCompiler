@@ -200,10 +200,10 @@ expr* member_item(expr *lv,char *name){
 expr* make_call(expr *lv, expr *reversed_elist){
     expr *func = emit_iftableitem(lv);
     while(reversed_elist){
-        emit(param,reversed_elist,NULL,NULL,0,0);
+        emit(param,NULL,NULL,reversed_elist,0,0);
         reversed_elist = reversed_elist->next;
     }
-    emit(call,func,NULL,NULL,0,0);
+    emit(call,NULL,NULL,func,0,0);
     expr *result = newexpr(var_e);
     result->sym = newtemp();
     emit(getretval,NULL,NULL,result,0,0);
