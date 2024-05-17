@@ -451,7 +451,6 @@ term:           LPAR expr RPAR                          {printf("Found (expressi
 assignexpr:     lvalue ASSIGN expr                      {printf("Found lvalue=expression\n");
                                                          if($1->type==tableitem_e){
                                                             emit(tablesetelem,$1->index,$3,$1,0,yylineno);
-                                                            emit(tablesetelem,$1->index,$3,$1,0,yylineno);
                                                             $$=emit_iftableitem($1);
                                                             $$->type = assignexpr_e;
                                                          } else {
@@ -680,7 +679,8 @@ indexed:        indexedelem                              {printf("Found indexed 
                 | %empty                                
                 ;
 
-indexedelem:    LBRACE expr COLON expr RBRACE            {printf("Found {expression:expression}\n"); 
+indexedelem:    LBRACE expr COLON expr RBRACE            {printf("Found {expression:expression}\n");
+                                                          $4->index = $2;
                                                           $$ = $4;
                                                          }
                 ;
