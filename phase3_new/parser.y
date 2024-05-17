@@ -36,6 +36,7 @@ int breakquad=0;
 expr *funcname;
 int *funcendjump;
 int funccounter=0;
+int returnjump=0;
 %}
 
 %union{
@@ -720,6 +721,10 @@ funcdef:        FUNC ID {if(funccounter==0){
                         }
                 LPAR {scope++;} idlist RPAR {scope--;} block   {emit(funcend,NULL,NULL,funcname,0,yylineno);
                                                                 patchlabel(funcendjump[--funccounter],nextquad()+1);
+                                                                if(returnjump!=0){
+                                                                  patchlabel(returnjump,nextquad());
+                                                                  returnjump=0;
+                                                                }
                                                                 $$=funcname;
                                                                 printf("Found function id(id list) block\n"); 
                                                                }
@@ -742,6 +747,10 @@ funcdef:        FUNC ID {if(funccounter==0){
                        }
                 LPAR {scope++;} idlist RPAR {scope--;} block {emit(funcend,NULL,NULL,funcname,0,yylineno);
                                                               patchlabel(funcendjump[--funccounter],nextquad()+1);
+                                                              if(returnjump!=0){
+                                                                  patchlabel(returnjump,nextquad());
+                                                                  returnjump=0;
+                                                                }
                                                               $$=funcname;
                                                               printf("Found function(id list) block\n"); 
                                                              }
@@ -791,7 +800,7 @@ block:          LBRACE {scope++;} inblock RBRACE        {Hide(scope);
                 ;
 
 ifstmt:         IF LPAR expr RPAR                        {scope++;
-                                                          emit(if_eq,$3,newexpr_constbool('T'),NULL,nextquad()+3,yylineno);
+                                                          emit(if_eq,newexpr_constbool('T'),NULL,$3,nextquad()+3,yylineno);
                                                           if(ifcounter==0){
                                                             if_jump_index = (int*)calloc(1,sizeof(int));
                                                           }
@@ -875,9 +884,13 @@ forstmt:        FOR LPAR elist SEMI expr SEMI           {if(forcounter==0){
 
 returnstmt:     RET SEMI                                {printf("Found return;\n"); 
                                                          emit(ret,NULL,NULL,NULL,0,yylineno);
+                                                         returnjump=nextquad();
+                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
                                                         }
                 | RET expr SEMI                         {printf("Found return expression;\n"); 
                                                          emit(ret,NULL,NULL,$2,0,yylineno);
+                                                         returnjump=nextquad();
+                                                         emit(jump,NULL,NULL,NULL,0,yylineno);
                                                         }
                 ;
 
