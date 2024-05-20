@@ -1,8 +1,4 @@
 #include "quad.h"
-#include "stdlib.h"
-
-extern quad* quads;
-extern int currQuad;
 
 double          *numConsts;
 unsigned        totalNumConsts;
@@ -46,7 +42,7 @@ generator_func_t generators[] = {
     generate_RETURN
 };
 
-
+extern quad* quads;
 
 typedef void (*generator_func_t)(quad*);
 
@@ -69,9 +65,9 @@ typedef struct vmarg{
 
 typedef struct instruction{
     vmopcode_t  opcode;
-    vmarg       *result;
-    vmarg       *arg1;
-    vmarg       *arg2;
+    vmarg       result;
+    vmarg       arg1;
+    vmarg       arg2;
     unsigned    srcLine;
 } instruction;
 
@@ -87,22 +83,20 @@ typedef struct incomplete_jump{
     struct incomplete_jump  *next;
 } incomplete_jump;
 
-void make_operand(expr *e, vmarg *arg);
-void make_numberoperand(vmarg *arg, double val);
-void make_booloperand(vmarg *arg, unsigned val);
-void make_retvaloperand(vmarg *arg);
-void add_incomplete_jumo(unsigned instrNo, unsigned iaddress);
-unsigned int nextinstructionlabel();
-void emit_v(instruction *t);
-void patch_incomplete_jumps();
 
 unsigned consts_newstring(char *s);
 unsigned consts_newnumber(double n);
 unsigned libfuncs_newused(char *s);
 unsigned userfuncs_newfunc(Sym *sym);
 
-void generate(vmopcode_t op,quad *q);
-void generate_relational(vmopcode_t op, quad *q);
+void make_operand(expr *e, vmarg *arg);
+void make_numberoperand(vmarg *arg, double val);
+void make_booloperand(vmarg *arg, unsigned val);
+void make_retvaloperand(vmarg *arg);
+void add_incomplete_jumo(unsigned instrNo, unsigned iaddress);
+unsigned int nextinstructionlabel();
+
+void generate(iopcode op,quad* q);
 void generate_ADD(quad*);
 void generate_SUB(quad*);
 void generate_MUL(quad*);
@@ -112,7 +106,7 @@ void generate_NEWTABLE(quad*);
 void generate_TABLEGETELEM(quad*);
 void generate_TABLESETELEM(quad*);
 void generate_ASSIGN(quad*);
-void generate_NOP();
+void generate_NOP(quad*);
 void generate_JUMP(quad*);
 void generate_IF_EQ(quad*);
 void generate_IF_NOTEQ(quad*);

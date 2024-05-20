@@ -23,14 +23,21 @@ void make_operand(expr *e, vmarg *arg){
             }
             break;
         case constbool_e:
-            arg->val = e->boolConst;
+            arg->val = ((e->boolConst=='T')?1:0);
             arg->type = bool_a;
             break;
         case conststring_e:
             arg->val = consts_newstring(e->strConst);
             arg->type = string_a;
             break;
-        //case constnum
+        case constint_e:
+            arg->val = consts_newnumber(e->intConst);
+            arg->type = number_a;
+            break;
+        case constdouble_e:
+            arg->val = consts_newnumber(e->doubleConst);
+            arg->type = number_a;
+            break;
         case nil_e:
             arg->type = nil_a;
             break;
@@ -47,60 +54,166 @@ void make_operand(expr *e, vmarg *arg){
     }
 }
 
-void generate(){
-    for(unsigned i=0;i<ij_total;++i){
-        (*generators[quads[i].op])(quads+i);
+void generate(vmopcode_t op,quad* q){
+    instruction *t = malloc(sizeof(instruction));
+    t->opcode = op;
+    t->srcLine = q->line;
+    if(q->arg1!=NULL) {
+        t->arg1 = malloc(sizeof(vmarg));
+        make_operand(q->arg1, t->arg1);
     }
-}
-
-static void avm_initstack(){
-    for(unsigned i=0;i<AVM_STACKSIZE;++i){
-        AVM_WIPEOUT(stack[i]);
-        stack[i].type = undef_m;
+    else{
+        t->arg1 = NULL;
     }
-}
-
-avm_table *avm_tablenew(){
-    avm_table *t = (avm_table*)malloc(sizeof(avm_table));
-    AVM_WIPEOUT(*t);
-    t->refCounter = t->total = 0;
-    avm_tablebucketsinit(t->numIndexed);
-    avm_tablebucketsinit(t->strIndexed);
-    return t;
-}
-
-void avm_tableincrefcounter(avm_table *t){
-    ++t->refCounter;
-}
-
-void avm_tabledecrefcounter(avm_table *t){
-    assert(t->refCounter>0);
-    if(!--t->refCounter) avm_tabledestroy(t);
-}
-
-void avm_tablebucketsinit(avm_table_bucket **p){
-    for(unsigned i=0;i<AVM_TABLE_HASHSIZE;++i){
-        p[i] = (avm_table_bucket*)0;
+    if(q->arg2!=NULL) {
+        t->arg2 = malloc(sizeof(vmarg));
+        make_operand(q->arg2, t->arg2);
     }
-}
-
-void avm_tabledestroy(avm_table *t){
-    avm_tablebucketsdestroy(t->strIndexed);
-    avm_tablebucketsdestroy(t->numIndexed);
-    free(t);
-}
-
-void avm_tablebucketsdestroy(avm_table_bucket **p){
-    for(unsigned i=0; i<AVM_STACKSIZE;++i,++p){
-        for(avm_table_bucket *b = *p;b;){
-            avm_table_bucket *del = b;
-            b = b->next;
-            avm_memcellclear(&del->key);
-            avm_memcellclear(&del->value);
-            free(del);
-        }
-        p[i] = (avm_table_bucket*)0;
+    else{
+        t->arg2 = NULL;
     }
+    if(q->result!=NULL) {
+        t->result = malloc(sizeof(vmarg));
+        make_operand(q->result, t->result);
+    }
+    else{
+        t->result = NULL;
+    }
+    q->label = nextinstructionlabel();
+    emit_v(t);
+}
+
+void generate_ADD(quad* q){ 
+    generate(add_v, q); 
+}
+
+void generate_SUB(quad* q){ 
+    generate(sub_v, q); 
+}
+
+void generate_MUL(quad* q){ 
+    generate(mul_v, q); 
+}
+
+void generate_DIV(quad* q){ 
+    generate(div_v, q); 
+}
+
+void generate_MOD(quad* q){
+    generate(mod_v, q); 
+}
+
+void generate_NEWTABLE(quad* q){ 
+    generate(newtable_v, q); 
+}
+
+void generate_TABLEGETELEM(quad* q){ 
+    generate(tablegetelem_v, q); 
+}
+
+void generate_TABLESETELEM(quad* q){ 
+    generate(tablesetelem_v, q); 
+}
+
+void generate_ASSIGN(quad* q){  
+    generate(assign_v, q); 
+}
+
+void generate_NOP(){ 
+    instruction *t=malloc(sizeof(instruction)); 
+    t->opcode=nop_v; 
+    t->arg1 = NULL;
+    t->arg2 = NULL;
+    t->result = NULL;
+    emit_v(t);
+}
+
+void generate_relational(vmopcode_t op,quad* q){
+    instruction *t=malloc(sizeof(instruction)); 
+    t->opcode = op;
+    t->srcLine=q->line;
+    if(q->arg1!=NULL) {
+        t->arg1 = malloc(sizeof(vmarg));
+        make_operand(q->arg1, t->arg1);
+    }
+    else{
+        t->arg1 = NULL;
+    }
+    if(q->arg2!=NULL) {
+        t->arg2 = malloc(sizeof(vmarg));
+        make_operand(q->arg2, t->arg2);
+    }
+    else{
+        t->arg2 = NULL;
+    }
+    t->result = malloc(sizeof(vmarg));
+    t->result->type=label_a;
+    t->result->val=q->label;
+    q->label = nextinstructionlabel();
+    emit_v(t);
+}
+
+void generate_JUMP(quad* q){ 
+    generate_relational(jump_v, q); 
+}
+
+void generate_IF_EQ(quad* q){ 
+    generate_relational(jeq_v, q); 
+}
+
+void generate_IF_NOTEQ(quad* q){ 
+    generate_relational(jne_v, q); 
+}
+
+void generate_IF_GREATER(quad* q){ 
+    generate_relational(jgt_v, q); 
+}
+
+void generate_IF_GREATEREQ(quad* q){ 
+    generate_relational(jge_v, q); 
+}
+
+void generate_IF_LESS(quad* q){ 
+    generate_relational(jlt_v, q); 
+}
+
+void generate_IF_LESSEQ(quad* q){ 
+    generate_relational(jle_v, q); 
+}
+
+void generate_NOT(quad* q){
+    return;
+}
+
+void generate_OR(quad* q){
+    return;
+} 
+
+void generate_AND(quad* q){
+    return;
+} 
+
+void generate_UMINUS(quad* q){
+    instruction* t = malloc(sizeof(instruction));
+    t->opcode = mul_v;
+    t->srcLine = q->line;  
+    if(q->arg1!=NULL) {
+        t->arg1 = malloc(sizeof(vmarg));
+        make_operand(q->arg1, t->arg1);
+    }
+    else{
+        t->arg1 = NULL;
+    }
+    t->arg2 = malloc(sizeof(vmarg));
+    make_numberoperand(t->arg2, -1);
+    if(q->result!=NULL) {
+        t->result = malloc(sizeof(vmarg));
+        make_operand(q->result, t->result);
+    }
+    else{
+        t->result = NULL;
+    }
+    emit_v(t);
 }
 
 void make_numberoperand(vmarg *arg, double val){
@@ -115,4 +228,85 @@ void make_booloperand(vmarg *arg, unsigned val){
 
 void make_retvaloperand(vmarg *arg){
     arg->type = retval_a;
+}
+
+unsigned int nextinstructionlabel(){
+	return currInstruction ;
+}
+
+unsigned consts_newstring(char* s){
+    unsigned index;
+    for(unsigned i=0; i<totalStringConsts; ++i) {
+        if(strcmp(stringConsts[i], s)==0)
+            return i;
+    }
+    if (totalStringConsts==0)
+        stringConsts = malloc(sizeof(char*));
+    else 
+        stringConsts = realloc(stringConsts, sizeof(char*)*(totalStringConsts+1));
+
+    stringConsts[totalStringConsts] = strdup(s);
+    index=totalStringConsts++;
+    return index;
+}
+
+unsigned consts_newnumber(double n){
+    unsigned index;
+    for(unsigned i=0;i<totalNumConsts;i++){
+        if(numConsts[i]==n) return i;
+    }
+    if(totalNumConsts==0){
+        numConsts=malloc(sizeof(double));
+    }else numConsts= realloc(numConsts,sizeof(double)*(totalNumConsts+1));
+    
+    numConsts[totalNumConsts]=n;
+    index=totalNumConsts++;
+    return index;
+}
+
+unsigned libfuncs_newused(char* s){
+    unsigned index;
+    for(unsigned i=0; i<totalNamedLibFuncs; ++i) {
+        if(strcmp(namedLibFuncs[i], s)==0)
+            return i;
+    }
+    if (totalNamedLibFuncs==0)
+        namedLibFuncs = malloc(sizeof(char*));
+    else 
+        namedLibFuncs = realloc(namedLibFuncs, sizeof(char*)*(totalNamedLibFuncs+1));
+
+    namedLibFuncs[totalNamedLibFuncs] = strdup(s);
+    index=totalNamedLibFuncs++;
+    return index;
+}
+
+unsigned userfuncs_newfunc(Sym *sym){
+    /*unsigned index;
+    for(unsigned i=0; i<totalUserFuncs;i++){ 
+        if(userFuncs[i].address == sym. && !strcmp(userFuncs[i].id, (sym->value).funcVal->name))
+            return i;
+    } 
+    if (totalUserFuncs==0)
+        userFuncs = malloc(sizeof(userfunc));
+    else 
+        userFuncs = realloc(userFuncs, sizeof(userfunc)*(totalUserFuncs+1));
+    
+    userFuncs[totalUserFuncs].address = sym->address; //na to valw sto funcprefix ston parser $$->sym->address= ..;
+    userFuncs[totalUserFuncs].localSize = sym->value.funcVal->totalLocals; 
+    userFuncs[totalUserFuncs].id = sym->value.funcVal->name;  
+    index=totalUserFuncs++;
+    return index;*/
+}
+
+void emit_v(instruction* t){
+	/*assert(t);
+	if(totalVmargs==currInstruction)
+		expand_v();
+    instruction * v=malloc (sizeof(instruction));
+    v=vmargs+(currInstruction++);
+    v->opcode=t->opcode;
+    v->result=t->result;
+    v->arg1=t->arg1;
+    v->arg2=t->arg2;
+    v->srcLine=t->srcLine;*/
 }
