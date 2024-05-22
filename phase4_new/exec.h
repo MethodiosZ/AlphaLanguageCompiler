@@ -83,6 +83,7 @@ void emit_v(instruction *t);
 void patch_incomplete_jumps();
 void expand_v();
 void printInstructions();
+void printVmarg(vmarg* arg);
 void InstrToBin();
 
 unsigned consts_newstring(char *s);

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "quad.h"
+#include "exec.h"
 
 int yyerror(char* yaccProvidedMessage);
 int alpha_yylex(void);
@@ -700,6 +701,7 @@ funcdef:        FUNC ID {if(funccounter==0){
                             var = newsymbol($2);
                             var->space = currscopespace();
                             var->offset = currscopeoffset();
+                            var->address = nextquad();
                             incurrscopeoffset();
                             funcname = newexpr(programfunc_e);
                             funcname->sym = var;
@@ -713,6 +715,7 @@ funcdef:        FUNC ID {if(funccounter==0){
                             symbol = Search($2,scope,USERFUNC);
                             var = SymTableItemtoQuadItem(symbol);
                             funcname = newexpr(programfunc_e);
+                            var->address = nextquad();
                             funcname->sym = var;
                             funcendjump[funccounter++]=nextquad();
                             emit(jump,NULL,NULL,NULL,0,yylineno);
@@ -739,6 +742,7 @@ funcdef:        FUNC ID {if(funccounter==0){
                         symbol = createSymbol(buffer,scope,yylineno,USERFUNC);
                         Insert(symbol);
                         var = SymTableItemtoQuadItem(symbol);
+                        var->address = nextquad();
                         funcname = newexpr(programfunc_e);
                         funcname->sym = var;
                         funcendjump[funccounter++]=nextquad();
@@ -914,7 +918,6 @@ int main(int argc, char **argv){
     }
     yyparse();
 
-    //PrintTable();
-    printQuads();
+    printInstructions();
     return 0;
 }

@@ -1,4 +1,5 @@
 #include "exec.h"
+#include <stdio.h>
 
 extern quad* quads;
 extern int currQuad;
@@ -97,7 +98,7 @@ void generate(vmopcode_t op,quad* q){
     else{
         t->result = NULL;
     }
-    //q->address = nextinstructionlabel();
+    q->taddress = nextinstructionlabel();
     emit_v(t);
 }
 
@@ -167,7 +168,7 @@ void generate_relational(vmopcode_t op,quad* q){
     t->result = malloc(sizeof(vmarg));
     t->result->type=label_a;
     t->result->val=q->label;
-    //q->address = nextinstructionlabel();
+    q->taddress = nextinstructionlabel();
     emit_v(t);
 }
 
@@ -200,7 +201,7 @@ void generate_IF_LESSEQ(quad* q){
 }
 
 void generate_NOT(quad* q){
-    //q->address = nextinstructionlabel();
+    q->taddress = nextinstructionlabel();
     instruction *t;
     t->opcode = jeq_v;
     if(q->arg1!=NULL) {
@@ -248,7 +249,7 @@ void generate_NOT(quad* q){
 }
 
 void generate_OR(quad* q){
-    //q.address = nextinstructionlabel();
+    q->taddress = nextinstructionlabel();
     instruction *t;
     t->opcode = jeq_v;
     if(q->arg1!=NULL) {
@@ -306,7 +307,7 @@ void generate_OR(quad* q){
 } 
 
 void generate_AND(quad* q){
-    //q.address = nextinstructionlabel();
+    q->taddress = nextinstructionlabel();
     instruction *t;
     t->opcode = jeq_v;
     if(q->arg1!=NULL) {
@@ -364,6 +365,7 @@ void generate_AND(quad* q){
 } 
 
 void generate_UMINUS(quad* q){
+    q->taddress = nextinstructionlabel();
     instruction* t = malloc(sizeof(instruction));
     t->opcode = mul_v;
     t->srcLine = q->line;  
@@ -387,7 +389,7 @@ void generate_UMINUS(quad* q){
 }
 
 void generate_PARAM(quad* q) {
-    //q->taddress = nextinstructionlabel();
+    q->taddress = nextinstructionlabel();
     instruction *t=malloc(sizeof(instruction)); 
     t->opcode = pusharg_v;
     t->srcLine=q->line;
@@ -404,7 +406,7 @@ void generate_PARAM(quad* q) {
 }
 
 void generate_CALL(quad* q) {
-    //q->taddress = nextinstructionlabel();
+    q->taddress = nextinstructionlabel();
     instruction *t=malloc(sizeof(instruction)); 
     t->opcode = call_v;
     t->srcLine=q->line;
@@ -421,7 +423,7 @@ void generate_CALL(quad* q) {
 }
 
 void generate_GETRETVAL(quad* q) {
-    //q->taddress = nextinstructionlabel();
+    q->taddress = nextinstructionlabel();
     instruction *t=malloc(sizeof(instruction)); 
     t->opcode = assign_v;
     t->srcLine=q->line;
@@ -440,7 +442,7 @@ void generate_GETRETVAL(quad* q) {
 
 void  generate_FUNCSTART(quad* q){
     symb* f = q->result->sym;
-    //q->taddress = nextinstructionlabel();
+    q->taddress = nextinstructionlabel();
     instruction *t=malloc(sizeof(instruction)); 
     t->opcode = funcenter_v;
     t->srcLine=q->line;
@@ -457,7 +459,7 @@ void  generate_FUNCSTART(quad* q){
 }
 
 void generate_RETURN(quad* q){
-    //q->taddress = nextinstructionlabel();
+    q->taddress = nextinstructionlabel();
     instruction *t=malloc(sizeof(instruction)); 
     t->opcode = assign_v;
     t->srcLine=q->line;  
@@ -475,7 +477,7 @@ void generate_RETURN(quad* q){
 }
 
 void generate_FUNCEND(quad* q){   
-    //q->taddress = nextinstructionlabel();
+    q->taddress = nextinstructionlabel();
     instruction *t=malloc(sizeof(instruction)); 
     t->opcode = funcexit_v;
     t->srcLine=q->line;
@@ -558,7 +560,7 @@ unsigned libfuncs_newused(char* s){
 unsigned userfuncs_newfunc(symb *sym){
     unsigned index;
     for(unsigned i=0; i<totalUserFuncs;i++){ 
-        //if(userFuncs[i].address == sym->offset && !strcmp(userFuncs[i].id, (sym->value).funcVal->name))
+        if(userFuncs[i].address == sym->address && !strcmp(userFuncs[i].id, sym->name))
             return i;
     } 
     if (totalUserFuncs==0)
@@ -566,9 +568,9 @@ unsigned userfuncs_newfunc(symb *sym){
     else 
         userFuncs = realloc(userFuncs, sizeof(userfunc)*(totalUserFuncs+1));
     
-    //userFuncs[totalUserFuncs].address = sym->address; //na to valw sto funcprefix ston parser $$->sym->address= ..;
-    //userFuncs[totalUserFuncs].localSize = sym->value.FuncVal->line; 
-    //userFuncs[totalUserFuncs].id = sym->value.funcVal->name;  
+    userFuncs[totalUserFuncs].address = sym->address;
+    userFuncs[totalUserFuncs].localSize = sym->offset; 
+    userFuncs[totalUserFuncs].id = sym->name;  
     index=totalUserFuncs++;
     return index;
 }
@@ -596,4 +598,148 @@ void expand_v(){
     }
     vmargs = t;
     totalVmargs += EXPAND_SIZE_V;
+}
+
+void printVmarg(vmarg* arg){
+	if(arg==NULL){
+		printf("%-*s \t",10,"\t");
+	}else{
+        if(arg->type == nil_a){
+			printf("%-*s \t",20,"NIL");
+        }
+        else{
+            printf(" %d,",arg->type);
+            printf("%d",arg->val);
+		printf("%-*s",20,"");
+        }
+	}
+}
+
+void printInstructions(){
+    char vmopcode_array[25]={
+		"assign_v\0","add_v\0","sub_v\0",
+		"mul_v\0","div_v\0","mod_v\0",
+		"uminus_v\0","and_v\0","or_v\0",
+		"not_v\0","jeq_v\0","jne_v\0","jle_v\0",
+		"jge_v\0", "jlt_v\0",
+		"jgt_v\0","call_v\0","pusharg_v\0",
+		"ret_v\0","getretval_v\0","funcenter_v\0",
+		"funcexit_v\0","newtable_v\0","tablegetelem_v\0",    
+		"tablesetelem_v\0","jump_v\0","nop_v\0"};
+
+    int line_for_print = 1;
+    printf("\n----------------------------------------------------------------------------------------------------------------------------------------------------------\n");    
+    printf("\t\t\t\t\t\t\t\tINSTRUCTIONS\t\t\t\t\t\t\t\t\n");
+    printf("----------------------------------------------------------------------------------------------------------------------------------------------------------\n");    
+    printf("instr#\t\t\topcode\t\t\tresult\t\t\targ1\t\t\targ2\t\t\tsrcLine\t\t\n");
+    printf("----------------------------------------------------------------------------------------------------------------------------------------------------------\n");    
+    for(int i = 0; i < currInstruction; i++){
+        printf("%-*d \t",20,line_for_print);
+        printf("%-*s \t", 20, vmopcode_array[vmargs[i].opcode]);
+		 if(vmargs[i].opcode== assign_v){
+			printVmarg(vmargs[i].result);
+			printVmarg(vmargs[i].arg1);
+			printf("%-*s \t",15,"\t");
+        }else if(vmargs[i].opcode == add_v || vmargs[i].opcode== sub_v || vmargs[i].opcode == mul_v || vmargs[i].opcode == div_v || vmargs[i].opcode== mod_v){
+           		printVmarg(vmargs[i].result);
+			printVmarg(vmargs[i].arg1);
+			printVmarg(vmargs[i].arg2);
+	    }else if(vmargs[i].opcode == uminus_v || vmargs[i].opcode == not_v){
+            printVmarg(vmargs[i].result);
+			printVmarg(vmargs[i].arg1);
+			printf("%-*s \t",15,"\t");
+	    }else if(vmargs[i].opcode == and_v ||vmargs[i].opcode== or_v ){
+		    printVmarg(vmargs[i].result);
+			printVmarg(vmargs[i].arg1);
+			printVmarg(vmargs[i].arg2);
+	    }else if(vmargs[i].opcode== jeq_v || vmargs[i].opcode== jne_v || vmargs[i].opcode == jle_v || vmargs[i].opcode== jge_v || vmargs[i].opcode == jlt_v || vmargs[i].opcode == jgt_v){
+            printVmarg(vmargs[i].result);
+			printVmarg(vmargs[i].arg1);
+			printVmarg(vmargs[i].arg2);
+        }else if(vmargs[i].opcode == call_v || vmargs[i].opcode == return_v || vmargs[i].opcode == jump_v || vmargs[i].opcode == newtable_v || vmargs[i].opcode == funcexit_v || vmargs[i].opcode == getretval_v || vmargs[i].opcode== pusharg_v){
+		        printVmarg(vmargs[i].result);
+			printf("%-*s \t",20,"\t");
+			printf("%-*s \t",5,"\t");
+	    }else if(vmargs[i].opcode == funcenter_v){
+            printVmarg(vmargs[i].result);
+			printf("%-*s \t",20,"\t");
+			printf("%-*s \t",5,"\t");
+        }else if(vmargs[i].opcode == tablegetelem_v){
+            printVmarg(vmargs[i].result);
+			printVmarg(vmargs[i].arg1);
+			printVmarg(vmargs[i].arg2);       
+        }else if(vmargs[i].opcode == tablesetelem_v){
+           	printVmarg(vmargs[i].result);
+			printVmarg(vmargs[i].arg1);
+			printVmarg(vmargs[i].arg2);  
+	    }
+		printf(" %-*d \t",20,vmargs[i].srcLine);
+        line_for_print++;
+        printf("\n");
+    }
+}
+
+void instrToBinary(){
+	FILE *exe;
+	int i;
+	int  length;
+	int temp;
+	int magic_num = 161282016;
+	exe= fopen("exe.bi","wb");
+	fwrite(&magic_num,sizeof(int),1,exe);
+	fwrite(&totalUserFuncs,sizeof(int),1,exe);
+	for(i=0;i<totalUserFuncs;i++){
+		--userFuncs[i].address;
+		fwrite(&userFuncs[i].address,sizeof(int),1,exe);
+		fwrite(&userFuncs[i].localSize,sizeof(int),1,exe);
+		length = strlen(userFuncs[i].id);
+		fwrite(&length,sizeof(int),1,exe);
+		fwrite(userFuncs[i].id,length+1,1,exe);
+	}
+	fwrite(&totalStringConsts,sizeof(int),1,exe);
+	for(i=0;i<totalStringConsts;++i){
+		length = strlen(stringConsts[i]);
+		fwrite(&length,sizeof(int),1,exe);
+		fwrite(stringConsts[i],length+1,1,exe);
+	}
+	fwrite(&totalNumConsts,sizeof(int),1,exe);
+	for(i=0;i<totalNumConsts;i++){
+		fwrite(&numConsts[i],sizeof(double),1,exe);
+	}
+	fwrite(&totalNamedLibFuncs,sizeof(int),1,exe);
+	for(i=0;i<totalNamedLibFuncs;i++){
+		length = strlen(namedLibFuncs[i]);
+		fwrite(&length,sizeof(int),1,exe);
+		fwrite(namedLibFuncs[i],length+1,1,exe);
+	}
+	fwrite(&currInstruction,sizeof(int),1,exe);
+	for (i = 0; i < currInstruction; i++) {
+		int rv=-1,rt=-1,av1=-1,at1=-1,av2=-1,at2=-1;
+		instruction instr = vmargs[i];
+        fwrite(&instr.opcode, sizeof(int), 1, exe);
+		if(instr.result){
+        	fwrite(&instr.result->type, sizeof(int), 1, exe);
+        	fwrite(&instr.result->val, sizeof(int), 1, exe);
+		}else{
+			fwrite(&rt, sizeof(int), 1, exe);
+        	fwrite(&rv, sizeof(int), 1, exe);
+		}
+		if(instr.arg1){
+        	fwrite(&instr.arg1->type, sizeof(int), 1, exe);
+        	fwrite(&instr.arg1->val, sizeof(int), 1, exe);
+		}else{
+			fwrite(&at1, sizeof(int), 1, exe);
+        	fwrite(&av1, sizeof(int), 1, exe);
+		}
+		if(instr.arg2){
+        	fwrite(&instr.arg2->type, sizeof(int), 1, exe);
+        	fwrite(&instr.arg2->val, sizeof(int), 1, exe);
+		}else{
+			fwrite(&at2, sizeof(int), 1, exe);
+        	fwrite(&av2, sizeof(int), 1, exe);
+
+		}
+        fwrite(&instr.srcLine, sizeof(unsigned), 1, exe);
+	}
+	fclose(exe);
 }
