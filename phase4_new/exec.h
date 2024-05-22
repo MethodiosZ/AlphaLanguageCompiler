@@ -1,21 +1,9 @@
 #include "quad.h"
 #include "stdlib.h"
 
-extern quad* quads;
-extern int currQuad;
-
-double          *numConsts;
-unsigned        totalNumConsts;
-char            **stringConsts;
-unsigned        totalStringConsts;
-char            **namedLibFuncs;
-unsigned        totalNamedLibFuncs;
-userfunc        *userFuncs;
-unsigned        totalUserFuncs;
-unsigned int    currInstruction = 0;
-
-incomplete_jump *ij_head = (incomplete_jump*)0;
-unsigned        ij_total = 0;
+#define EXPAND_SIZE_V 1024
+#define CURR_SIZE_V (totalVmargs*sizeof(instruction))
+#define NEW_SIZE_V (EXPAND_SIZE_V*sizeof(instruction)+CURR_SIZE_V)
 
 generator_func_t generators[] = {
     generate_ADD,
@@ -45,8 +33,6 @@ generator_func_t generators[] = {
     generate_FUNCEND,
     generate_RETURN
 };
-
-
 
 typedef void (*generator_func_t)(quad*);
 
@@ -95,11 +81,14 @@ void add_incomplete_jumo(unsigned instrNo, unsigned iaddress);
 unsigned int nextinstructionlabel();
 void emit_v(instruction *t);
 void patch_incomplete_jumps();
+void expand_v();
+void printInstructions();
+void InstrToBin();
 
 unsigned consts_newstring(char *s);
 unsigned consts_newnumber(double n);
 unsigned libfuncs_newused(char *s);
-unsigned userfuncs_newfunc(Sym *sym);
+unsigned userfuncs_newfunc(symb *sym);
 
 void generate(vmopcode_t op,quad *q);
 void generate_relational(vmopcode_t op, quad *q);
@@ -129,4 +118,4 @@ void generate_GETRETVAL(quad*);
 void generate_FUNCSTART(quad*);
 void generate_FUNCEND(quad*);
 void generate_RETURN(quad*);
-
+void reset_operand(vmarg *arg);

@@ -1,5 +1,23 @@
 #include "exec.h"
 
+extern quad* quads;
+extern int currQuad;
+
+double          *numConsts;
+unsigned        totalNumConsts = 0;
+char            **stringConsts;
+unsigned        totalStringConsts = 0;
+char            **namedLibFuncs;
+unsigned        totalNamedLibFuncs = 0;
+userfunc        *userFuncs;
+unsigned        totalUserFuncs = 0;
+unsigned        currInstruction = 0;
+incomplete_jump *ij_head = (incomplete_jump*)0;
+unsigned        ij_total = 0;
+instruction     *vmargs = (instruction*)0;
+unsigned        totalVmargs = 0;
+instruction     *instrs;
+
 void make_operand(expr *e, vmarg *arg){
     switch(e->type){
         case var_e:
@@ -79,7 +97,7 @@ void generate(vmopcode_t op,quad* q){
     else{
         t->result = NULL;
     }
-    q->label = nextinstructionlabel();
+    //q->address = nextinstructionlabel();
     emit_v(t);
 }
 
@@ -149,7 +167,7 @@ void generate_relational(vmopcode_t op,quad* q){
     t->result = malloc(sizeof(vmarg));
     t->result->type=label_a;
     t->result->val=q->label;
-    q->label = nextinstructionlabel();
+    //q->address = nextinstructionlabel();
     emit_v(t);
 }
 
@@ -182,15 +200,167 @@ void generate_IF_LESSEQ(quad* q){
 }
 
 void generate_NOT(quad* q){
-    return;
+    //q->address = nextinstructionlabel();
+    instruction *t;
+    t->opcode = jeq_v;
+    if(q->arg1!=NULL) {
+        t->arg1 = malloc(sizeof(vmarg));
+        make_operand(q->arg1, t->arg1);
+    }
+    else{
+        t->arg1 = NULL;
+    }
+    make_booloperand(t->arg2,0);
+    t->result->type = label_a;
+    t->result->val = nextinstructionlabel()+3;
+    emit_v(t);
+    
+    t->opcode = assign_v;
+    make_booloperand(t->arg1,0);
+    reset_operand(t->arg2);
+    if(q->result!=NULL) {
+        t->result = malloc(sizeof(vmarg));
+        make_operand(q->result, t->result);
+    }
+    else{
+        t->result = NULL;
+    }
+    emit_v(t);
+
+    t->opcode = jump_v;
+    reset_operand(t->arg1);
+    reset_operand(t->arg2);
+    t->result->type = label_a;
+    t->result->val = nextinstructionlabel()+2;
+    emit_v(t);
+
+    t->opcode = assign_v;
+    make_booloperand(t->arg1,1);
+    reset_operand(t->arg2);
+    if(q->result!=NULL) {
+        t->result = malloc(sizeof(vmarg));
+        make_operand(q->result, t->result);
+    }
+    else{
+        t->result = NULL;
+    }
+    emit_v(t);
 }
 
 void generate_OR(quad* q){
-    return;
+    //q.address = nextinstructionlabel();
+    instruction *t;
+    t->opcode = jeq_v;
+    if(q->arg1!=NULL) {
+        t->arg1 = malloc(sizeof(vmarg));
+        make_operand(q->arg1, t->arg1);
+    }
+    else{
+        t->arg1 = NULL;
+    }
+    make_booloperand(t->arg2,1);
+    t->result->type = label_a;
+    t->result->val = nextinstructionlabel()+4;
+    emit_v(t);
+    
+    if(q->arg2!=NULL) {
+        t->arg1 = malloc(sizeof(vmarg));
+        make_operand(q->arg2, t->arg1);
+    }
+    else{
+        t->arg1 = NULL;
+    }
+    t->result->val = nextinstructionlabel()+3;
+    emit_v(t);
+
+    t->opcode = assign_v;
+    make_booloperand(t->arg1,0);
+    reset_operand(t->arg2);
+    if(q->result!=NULL) {
+        t->result = malloc(sizeof(vmarg));
+        make_operand(q->result, t->result);
+    }
+    else{
+        t->result = NULL;
+    }
+    emit_v(t);
+
+    t->opcode = jump_v;
+    reset_operand(t->arg1);
+    reset_operand(t->arg2);
+    t->result->type = label_a;
+    t->result->val = nextinstructionlabel()+2;
+    emit_v(t);
+
+    t->opcode = assign_v;
+    make_booloperand(t->arg1,1);
+    reset_operand(t->arg2);
+    if(q->result!=NULL) {
+        t->result = malloc(sizeof(vmarg));
+        make_operand(q->result, t->result);
+    }
+    else{
+        t->result = NULL;
+    }
+    emit_v(t);
 } 
 
 void generate_AND(quad* q){
-    return;
+    //q.address = nextinstructionlabel();
+    instruction *t;
+    t->opcode = jeq_v;
+    if(q->arg1!=NULL) {
+        t->arg1 = malloc(sizeof(vmarg));
+        make_operand(q->arg1, t->arg1);
+    }
+    else{
+        t->arg1 = NULL;
+    }
+    make_booloperand(t->arg2,0);
+    t->result->type = label_a;
+    t->result->val = nextinstructionlabel()+4;
+    emit_v(t);
+    
+    if(q->arg2!=NULL) {
+        t->arg1 = malloc(sizeof(vmarg));
+        make_operand(q->arg2, t->arg1);
+    }
+    else{
+        t->arg1 = NULL;
+    }
+    t->result->val = nextinstructionlabel()+3;
+    emit_v(t);
+
+    t->opcode = assign_v;
+    make_booloperand(t->arg1,1);
+    reset_operand(t->arg2);
+    if(q->result!=NULL) {
+        t->result = malloc(sizeof(vmarg));
+        make_operand(q->result, t->result);
+    }
+    else{
+        t->result = NULL;
+    }
+    emit_v(t);
+
+    t->opcode = jump_v;
+    reset_operand(t->arg1);
+    reset_operand(t->arg2);
+    t->result->type = label_a;
+    t->result->val = nextinstructionlabel()+2;
+    emit_v(t);
+
+    t->opcode = assign_v;
+    make_booloperand(t->arg1,0);
+    reset_operand(t->arg2);
+    if(q->result!=NULL) {
+        t->result = malloc(sizeof(vmarg));
+        make_operand(q->result, t->result);
+    }
+    else{
+        t->result = NULL;
+    }
+    emit_v(t);
 } 
 
 void generate_UMINUS(quad* q){
@@ -206,6 +376,111 @@ void generate_UMINUS(quad* q){
     }
     t->arg2 = malloc(sizeof(vmarg));
     make_numberoperand(t->arg2, -1);
+    if(q->result!=NULL) {
+        t->result = malloc(sizeof(vmarg));
+        make_operand(q->result, t->result);
+    }
+    else{
+        t->result = NULL;
+    }
+    emit_v(t);
+}
+
+void generate_PARAM(quad* q) {
+    //q->taddress = nextinstructionlabel();
+    instruction *t=malloc(sizeof(instruction)); 
+    t->opcode = pusharg_v;
+    t->srcLine=q->line;
+    t->arg1 = NULL;
+    t->arg2 = NULL;
+    if(q->result!=NULL) {
+        t->result = malloc(sizeof(vmarg));
+        make_operand(q->result, t->result);
+    }
+    else{
+        t->result = NULL;
+    }
+    emit_v(t);
+}
+
+void generate_CALL(quad* q) {
+    //q->taddress = nextinstructionlabel();
+    instruction *t=malloc(sizeof(instruction)); 
+    t->opcode = call_v;
+    t->srcLine=q->line;
+    t->arg1 = NULL;
+    t->arg2 = NULL;
+    if(q->result!=NULL) {
+        t->result = malloc(sizeof(vmarg));
+        make_operand(q->result, t->result);
+    }
+    else{
+        t->result = NULL;
+    }
+    emit_v(t);
+}
+
+void generate_GETRETVAL(quad* q) {
+    //q->taddress = nextinstructionlabel();
+    instruction *t=malloc(sizeof(instruction)); 
+    t->opcode = assign_v;
+    t->srcLine=q->line;
+    t->arg1 = malloc(sizeof(vmarg));
+    make_retvaloperand(t->arg1);
+    t->arg2 = NULL;
+    if(q->result!=NULL) {
+        t->result = malloc(sizeof(vmarg));
+        make_operand(q->result, t->result);
+    }
+    else{
+        t->result = NULL;
+    }
+    emit_v(t);
+}
+
+void  generate_FUNCSTART(quad* q){
+    symb* f = q->result->sym;
+    //q->taddress = nextinstructionlabel();
+    instruction *t=malloc(sizeof(instruction)); 
+    t->opcode = funcenter_v;
+    t->srcLine=q->line;
+    t->arg1 = NULL;
+    t->arg2 = NULL;
+    if(q->result!=NULL) {
+        t->result = malloc(sizeof(vmarg));
+        make_operand(q->result, t->result);
+    }
+    else{
+        t->result = NULL;
+    }
+    emit_v(t);
+}
+
+void generate_RETURN(quad* q){
+    //q->taddress = nextinstructionlabel();
+    instruction *t=malloc(sizeof(instruction)); 
+    t->opcode = assign_v;
+    t->srcLine=q->line;  
+    if(q->result!=NULL){
+        t->arg1 = malloc(sizeof(vmarg));
+        make_operand(q->result , t->arg1 );
+    }else{
+        t->arg1 = malloc(sizeof(vmarg));
+		t->arg1->type=nil_a;
+	}
+    t->arg2 = NULL;
+    t->result = malloc(sizeof(vmarg));
+    make_retvaloperand(t->result);
+    emit_v(t);
+}
+
+void generate_FUNCEND(quad* q){   
+    //q->taddress = nextinstructionlabel();
+    instruction *t=malloc(sizeof(instruction)); 
+    t->opcode = funcexit_v;
+    t->srcLine=q->line;
+    t->arg1 = NULL;
+    t->arg2 = NULL;
     if(q->result!=NULL) {
         t->result = malloc(sizeof(vmarg));
         make_operand(q->result, t->result);
@@ -280,10 +555,10 @@ unsigned libfuncs_newused(char* s){
     return index;
 }
 
-unsigned userfuncs_newfunc(Sym *sym){
-    /*unsigned index;
+unsigned userfuncs_newfunc(symb *sym){
+    unsigned index;
     for(unsigned i=0; i<totalUserFuncs;i++){ 
-        if(userFuncs[i].address == sym. && !strcmp(userFuncs[i].id, (sym->value).funcVal->name))
+        //if(userFuncs[i].address == sym->offset && !strcmp(userFuncs[i].id, (sym->value).funcVal->name))
             return i;
     } 
     if (totalUserFuncs==0)
@@ -291,22 +566,34 @@ unsigned userfuncs_newfunc(Sym *sym){
     else 
         userFuncs = realloc(userFuncs, sizeof(userfunc)*(totalUserFuncs+1));
     
-    userFuncs[totalUserFuncs].address = sym->address; //na to valw sto funcprefix ston parser $$->sym->address= ..;
-    userFuncs[totalUserFuncs].localSize = sym->value.funcVal->totalLocals; 
-    userFuncs[totalUserFuncs].id = sym->value.funcVal->name;  
+    //userFuncs[totalUserFuncs].address = sym->address; //na to valw sto funcprefix ston parser $$->sym->address= ..;
+    //userFuncs[totalUserFuncs].localSize = sym->value.FuncVal->line; 
+    //userFuncs[totalUserFuncs].id = sym->value.funcVal->name;  
     index=totalUserFuncs++;
-    return index;*/
+    return index;
 }
 
 void emit_v(instruction* t){
-	/*assert(t);
-	if(totalVmargs==currInstruction)
+	assert(t);
+	if(totalVmargs==currInstruction){
 		expand_v();
+    }
     instruction * v=malloc (sizeof(instruction));
     v=vmargs+(currInstruction++);
     v->opcode=t->opcode;
     v->result=t->result;
     v->arg1=t->arg1;
     v->arg2=t->arg2;
-    v->srcLine=t->srcLine;*/
+    v->srcLine=t->srcLine;
+}
+
+void expand_v(){
+    assert(totalVmargs==currInstruction);
+    instruction *t = (instruction*)malloc(NEW_SIZE_V);
+    if(vmargs){
+        memcpy(t,vmargs,CURR_SIZE_V);
+        free(vmargs);
+    }
+    vmargs = t;
+    totalVmargs += EXPAND_SIZE_V;
 }
