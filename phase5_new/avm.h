@@ -46,3 +46,4 @@ void avm_tabledecrefcounter(avm_table *t);
 void avm_tablebucketsinit(avm_table_bucket **p);
 void avm_memcellclear(avm_memcell *m);
 void avm_tablebucketsdestroy(avm_table_bucket **p);
+avm_memcell *avm_translate_operand(vmarg *arg, avm_memcell *reg);
