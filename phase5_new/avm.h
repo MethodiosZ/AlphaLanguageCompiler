@@ -6,6 +6,10 @@
 #define AVM_ENDING_PC codeSize
 #define AVM_STACKENV_SIZE 4
 #define AVM_MAX_INSTRUCTIONS (unsigned) nop_v
+#define AVM_NUMACTUALS_OFFSET +4
+#define AVM_SAVEDPC_OFFSET +3
+#define AVM_SAVEDTOP_OFFSET +2
+#define AVM_SAVEDTOPSP_OFFSET +1
 
 execute_func_t executeFuncs[] = {
     execute_assign,
@@ -82,7 +86,7 @@ typedef struct avm_memcell{
 static void avm_initstack();
 avm_table *avm_tablenew();
 void avm_tabledestroy(avm_table *t);
-avm_memcell *avm_tablegetelem(avm_memcell *key);
+avm_memcell *avm_tablegetelem(avm_memcell *key, avm_memcell *value);
 void avm_tablesetelem(avm_memcell *key, avm_memcell *value);
 void avm_tableincrefcounter(avm_table *t);
 void avm_tabledecrefcounter(avm_table *t);
@@ -126,5 +130,17 @@ void execute_tablegetelem(instruction *instr);
 void execute_tablesetelem(instruction *instr);
 void execute_nop(instruction *instr);
 
-memclear_string(avm_memcell *m);
-memclear_table(avm_memcell *m);
+void memclear_string(avm_memcell *m);
+void memclear_table(avm_memcell *m);
+void avm_warning(char *format);
+void avm_assign(avm_memcell *lv, avm_memcell *rv);
+void avm_error(char *format);
+char *avm_tostring(avm_memcell *m);
+void avm_calllibfunc(char *id);
+void avm_callsaveenvironment();
+void avm_call_functor(avm_table *t);
+void avm_push_table_arg(avm_table *t);
+void amv_dec_top();
+void avm_push_envvalue(unsigned val);
+unsigned avm_get_envvalue(unsigned i);
+userfunc *avm_getfuncinfo(unsigned address);

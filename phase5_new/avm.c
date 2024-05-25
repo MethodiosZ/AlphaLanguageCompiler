@@ -9,6 +9,8 @@ instruction     *code = (instruction*)0;
 avm_memcell     ax, bx, cx;
 avm_memcell     retval;
 unsigned        top, topsp;
+unsigned        totalActuals = 0;
+unsigned        N = 0;
 
 static void avm_initstack(){
     for(unsigned i=0;i<AVM_STACKSIZE;++i){
@@ -132,4 +134,118 @@ void memclear_string(avm_memcell *m){
 void memclear_table(avm_memcell *m){
     assert(m->data.tableVal);
     avm_tabledecrefcounter(m->data.tableVal);
+}
+
+void avm_assign(avm_memcell *lv, avm_memcell *rv){
+    if(lv==rv) return;
+    if(lv->type == table_m && rv->type ==table_m && 
+    lv->data.tableVal == rv->data.tableVal) return;
+    if(rv->type == undef_m) avm_warning("assigning from 'undef' content!");
+    avm_memcellclear(lv);
+    memcpy(lv,rv,sizeof(avm_memcell));
+    if(lv->type == string_m) lv->data.strVal = strdup(rv->data.strVal);
+    else if(lv->type == table_m) avm_tableincrefcounter(lv->data.tableVal);
+}
+
+void avm_call_functor(avm_table *t){
+    cx.type = string_m;
+    cx.data.strVal = "()";
+    avm_memcell *f = avm_tablegetelem(t, &cx);
+    if(!f) avm_error("in calling table: no '()' element found!");
+    else if(f->type == table_m) avm_call_functor(f->data.tableVal);
+    else if(f->type == userfunc_m){
+        avm_push_table_arg(t);
+        avm_callsaveenvironment();
+        pc = f->data.funcVal;
+        assert(pc < AVM_ENDING_PC && code[pc].opcode == funcenter_v);
+    }
+    else {
+        avm_error("in calling table: illegal '()' element value!");
+    }
+}
+
+void avm_dec_top(){
+    if(!top){
+        avm_error("Stack overflow!");
+        executionFinished = 1;
+    }
+    else --top;
+}
+
+void avm_push_envvalue(unsigned val){
+    stack[top].type = number_m;
+    stack[top].data.numVal = val;
+    avm_dec_top();
+}
+
+void avm_callsaveenvironment(){
+    avm_push_envvalue(totalActuals);
+    assert(code[pc].opcode == call_v);
+    avm_push_envvalue(pc+1);
+    avm_push_envvalue(top+totalActuals+2);
+    avm_push_envvalue(topsp);
+}
+
+unsigned avm_get_envvalue(unsigned i){
+    assert(stack[i].type == number_m);
+    unsigned val = (unsigned) stack[i].data.numVal;
+    assert(stack[i].data.numVal == (double)val);
+    return val;
+}
+
+void execute_assign(instruction *instr){
+    avm_memcell *lv = avm_translate_operand(&instr->result, (avm_memcell*)0);
+    avm_memcell *rv = avm_translate_operand(&instr->arg1, &ax);
+    assert(lv && (&stack[N-1] >= lv && lv > &stack[top] || lv==&retval));
+    assert(rv && (&stack[N-1] >= rv && rv > &stack[top] || rv==&retval));
+    avm_assign(lv,rv);
+}
+
+void execute_call(instruction *instr){
+    avm_memcell *func = avm_translate_operand(&instr->result, &ax);
+    assert(func);
+    switch(func->type){
+        case userfunc_m: {
+            avm_callsaveenvironment();
+            pc = func->data.funcVal;
+            assert(pc < AVM_ENDING_PC);
+            assert(code[pc].opcode == funcenter_v);
+            break;
+        }
+        case string_m:
+            avm_calllibfunc(func->data.strVal);
+            break;
+        case libfunc_m:
+            avm_calllibfunc(func->data.libfuncVal);
+            break;
+        case table_m:
+            avm_call_functor(func->data.tableVal);
+            break;
+        default: {
+            char *s = avm_tostring(func);
+            avm_error("call: cannot bind to function!");
+            free(s);
+            executionFinished = 1;
+        }
+    }
+}
+
+void execute_funcenter(instruction *instr){
+    avm_memcell *func = avm_translate_operand(&instr->result, &ax);
+    assert(func);
+    assert(pc == func->data.funcVal);
+    totalActuals = 0;
+    userfunc *funcInfo = avm_getfuncinfo(pc);
+    topsp = top;
+    top = top - funcInfo->localSize;
+}
+
+void execute_funcexit(instruction *unused){
+    unsigned oldTop = top;
+    top = avm_get_envvalue(topsp + AVM_SAVEDTOP_OFFSET);
+    pc = avm_get_envvalue(topsp + AVM_SAVEDPC_OFFSET);
+    topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
+    while(++oldTop <= top){
+        avm_memcellclear(&stack[oldTop]);
+    }
 }
