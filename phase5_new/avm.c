@@ -193,6 +193,52 @@ unsigned avm_get_envvalue(unsigned i){
     return val;
 }
 
+void avm_calllibfunc(char *id){
+    library_func_t f = avm_getlibraryfunc(id);
+    if(!f){
+        //pass as one string
+        avm_error("unsupported lib func s called!");
+        executionFinished = 1;
+    }
+    else {
+        avm_callsaveenvironment();
+        topsp = top;
+        totalActuals = 0;
+        (*f)();
+        if(!executionFinished) execute_funcexit((instruction*)0);
+    }
+}
+
+unsigned avm_totalactuals(){
+    return avm_get_envvalue(topsp + AVM_NUMACTUALS_OFFSET);
+}
+
+avm_memcell *avm_getactual(unsigned i){
+    assert(i < avm_totalactuals());
+    return &stack[topsp + AVM_STACKENV_SIZE + 1 + i];
+}
+
+void libfunc_print(){
+    unsigned n = avm_totalactuals();
+    for(unsigned i = 0; i < n; ++i){
+        char *s = avm_tostring(avm_getactual(i));
+        puts(s);
+        free(s);
+    }
+}
+
+void avm_push_table_arg(avm_table *t){
+    stack[top].type = table_m;
+    avm_tableincrefcounter(stack[top].data.tableVal = t);
+    ++totalActuals;
+    avm_dec_top();
+}
+
+char *avm_tostring(avm_memcell *m){
+    assert(m->type >= 0 && m->type <= undef_m);
+    return(*tostringFuncs[m->type])(m);
+}
+
 void execute_assign(instruction *instr){
     avm_memcell *lv = avm_translate_operand(&instr->result, (avm_memcell*)0);
     avm_memcell *rv = avm_translate_operand(&instr->arg1, &ax);
@@ -248,4 +294,12 @@ void execute_funcexit(instruction *unused){
     while(++oldTop <= top){
         avm_memcellclear(&stack[oldTop]);
     }
+}
+
+void execute_pusharg(instruction *instr){
+    avm_memcell *arg = avm_translate_operand(&instr->arg1, &ax);
+    assert(arg);
+    avm_assign(&stack[top],arg);
+    ++totalActuals;
+    avm_dec_top();
 }

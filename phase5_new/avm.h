@@ -50,8 +50,20 @@ memclear_func_t memclearFuncs[] = {
     0
 };
 
+tosting_func_t tostringFuncs[]={
+    number_tostring,
+    string_tostring,
+    bool_tostring,
+    table_tostring,
+    userfunc_tostring,
+    libfunc_tostring,
+    nil_tostring,
+    undef_tostring
+};
+
 typedef void (*execute_func_t)(instruction*);
-typedef void (*memclear_func_t)(avm_memcell*); 
+typedef void (*memclear_func_t)(avm_memcell*);
+typedef char* (*tosting_func_t)(avm_memcell*); 
 
 typedef enum avm_memcell_t{
     number_m, string_m, bool_m, table_m, userfunc_m, libfunc_m,
@@ -132,6 +144,7 @@ void execute_nop(instruction *instr);
 
 void memclear_string(avm_memcell *m);
 void memclear_table(avm_memcell *m);
+
 void avm_warning(char *format);
 void avm_assign(avm_memcell *lv, avm_memcell *rv);
 void avm_error(char *format);
@@ -144,3 +157,16 @@ void amv_dec_top();
 void avm_push_envvalue(unsigned val);
 unsigned avm_get_envvalue(unsigned i);
 userfunc *avm_getfuncinfo(unsigned address);
+unsigned avm_totalactuals();
+avm_memcell *avm_getactual(unsigned i);
+void libfunc_print();
+void avm_registerlibfunc(char *id, library_func_t addr);
+
+char *number_tostring(avm_memcell *m);
+char *string_tostring(avm_memcell *m);
+char *bool_tostring(avm_memcell *m);
+char *table_tostring(avm_memcell *m);
+char *userfunc_tostring(avm_memcell *m);
+char *libfunc_tostring(avm_memcell *m);
+char *nil_tostring(avm_memcell *m);
+char *undef_tostring(avm_memcell *m);
