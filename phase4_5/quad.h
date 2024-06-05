@@ -46,6 +46,7 @@ typedef struct symbol{
 	unsigned		offset;
 	unsigned		scope;
 	unsigned		line;
+	unsigned		address;
 } symb;
 
 typedef struct expr{
@@ -66,6 +67,7 @@ typedef struct quad{
 	expr            *arg2;
 	unsigned int    label;
 	unsigned int    line;
+	unsigned		taddress;
 }quad;
 
 typedef struct funccall{
