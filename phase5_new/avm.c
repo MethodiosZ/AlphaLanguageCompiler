@@ -227,6 +227,29 @@ void libfunc_print(){
     }
 }
 
+void lifunc_typeof(){
+    unsigned n = avm_totalactuals();
+    if(n!=1) avm_error("one argument (not d) expected in 'typeof'!");
+    else {
+        avm_memcellclear(&retval);
+        retval.type = string_m;
+        retval.data.strval = strdup(typeStrings[avm_getactual(0)->type]);
+    }
+}
+
+void libfunc_totalarguments(){
+    unsigned p_topsp = avm_get_envvalue(topsp + AVM_SAVETOPSP_OFFSET);
+    avm_memcellclear(&retval);
+    if(!p_topsp) {
+        avm_error("'totalarguments' called outside a function!");
+        retval.type = nil_m;
+    }
+    else {
+        retval.type = number_m;
+        retval.data.numVal = avm_get_envvalue(p_topsp + AVM_NUMACTUALS_OFFSET);
+    }
+}
+
 void avm_push_table_arg(avm_table *t){
     stack[top].type = table_m;
     avm_tableincrefcounter(stack[top].data.tableVal = t);
