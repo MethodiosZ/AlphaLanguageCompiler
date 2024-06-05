@@ -233,12 +233,12 @@ void lifunc_typeof(){
     else {
         avm_memcellclear(&retval);
         retval.type = string_m;
-        retval.data.strval = strdup(typeStrings[avm_getactual(0)->type]);
+        retval.data.strVal = strdup(typeStrings[avm_getactual(0)->type]);
     }
 }
 
 void libfunc_totalarguments(){
-    unsigned p_topsp = avm_get_envvalue(topsp + AVM_SAVETOPSP_OFFSET);
+    unsigned p_topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
     avm_memcellclear(&retval);
     if(!p_topsp) {
         avm_error("'totalarguments' called outside a function!");
@@ -326,3 +326,149 @@ void execute_pusharg(instruction *instr){
     ++totalActuals;
     avm_dec_top();
 }
+
+void execute_jeq(instruction *instr){
+    assert(instr->result.type == label_a);
+    avm_memcell *rv1 = avm_translate_operand(&instr->arg1, &ax);
+    avm_memcell *rv2 = avm_translate_operand(&instr->arg2, &bx);
+    unsigned char result = 0;
+    if(rv1->type == undef_m || rv2->type == undef_m){
+        avm_error("'undef' involved in equality!");
+    }
+    else if(rv1->type == nil_m || rv2->type == nil_m){
+        result = rv1->type == nil_m && rv2->type == nil_m;
+    }
+    else if(rv1->type == bool_m || rv2->type == bool_m){
+        result = (avm_tobool(rv1) == avm_tobool(rv2));
+    }
+    else if(rv1->type != rv2->type){
+        avm_error("Illegal equality check!");
+    }
+    else{
+
+    }
+    if(!executionFinished && result) pc = instr->result.val;
+}
+
+void execute_newtable(instruction *instr){
+    avm_memcell *lv = avm_translate_operand(&instr->result, (avm_memcell*)0);
+    assert(lv && (&stack[0] <= lv && &stack[top] > lv || lv==&retval));
+    avm_memcellclear(lv);
+    lv->type = table_m;
+    lv->data.tableVal = avm_tablenew();
+    avm_tableincrefcounter(lv->data.tableVal);
+}
+
+void execute_tablegetelem(instruction *instr){
+    avm_memcell *lv = avm_translate_operand(&instr->result,(avm_memcell*)0);
+    avm_memcell *t = avm_translate_operand(&instr->arg1,(avm_memcell*)0);
+    avm_memcell *i = avm_translate_operand(&instr->arg2,&ax);
+    assert(lv && (&stack[0] <= lv && &stack[top] > lv || lv==&retval));
+    assert(t && &stack[0] <= t && &stack[top] > t);
+    assert(i);
+    avm_memcellclear(lv);
+    lv->type = nil_m;
+    if(t->type != table_m){
+        avm_error("illegal use of type as table!");
+    }
+    else{
+        avm_memcell *content = avm_tablegetelem(t->data.tableVal,i);
+        if(content) avm_assign(lv, content);
+        else{
+            char *ts = avm_tostring(t);
+            char *is = avm_tostring(i);
+            avm_warning("table not found!");
+            free(ts);
+            free(is);
+        }
+    }
+}
+
+void execute_tablesetelem(instruction *instr){
+    avm_memcell *t = avm_translate_operand(&instr->result, (avm_memcell*)0);
+    avm_memcell *i = avm_translate_operand(&instr->arg1, &ax);
+    avm_memcell *c = avm_translate_operand(&instr->arg2, &bx);
+    assert(t && &stack[0] <= t && &stack[top] > t);
+    assert(i && c);
+    if(t->type != table_m) avm_error("Illegal use of type as table!");
+    else avm_tablesetelem(t->data.tableVal,i,c);
+}
+
+double add_impl(double x, double y){
+    return x+y;
+}
+
+double sub_impl(double x, double y){
+    return x-y;
+}
+
+double mul_impl(double x, double y){
+    return x*y;
+}
+
+double div_impl(double x, double y){
+    if(y!=0) return x/y;
+    else avm_error("Division with zero!");
+}
+
+double mod_impl(double x, double y){
+    if(y!=0) return ((unsigned)x) % ((unsigned)y);
+    else avm_error("Division with zero!");
+}
+
+void execute_aithmetic(instruction *instr){
+    avm_memcell *lv = avm_translate_operand(&instr->result, (avm_memcell*)0);
+    avm_memcell *rv1 = avm_translate_operand(&instr->arg1,&ax);
+    avm_memcell *rv2 = avm_translate_operand(&instr->arg2,&bx);
+    assert(lv && (&stack[0] <= lv && &stack[top] > lv || lv==&retval));
+    assert(rv1 && rv2);
+    if(rv1->type != number_m || rv2->type != number_m){
+        avm_error("not a number in arithmetic!");
+        executionFinished = 1;
+    }
+    else {
+        arithmetic_func_t op = arithmeticFuncs[instr->opcode-add_v];
+        avm_memcellclear(lv);
+        lv->type = number_m;
+        lv->data.numVal = (*op)(rv1->data.numVal, rv2->data.numVal);
+    }
+}
+
+unsigned char number_tobool(avm_memcell *m){
+    return m->data.numVal != 0;
+}
+
+unsigned char string_tobool(avm_memcell *m){
+    return m->data.strVal[0] != 0;
+}
+
+unsigned char bool_tobool(avm_memcell *m){
+    return m->data.boolVal;
+}
+
+unsigned char table_tobool(avm_memcell *m){
+    return 1;
+}
+
+unsigned char userfunc_tobool(avm_memcell *m){
+    return 1;
+}
+
+unsigned char libfunc_tobool(avm_memcell *m){
+    return 1;
+}
+
+unsigned char nil_tobool(avm_memcell *m){
+    return 0;
+}
+
+unsigned char undef_tobool(avm_memcell *m){
+    assert(0);
+    return 0;
+}
+
+unsigned char avm_tobool(avm_memcell *m){
+    assert(m->type >= 0 && m->type < undef_m);
+    return (*toboolFuncs[m->type])(m);
+}
+

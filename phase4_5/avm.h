@@ -11,6 +11,12 @@
 #define AVM_SAVEDTOP_OFFSET +2
 #define AVM_SAVEDTOPSP_OFFSET +1
 
+#define execute_add execute_arithmetic
+#define execute_sub execute_arithmetic
+#define execute_mul execute_arithmetic
+#define execute_div execute_arithmetic
+#define execute_mod execute_arithmetic
+
 execute_func_t executeFuncs[] = {
     execute_assign,
     execute_add,
@@ -61,9 +67,34 @@ tosting_func_t tostringFuncs[]={
     undef_tostring
 };
 
+arithmetic_func_t arithmeticFuncs[] = {
+    add_impl,
+    sub_impl,
+    mul_impl,
+    div_impl,
+    mod_impl
+};
+
+tobool_func_t toboolFuncs[] = {
+    number_tobool,
+    string_tobool,
+    bool_tobool,
+    table_tobool,
+    userfunc_tobool,
+    libfunc_tobool,
+    nil_tobool,
+    undef_tobool
+};
+
+char *typeStrings[] = {
+    "number", "string", "bool", "table", "userfunc", "libfunc", "nil", "undef"
+};
+
 typedef void (*execute_func_t)(instruction*);
 typedef void (*memclear_func_t)(avm_memcell*);
-typedef char* (*tosting_func_t)(avm_memcell*); 
+typedef char* (*tosting_func_t)(avm_memcell*);
+typedef double (*arithmetic_func_t)(double x, double y);
+typedef unsigned char (*tobool_func_t)(avm_memcell*);
 
 typedef enum avm_memcell_t{
     number_m, string_m, bool_m, table_m, userfunc_m, libfunc_m,
@@ -98,8 +129,8 @@ typedef struct avm_memcell{
 static void avm_initstack();
 avm_table *avm_tablenew();
 void avm_tabledestroy(avm_table *t);
-avm_memcell *avm_tablegetelem(avm_memcell *key, avm_memcell *value);
-void avm_tablesetelem(avm_memcell *key, avm_memcell *value);
+avm_memcell *avm_tablegetelem(avm_table *table, avm_memcell *index);
+void avm_tablesetelem(avm_table *table, avm_memcell *index, avm_memcell *value);
 void avm_tableincrefcounter(avm_table *t);
 void avm_tabledecrefcounter(avm_table *t);
 void avm_tablebucketsinit(avm_table_bucket **p);
@@ -172,3 +203,20 @@ char *userfunc_tostring(avm_memcell *m);
 char *libfunc_tostring(avm_memcell *m);
 char *nil_tostring(avm_memcell *m);
 char *undef_tostring(avm_memcell *m);
+
+double add_impl(double x, double y);
+double sub_impl(double x, double y);
+double mul_impl(double x, double y);
+double div_impl(double x, double y);
+double mod_impl(double x, double y);
+void execute_aithmetic(instruction *instr);
+
+unsigned char number_tobool(avm_memcell *m);
+unsigned char string_tobool(avm_memcell *m);
+unsigned char bool_tobool(avm_memcell *m);
+unsigned char table_tobool(avm_memcell *m);
+unsigned char userfunc_tobool(avm_memcell *m);
+unsigned char libfunc_tobool(avm_memcell *m);
+unsigned char nil_tobool(avm_memcell *m);
+unsigned char undef_tobool(avm_memcell *m);
+unsigned char avm_tobool(avm_memcell *m);
