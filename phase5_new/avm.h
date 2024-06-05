@@ -161,6 +161,8 @@ unsigned avm_totalactuals();
 avm_memcell *avm_getactual(unsigned i);
 void libfunc_print();
 void avm_registerlibfunc(char *id, library_func_t addr);
+void lifunc_typeof();
+void libfunc_totalarguments();
 
 char *number_tostring(avm_memcell *m);
 char *string_tostring(avm_memcell *m);
