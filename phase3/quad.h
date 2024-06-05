@@ -1,26 +1,21 @@
-#ifndef	QUAD_H_
+#ifndef QUAD_H_
 #define QUAD_H_
 
-#include "hashtable.h"
+#include "symboltable.h"
 
-typedef enum opcode iopcode; 
-typedef enum Expr_t expr_t; 
-typedef struct expression expr;
-typedef struct call call_t;
-
-enum opcode{
+typedef enum opcode{
 	assign, 	add,		sub,
-	mul,		divide,		mod,
+	mul,		divd,		mod,
 	uminus,		and,		or,
 	not,		if_eq,		if_noteq,
 	if_lesseq,	if_greatereq,	if_less,
 	if_greater,	call,		param,
 	ret,		getretval,	funcstart,
-	funcend,	jump,		tablecreate,	
-	tablegetelem,	tablesetelem
-};
+	funcend,		tablecreate,	
+	tablegetelem,	tablesetelem, jump
+} iopcode;
 
-enum Expr_t{
+typedef enum expr_t{
 	var_e,
 	tableitem_e,
 	programfunc_e,
@@ -29,59 +24,98 @@ enum Expr_t{
 	boolexpr_e,
 	assignexpr_e,
 	newtable_e,
-	constnum_e,
+	constint_e,
+	constdouble_e,
 	constbool_e,
 	conststring_e,
 	nil_e
-};
+} expr_t;
 
-struct expression{
-	expr_t 	type;
-	Variable *sym;
-	expr    *index;
-	double	numConst;
-	char 	*strConst;
-	unsigned char boolConst;
-	expr	*next;
-};
+typedef enum scopespace{
+	programvar, functionlocal, formalarg
+} scopespace_t;
 
-typedef struct Quad{
-	iopcode	op;
-	expr *	result;	
-	expr *	arg1;
-	expr *	arg2;
-	unsigned int label;
-	unsigned int line;
+typedef enum symbol_t{
+	var_s, programfunc_s, libraryfunc_s
+} symbol_t;
+
+typedef struct symbol{
+	symbol_t		type;
+	char 			*name;
+	scopespace_t	space;
+	unsigned		offset;
+	unsigned		scope;
+	unsigned		line;
+} symb;
+
+typedef struct expr{
+	expr_t 	        type;
+	symb            *sym;
+	struct expr     *index;
+	int				intConst;
+	double	        doubleConst;
+	char 	        *strConst;
+	unsigned char   boolConst;
+	struct expr	    *next;
+} expr;
+
+typedef struct quad{
+	iopcode	        op;
+	expr            *result;	
+	expr            *arg1;
+	expr            *arg2;
+	unsigned int    label;
+	unsigned int    line;
 }quad;
 
-struct call {
-	expr* elist;
-	unsigned char method;
-	char* name;
-};
+typedef struct funccall{
+	expr			*elist;
+	unsigned char	method;
+	char			*name;
+} fcall;
+
+typedef struct stmt{
+	int breakList;
+	int contList;
+} stmt_t;
 
 void expand();
-void emit(iopcode op,expr * arg1, expr * arg2, expr * result, unsigned label, unsigned line);
-void printQuads(); 
-unsigned nextquadlabel();
-void patchlabel(unsigned quadNo, unsigned label);
-expr* lvalue_expr(Variable *sym);
-expr* newexpr(expr_t t);
+void emit(iopcode op,expr *arg1,expr *arg2,expr *result, unsigned label,unsigned line);
 expr* emit_iftableitem(expr* e);
-expr* make_call(expr* lv, expr* reversed_elist);
-expr* newexpr_constnum(double i);
-void comperror(char* format, const char* context);
-void check_arith(expr* e, const char* context);
-unsigned int istempname(char* s);
-unsigned int istempexpr(expr* e);
-expr* newexpr_constbool(unsigned int b);
-expr* newexpr_conststring(char *name);
+scopespace_t currscopespace();
+unsigned currscopeoffset();
+void incurrscopeoffset();
+void enterscopespace();
+void exitscopespace();
+void resetformalargoffset();
+void resetfunctionlocaloffset();
+void restorecurrscopeoffset(unsigned n);
 unsigned nextquad();
-expr* member_item(expr* lv, char* name);
+void patchlabel(unsigned quadNo,unsigned label);
+expr* newexpr(expr_t t);
+expr* newexpr_conststring(char *s);
+expr* newexpr_constint(int i);
+expr* newexpr_constdouble(double d);
+expr* newexpr_constnil();
+expr* newexpr_constbool(unsigned char b);
+expr* lvalue_expr(symb *sym);
+expr* member_item(expr *lv,char *name);
+expr* make_call(expr *lv, expr *reversed_elist);
+void comperror(char *format,const char* context);
+void check_arith(expr *e,const char *context);
+unsigned int istempname(char *s);
+unsigned int istempexpr(expr *e);
+void make_stmt(stmt_t *s);
 int newlist(int i);
 int mergelist(int l1,int l2);
-void patchlist(int list, int label);
+void patchlist(int list,int label);
+void printQuads();
 const char* getopcode(iopcode op);
 const char* getlabel(unsigned label);
+symb* newtemp();
+void resettemp();
+symb* newsymbol(char *name);
+void printexpr(expr *item);
+symb* SymTableItemtoQuadItem(Sym *item);
 
-#endif 
+#endif

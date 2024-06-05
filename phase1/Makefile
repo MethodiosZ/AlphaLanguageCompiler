@@ -1,24 +1,23 @@
-###################################################
-#
-# Makefile
-# Compilers Phase 1
-#
-####################################################
+# Compiler
+CC = gcc -g -w
 
-CC=gcc -g
-FL=flex
-FFLAGS= --outfile
-OFLAGS=-o
-REM=rm -f
-XF=.out
-CF=.c
-HF=.h
+# Flex compiler
+FL = flex
 
-all: al.c
-	$(CC) $(OFLAGS) scanner.out al.c
+# Executable name
+EXECUTABLE = scanner
 
-al.c:	scanner.l
-	$(FL) $(FFLAGS)=al.c scanner.l
+# Default rule
+all: $(EXECUTABLE)
 
-clean:	scanner.out al.c al.h
-	$(REM) *$(XF) *$(CF) *$(HF)
+# Compile
+$(EXECUTABLE): scanner.l
+	$(FL) -o lex.yy.c scanner.l
+	$(CC) -o scanner lex.yy.c
+
+# Clean generated files
+clean:
+	rm -f lex.yy.c $(EXECUTABLE)
+	rm -f scanner
+	rm -f scanner.h
+	clear

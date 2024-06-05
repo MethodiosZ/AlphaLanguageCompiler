@@ -1,213 +1,190 @@
 %{
-	#define YY_DECL int alpha_yylex(void* yval)
+    #define YY_DECL int alpha_yylex(void* yylval)
 
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
 
-	#include <stdio.h>
-	#include <string.h>
-	#include <stdlib.h>
-	
+    int yytokenid           = 0;
+    int commentbegin        = 0;
+    int commentnestlvl      = 0;
+    int nestedcommentbegin[10] = {0,0,0,0,0,0,0,0,0,0};
+    char commentlines[10];
+    char* string_build;
 
-	int yytokenno = 0;
-	int yycount = 0;
-	int string_size; 
-	int string_curr;
-	char* string_from_token;
-	char* string_to_node;
-	char* new_memory;
+    static const char *Keys[] = {
+        "IF","ELSE","WHILE","FOR","FUNCTION","RETURN","BREAK","CONTINUE","AND","NOT","OR","LOCAL","TRUE","FALSE","NIL",
+    };
 
+    static const char *Ops[] = {
+        "ASSIGN","PLUS","MINUS","MULTIPLY","DIV","MOD","EQUAL","NOT_EQUAL","PLUS_PLUS","MINUS_MINUS","LESSER","GREATER","GREATER_EQUAL","LESSER_EQUAL",
+    };
 
-	typedef enum 	type{ID, INTCONST, REALCONST, PUNCT, OPERATOR, WHITESPACE, KEYWORD, NOMATCH, COMMENTS, STR}types;
-	typedef enum	key{IF, ELSE, WHILE, FOR, FUNCTION, RETURN, BREAK, CONTINUE, AND, NOT, OR, LOCAL, TRUE, FALSE, NIL, NTHNG}keywords;
+    static const char *Puncs[] = {
+        "LEFT_BRACE","RIGHT_BRACE","LEFT_SQBRACE","RIGHT_SQBRACE","LEFT_PARENTHESIS","RIGHT_PARENTHESIS","SEMICOLON","COMA","COLON","COLON_COLON","DOT","DOT_DOT",
+    };
 
-	typedef struct node alpha_token_t;
+    static const char *Comms[] = {
+        "LINE_COMMENT","BLOCK_COMMENT","NESTED_COMMENT",
+    };
 
-	struct node{
-		int line_number;
-		int token_number;
-		char* token;
-		types type;
-		char* ch_value;
-		float num_value;
-		keywords key;
-		alpha_token_t* next;
-	};
+    typedef struct alpha_token{
+        int                     line;
+        int                     token_id;
+        char*                   content;
+        char*                   category;
+        int                     type;
+        struct alpha_token*     next;
+    }alpha_token_t;
 
-	void insert_node(alpha_token_t *head, int line_number, int token_number, char* token, types type, char* ch_value, float num_value, keywords key);
-	keywords keywords_to_enum(char* text);
-	void print_results(alpha_token_t *head);
-    	void allocate_str_memory();
-	
+    typedef enum keywords{IF,ELSE,WHILE,FOR,FUNCTION,RETURN,BREAK,CONTINUE,AND,NOT,OR,LOCAL,TRUE,FALSE,NIL}keywords_t;
+    typedef enum operators{ASSIGN,PLUS,MINUS,MULTIPLY,DIV,MOD,EQUAL,NOT_EQUAL,PLUS_PLUS,MINUS_MINUS,LESSER,GREATER,GREATER_EQUAL,LESSER_EQUAL}operators_t;
+    typedef enum punc{LEFT_BRACE,RIGHT_BRACE,LEFT_SQBRACE,RIGHT_SQBRACE,LEFT_PARENTHESIS,RIGHT_PARENTHESIS,SEMICOLON,COMA,COLON,COLON_COLON,DOT,DOT_DOT}punc_t;
+    typedef enum comm{LINE_COMMENT,BLOCK_COMMENT,NESTED_COMMENT}comm_t;
+
+    void insert(alpha_token_t *head, int line, int token_id, char* content,char* category, int type);
+    void print(alpha_token_t* head);
+    int text_to_enum_keys(char* text);
+    int text_to_enum_ops(char* text);
+    int text_to_enum_puncs(char* text);
+
 %}
 
-%option noyywrap
+/* Flex options */
+%option header-file="./scanner.h"
+%option noyywrap 
 %option yylineno
-%option header-file="./al.h"
 
+/* Flex macros */
+keyword		    "if"|"else"|"while"|"for"|"function"|"return"|"break"|"continue"|"and"|"not"|"or"|"local"|"true"|"false"|"nil"
+intconst 	    (0[xX][0-9a-fA-F]+)|[0-9]+
+realconst       [0-9]*\.([0-9](e|E)?[0-9]*)
+operator	    "="|"+"|"-"|"*"|"/"|"%"|"=="|"!="|"++"|"--"|">"|"<"|">="|"<="
+ident           [a-zA-Z_][a-zA-Z_0-9]*
+punctuation		"{"|"}"|"["|"]"|"("|")"|";"|","|":"|"::"|"."|".."
+space           [\r\n \t\v]
+comment		    ("//".*)
 
-id			[a-zA-Z_][a-zA-Z_0-9]*
-
-intconst		(0[xX][0-9a-fA-F]+)|[0-9]+
-
-realconst		[0-9]*\.([0-9](e|E)?[0-9]*)
-
-punct			"{"|"}"|"["|"]"|"("|")"|";"|","|"."|":"|"::"|".."
-
-operator		"="|"+"|"-"|"*"|"/"|"%"|"=="|"!="|"++"|"--"|">"|"<"|">="|"<="
-
-whitespace		[\r\n \t\v]
-
-keyword			"if"|"else"|"while"|"for"|"function"|"return"|"break"|"continue"|"and"|"not"|"or"|"local"|"true"|"false"|"nil"
-
-commentline		"//".*
-
-wrong_id		[0-9][a-zA-Z_0-9]*
-
-%x COMMENT
+%x BLOCK_COMMENT
+%x NESTED_COMMENT
 %x STRING
-
-%% 
-
-\"		{
-			string_from_token="";
-			string_size=1; 
-			string_curr=0; 
-			string_from_token=malloc(sizeof(char)*string_size);
-			string_to_node=string_from_token; 
-			BEGIN(STRING);
-		}
-<STRING>\"	{
-			allocate_str_memory();
-			*string_from_token='\0';
-			insert_node(yval, yylineno, ++yytokenno, string_to_node, STR, string_to_node, -1, NTHNG);
-			BEGIN(INITIAL);
-		}
-<STRING>\\n	{
-			allocate_str_memory();
-			*string_from_token='\n';
-			string_from_token++;
-			string_curr++;
-		}
-<STRING>\\t	{
-			allocate_str_memory();
-			*string_from_token='\t'; 
-			string_from_token++; 
-			string_curr++;
-		}
-<STRING>\\\" 	{
-			allocate_str_memory();
-			*string_from_token='\"';
-			string_from_token++; 
-			string_curr++;
-		}
-<STRING>\\\\ 	{
-			allocate_str_memory();
-			*string_from_token='\\';
-			string_from_token++; 
-			string_curr++;
-		}
-<STRING>[^\\\n\"\\\t]+	{
-				char* tmp=yytext;
-				while(*tmp){
-					allocate_str_memory();
-					*string_from_token=*tmp;
-					string_from_token++;
-					tmp++;
-					string_curr++;
-				}
-			}
-<STRING><<EOF>> {
-			printf("STRING ERROR <<Open String Left>>. \n");
-			return -1;
-		}
-
-"/*"	yycount++; BEGIN(COMMENT);
-
-<COMMENT>[^*^/]*
-<COMMENT>"/"+[^*]*
-<COMMENT>"/"+"*"	yycount++;
-<COMMENT>"*"+[^*/]*
-<COMMENT>"*"+"/" {
-			yycount--;
-			if(yycount==0) {	
-				insert_node(yval,yylineno, ++yytokenno, "/**/", COMMENTS, "/**/", -2, NTHNG);
-				BEGIN(INITIAL);
-			}
-			else insert_node(yval,yylineno, ++yytokenno, "/**/", COMMENTS, "/**/", -3, NTHNG);
-		}
-<COMMENT><<EOF>> 	{ printf("COMMENT ERROR <<Open Comment >>. \n"); 
-			return -1; }
-
-
-
-{commentline}		{ insert_node(yval, yylineno, ++yytokenno, "//", COMMENTS, "//", -4, NTHNG); }
-
-{whitespace}		{  }
-
-{keyword}		{ keywords keywrd = keywords_to_enum(yytext);
-			  insert_node(yval, yylineno, ++yytokenno, yytext, KEYWORD, yytext, -5, keywrd); }
-
-{id}			{ insert_node(yval, yylineno, ++yytokenno, yytext, ID, yytext, -6, NTHNG);}
-
-{intconst}		{ insert_node(yval, yylineno, ++yytokenno, yytext, INTCONST, NULL, atoi(yytext), NTHNG); }
-
-{realconst}		{ insert_node(yval, yylineno, ++yytokenno, yytext, REALCONST, NULL, atof(yytext), NTHNG); }
-
-{punct}			{ insert_node(yval, yylineno, ++yytokenno, yytext, PUNCT, yytext, -7, NTHNG); }
-
-{operator}		{ insert_node(yval, yylineno, ++yytokenno, yytext, OPERATOR, yytext, -8, NTHNG); }
-
-<<EOF>>			{ printf("\nFile has been analyzed.\n"); return 1; }
-
-.			{ printf("%d:  #%d      '%s'     NOMATCH     '%s'\n",yylineno, ++yytokenno, yytext, yytext ); }
-
-{wrong_id}		{ printf("Error. Identifiers can't start with a number.\n"); 
-			  return -1; }
-
 %%
 
-void allocate_str_memory() {
-	if (string_size==string_curr) {
-		string_size = string_size*4; 
-		new_memory = (char *)malloc(sizeof(char)*string_size);
-		strcpy(new_memory, string_to_node);
-		string_to_node = new_memory;
-		new_memory =&(new_memory[strlen(new_memory)]);
-		string_from_token = new_memory;
-	}
+{keyword}       { fprintf(stderr,"Recognised keyword with value: %s\n",yytext);
+                  int key = text_to_enum_keys(yytext);  
+                  insert(yylval,yylineno,++yytokenid,yytext,"KEYWORD",key);  }
+{intconst}      { fprintf(stderr,"Recognised integer with value: %s\n",yytext); 
+                  insert(yylval,yylineno,++yytokenid,yytext,"INTCONST",-1);   }
+{realconst}     { fprintf(stderr,"Recognised real number with value: %s\n",yytext); 
+                  insert(yylval,yylineno,++yytokenid,yytext,"REALCONST",-1);   }
 
+\"  {
+    string_build = (char*)malloc(1);
+    string_build[0] = '\0';
+    BEGIN(STRING);
 }
 
-void insert_node(alpha_token_t *head, int line_number, int token_number, char* token, types type, char* ch_value, float num_value, keywords key) {
-
-	alpha_token_t *new_node, *tmp, *here;
-
-	new_node=(alpha_token_t *)malloc(sizeof(alpha_token_t));
-	new_node->line_number = line_number;
-	new_node->token_number = token_number;
-	new_node->token = strdup(token);
-	new_node->type = type;
-	new_node->key = key;
-	new_node->next = NULL;
-	if (ch_value != (char *)NULL){
-		new_node->ch_value = strdup(ch_value);
-	}
-	else if (num_value >= 0){
-		new_node->num_value = num_value;
-	}
-	tmp = head;
-	while(tmp) {
-		here = tmp;
-		tmp = tmp->next;
-	}
-	here->next = new_node;
-	
-	return;
+<STRING>\\\" {
+    string_build = (char*)realloc(string_build, strlen(string_build) + 2);
+    strcat(string_build, "\\\"");
 }
 
-keywords keywords_to_enum(char* text) {
+<STRING>\" {
+    insert(yylval, yylineno, ++yytokenid, strdup(string_build), "STRING", -1);
+    free(string_build);
+    BEGIN(INITIAL);
+}
 
-	if(!strcmp(text, "if")) return IF;
-	else if(!strcmp(text, "else")) return ELSE;
+<STRING>\\n {
+    string_build = (char*)realloc(string_build, strlen(string_build) + 2);
+    strcat(string_build, "\n");
+}
+
+<STRING>\\t {
+    string_build = (char*)realloc(string_build, strlen(string_build) + 2);
+    strcat(string_build, "\t");
+}
+
+<STRING>\\\\ {
+    string_build = (char*)realloc(string_build, strlen(string_build) + 2);
+    strcat(string_build, "\\");
+}
+
+<STRING>[^\"\\\n]+ {
+    string_build = (char*)realloc(string_build, strlen(string_build) + strlen(yytext) + 1);
+    strcat(string_build, yytext);
+}
+
+{operator}      { fprintf(stderr,"Recognised operator with value: %s\n",yytext);
+                  int op = text_to_enum_ops(yytext);  
+                  insert(yylval,yylineno,++yytokenid,yytext,"OPERATOR",op);   }
+{ident}         { fprintf(stderr,"Recognised id with value: %s\n",yytext); 
+                  insert(yylval,yylineno,++yytokenid,yytext,"IDENT",-1);   }
+{punctuation}   { fprintf(stderr,"Recognised punctuation mark with value: %s\n",yytext);
+                  int mark = text_to_enum_puncs(yytext);  
+                  insert(yylval,yylineno,++yytokenid,yytext,"PUNCTUATION",mark);   }
+<<EOF>>  {  if (YY_START == BLOCK_COMMENT){
+                fprintf(stderr, "Error: Block comment not closed at end of file\n");
+            } else if(YY_START == NESTED_COMMENT){
+                fprintf(stderr, "Error: Nested comment not closed at end of file\n");
+            } else {
+                    fprintf(stderr,"\nAnalysis Complete\n");
+            }
+            return 1; 
+}
+{space}         { }
+{comment}       { fprintf(stderr,"Recognised comment with value: %s\n",yytext);  
+                  insert(yylval,yylineno,++yytokenid,"","COMMENT",0);   }
+
+"/*"            { fprintf(stderr,"Recognised block comment beginning with value: %s\n",yytext);
+                  commentbegin=yylineno;  
+                  BEGIN(BLOCK_COMMENT);  
+                  }   /* Start of block comment */
+
+<BLOCK_COMMENT>{
+    "/*" {  fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);
+            nestedcommentbegin[commentnestlvl]=yylineno;
+            commentnestlvl++;
+            BEGIN(NESTED_COMMENT);  }
+    "*/" {  fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
+            snprintf(commentlines,10,"%d - %d",commentbegin,yylineno);
+            insert(yylval,commentbegin,++yytokenid,commentlines,"COMMENT",1);
+            BEGIN(INITIAL);}        /* End of block comment */
+    "\n"    { }
+    .       { }
+}
+
+<NESTED_COMMENT>{
+    "/*" {  fprintf(stderr,"Recognised nested comment beginning with value: %s\n",yytext);
+            nestedcommentbegin[commentnestlvl]=yylineno;
+            commentnestlvl++;  
+            BEGIN(NESTED_COMMENT);  }
+    "*/" {  if(commentnestlvl == 1) {
+                commentnestlvl--;
+                fprintf(stderr,"Recognised block comment ending with value: %s\n",yytext);
+                snprintf(commentlines,10,"%d - %d",nestedcommentbegin[commentnestlvl],yylineno);
+                insert(yylval,nestedcommentbegin[commentnestlvl],++yytokenid,commentlines,"COMMENT",2);
+                BEGIN(BLOCK_COMMENT);        /* End of block comment */ 
+            }else {
+                fprintf(stderr,"Recognised nested comment ending with value: %s\n",yytext);
+                commentnestlvl--;
+                snprintf(commentlines,10,"%d - %d",nestedcommentbegin[commentnestlvl],yylineno);
+                insert(yylval,nestedcommentbegin[commentnestlvl],++yytokenid,commentlines,"COMMENT",2);
+                BEGIN(NESTED_COMMENT); /* End of nested comment */
+            }
+        } 
+    "\n"    { }
+    .       { }
+}
+
+.               { fprintf(stderr,"Cannot match character '%s' with any rule\n",yytext);}
+
+%%
+/* user code */
+
+int text_to_enum_keys(char* text){
+    if(!strcmp(text,"if")) return IF;
+    else if(!strcmp(text, "else")) return ELSE;
 	else if(!strcmp(text, "while")) return WHILE;
 	else if(!strcmp(text, "for")) return FOR;
 	else if(!strcmp(text, "function")) return FUNCTION;
@@ -223,70 +200,97 @@ keywords keywords_to_enum(char* text) {
 	else if(!strcmp(text, "nil")) return NIL;
 }
 
-void print_results(alpha_token_t *head) {
-	alpha_token_t* tmp;
-	char* token;
-	tmp = head->next;
-	int integer;
-	
-	while(tmp) {
-		integer = tmp->num_value;
-		switch(tmp->type) {
-			case OPERATOR: printf("%d:  #%d\t'%s'\tOPERATOR\t%s\n",tmp->line_number, tmp->token_number, tmp->token, tmp->ch_value); break;
-			case INTCONST: printf("%d:  #%d\t'%s'\tINTCONST\t%d\n",tmp->line_number, tmp->token_number, tmp->token, integer); break;
-			case REALCONST: printf("%d:  #%d\t'%s'\tREALCONST\t%f\n",tmp->line_number, tmp->token_number, tmp->token, tmp->num_value); break;
-			case PUNCT: printf("%d:  #%d\t'%s'\tPUNCTUATION\t%s\n",tmp->line_number, tmp->token_number, tmp->token, tmp->ch_value); break;
-			case ID: printf("%d:  #%d\t'%s'\tIDENTIFIER\t'%s'\n",tmp->line_number, tmp->token_number, tmp->token, tmp->ch_value); break;
-			case KEYWORD:
-				switch (tmp->key) {
-					case IF: token = strdup("IF"); break;
-					case ELSE: token = strdup("ELSE"); break;
-					case WHILE: token = strdup("WHILE"); break;
-					case FOR: token = strdup("FOR"); break;
-					case FUNCTION: token = strdup("FUNCTION"); break;
-					case RETURN: token = strdup("RETURN"); break;
-					case BREAK: token = strdup("BREAK"); break;
-					case CONTINUE: token = strdup("CONTINUE"); break;
-					case AND: token = strdup("AND"); break;
-					case NOT: token = strdup("NOT"); break;
-					case OR: token = strdup("OR"); break;
-					case LOCAL: token = strdup("LOCAL"); break;
-					case TRUE: token = strdup("TRUE"); break;
-					case FALSE: token = strdup("FALSE"); break;
-					case NIL: token = strdup("NIL"); break;
-					case NTHNG: token = strdup("NTHING"); break;
-					default: printf("Print results defaulted on case KEYWORD.\n");
-				}
-				printf("%d:  #%d\t'%s'\tKEYWORD\t\t%s\n",tmp->line_number, tmp->token_number, tmp->token, token); break;
-			case WHITESPACE: printf("%d:  #%d\t'%s'\tWHITESPACE\t'%s'\n",tmp->line_number, tmp->token_number, tmp->token, tmp->ch_value); break;
-			case COMMENTS: printf("%d:  #%d\t'%s'\tCOMMENT\t'%s'\n",tmp->line_number, tmp->token_number, tmp->token, tmp->ch_value); break;
-			case STR: printf("%d:  #%d\t'%s'\tSTRING\t'%s'\n",tmp->line_number, tmp->token_number, tmp->token, tmp->ch_value); break;
-			case NOMATCH: printf("%d:  #%d\t'%s'\tNOMATCH\t'%s'\n",tmp->line_number, tmp->token_number, tmp->token, tmp->ch_value); break;
-			default: printf("Print results defaulted on type switch.\n");
-		}
-		tmp = tmp->next;
-	}
+int text_to_enum_ops(char* text){
+    if(!strcmp(text,"=")) return ASSIGN;
+    else if(!strcmp(text, "+")) return PLUS;
+	else if(!strcmp(text, "-")) return MINUS;
+	else if(!strcmp(text, "*")) return MULTIPLY;
+	else if(!strcmp(text, "/")) return DIV;
+	else if(!strcmp(text, "%")) return MOD;
+	else if(!strcmp(text, "==")) return EQUAL;
+	else if(!strcmp(text, "!=")) return NOT_EQUAL;
+	else if(!strcmp(text, "++")) return PLUS_PLUS;
+	else if(!strcmp(text, "--")) return MINUS_MINUS;
+	else if(!strcmp(text, ">")) return GREATER;	
+	else if(!strcmp(text, "<")) return LESSER;
+	else if(!strcmp(text, ">=")) return GREATER_EQUAL;
+	else if(!strcmp(text, "<=")) return LESSER_EQUAL;
 }
 
+int text_to_enum_puncs(char* text){
+    if(!strcmp(text,"{")) return LEFT_BRACE;
+    else if(!strcmp(text, "}")) return RIGHT_BRACE;
+	else if(!strcmp(text, "[")) return LEFT_SQBRACE;
+	else if(!strcmp(text, "]")) return RIGHT_SQBRACE;
+	else if(!strcmp(text, "(")) return LEFT_PARENTHESIS;
+	else if(!strcmp(text, ")")) return RIGHT_PARENTHESIS;
+	else if(!strcmp(text, ";")) return SEMICOLON;
+	else if(!strcmp(text, ",")) return COMA;
+	else if(!strcmp(text, ":")) return COLON;
+	else if(!strcmp(text, "::")) return COLON_COLON;
+	else if(!strcmp(text, ".")) return DOT;	
+	else if(!strcmp(text, "..")) return DOT_DOT;
+}
 
+void insert(alpha_token_t *head, int line, int token_id, char* content,char* category, int type){
+    alpha_token_t *new_token,*temp;
+    new_token=(alpha_token_t*)malloc(sizeof(alpha_token_t));
+    new_token->line=line;
+    new_token->token_id=token_id;
+    new_token->content=strdup(content);
+    new_token->category=strdup(category);
+    new_token->type=type;
+    new_token->next=NULL;
+    temp=head;
+    while(temp->next!=NULL){
+        temp=temp->next;
+    }
+    temp->next=new_token;
+    return;
+}
 
-int main (int argc, char* argv[]) {
-	
-	alpha_token_t *head=NULL;
-	head = (alpha_token_t *)malloc(sizeof(alpha_token_t));
-	head->next = NULL;
-	
-	if(argc>1) {
-		if(!(yyin = fopen(argv[1],"r"))){
-			fprintf(stderr, "Cannot read file %s\n",argv[1]);
-			return -1;
-		}
-	}
-	else yyin = stdin;
-	
-	alpha_yylex(head);
+void print(alpha_token_t* head){
+    alpha_token_t* temp;
+    temp=head->next;
+    printf("---------------------   Lexical Analysis    ---------------------\n\n");
+    while(temp){
+        printf("%d: #%d %s %s",temp->line,temp->token_id,temp->content,temp->category);
+        if(temp->type!=-1){
+            if(!strcmp(temp->category,"KEYWORD")){
+                printf(" %s\n",Keys[temp->type]);
+            }
+            else if(!strcmp(temp->category,"OPERATOR")){
+                printf(" %s\n",Ops[temp->type]);
+            }
+            else if(!strcmp(temp->category,"PUNCTUATION")){
+                printf(" %s\n",Puncs[temp->type]);
+            }
+            else if(!strcmp(temp->category,"COMMENT")){
+                printf(" %s\n",Comms[temp->type]);
+            }
+        }
+        else{
+            printf(" %s\n",temp->content);
+        }
+        temp=temp->next;
+    }
+    return;
+}
 
-	printf("\nValid tokens from file:\n");
-	print_results(head);
-	return 0;
+int main(int argc, char* argv[]) {
+    system("clear");
+    alpha_token_t* head = NULL;
+    head = (alpha_token_t*)malloc(sizeof(alpha_token_t));
+    head->next=NULL;
+    if(argc > 1) {
+        if(!(yyin = fopen(argv[1],"r"))) {
+            fprintf(stderr, "Cannot read file:  %s\n", argv[1]);
+            return -1;
+        }
+    }else {
+        yyin = stdin;
+    }
+    alpha_yylex(head);
+    print(head);
+    return 0;
 }
