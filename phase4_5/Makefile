@@ -7,10 +7,10 @@
 
 all: compiler
 
-parser.tab.c parser.tab.h: parser.y symboltable.h quad.h finalcode.h avm.h
+parser.tab.c parser.tab.h: parser.y symboltable.h quad.h avm.h
 	bison -v -d parser.y
 
-scanner.c: scanner.l parser.tab.h quad.h finalcode.h avm.h
+scanner.c: scanner.l parser.tab.h quad.h avm.h
 	flex --outfile=scanner.c scanner.l
 
 compiler: parser.c scanner.c symboltable.c quad.c finalcode.c avm.c

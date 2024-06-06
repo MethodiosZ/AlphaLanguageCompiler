@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "quad.h"
-#include "finalcode.h"
 #include "avm.h"
 
 int yyerror(char* yaccProvidedMessage);
