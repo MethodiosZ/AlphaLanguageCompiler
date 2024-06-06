@@ -7,5 +7,3 @@ Creates and compile: make
 Run: compiler "testfile"
 
 Clean: make clean
-
-Δεν εχει υλοποιηθει η μερικη αποτιμηση

@@ -85,6 +85,7 @@ void expand_v();
 void printInstructions();
 void printVmarg(vmarg* arg);
 void InstrToBin();
+void readBin();
 
 unsigned consts_newstring(char *s);
 unsigned consts_newnumber(double n);

@@ -18,6 +18,12 @@ unsigned        ij_total = 0;
 instruction     *vmargs = (instruction*)0;
 unsigned        totalVmargs = 0;
 instruction     *instrs;
+int             user=0,str=0,num=0,fun=0,insr_s=0,poffset=0;
+userfunc        *userfs;
+char            **str_c;
+char            **lib_f;
+instruction     *instrs;
+double          *numbers;
 
 void make_operand(expr *e, vmarg *arg){
     switch(e->type){
@@ -742,4 +748,91 @@ void InstrToBin(){
         fwrite(&instr.srcLine, sizeof(unsigned), 1, exe);
 	}
 	fclose(exe);
+}
+
+void readBin(){
+	FILE *executable;
+	executable= fopen("executable.abc","r");
+	int magic_number,i,length,temp;
+    fread(&magic_number, sizeof(int), 1, executable);
+	printf("Magic number: %ld\n", magic_number);
+	if(magic_number!=200701202){
+		return ;
+	}
+   	fread(&user, sizeof(int), 1, executable); printf("userfuncs %d\n", user);
+	if(user!=0){
+		userfs =(userfunc*) malloc(user*sizeof(userfunc));
+		for(i=0;i<user;i++){
+			//temp=userfs[i].address-1;
+			fread(&userfs[i].address, sizeof(int), 1, executable);
+			printf("%u ", userfs[i].address);
+			fread(&userfs[i].localSize, sizeof(int), 1, executable);
+			printf("%u ", userfs[i].localSize);
+			fread(&length, sizeof(int), 1, executable);
+			
+        	userfs[i].id = (char*) malloc(sizeof(char)*(length+1));
+        	fread((char*)userfs[i].id, length+1, 1, executable);
+			printf("%s\n", userfs[i].id);
+		}
+	}
+	fread(&str, sizeof(int), 1, executable); printf("strings %d\n", str);
+	if(str!=0){
+		str_c = (char**) malloc(sizeof(char*)*str);
+		for(i=0;i<str;i++){
+			 fread(&length, sizeof(int), 1, executable);
+        	str_c[i] = (char*) malloc(sizeof(char)*(length+1));
+       		 fread(str_c[i], length+1, 1, executable);			
+
+		}
+	}
+	 fread(&num, sizeof(int), 1, executable); printf("numbers %d\n", num);
+	 if(num!=0){
+		numbers= (double*)malloc(sizeof(double) * num);
+		for(i=0;i<num;i++){
+			fread(&numbers[i], sizeof(double), 1, executable);
+            		printf("%lf\n", numbers[i]);
+
+		}
+	}
+	fread(&fun, sizeof(int), 1, executable); printf("functions %d\n", fun); 
+	if(fun!=0){
+		lib_f = (char**) malloc(sizeof(char*)*fun);
+		for(i=0;i<fun;i++){
+			 fread(&length, sizeof(int), 1, executable);
+       		 lib_f[i] = (char*) malloc(sizeof(char)*(length+1));
+       		 fread(lib_f[i], length+1, 1, executable);
+		}
+	}
+	fread(&insr_s, sizeof(int), 1, executable); printf("instructions %d\n", insr_s); 
+	if(insr_s!=0){
+		instrs = (instruction*) malloc((insr_s+1)*sizeof(instruction));
+		for(i=0;i<insr_s;i++){
+		
+			instrs[i].result =(vmarg*) malloc(sizeof(vmarg));
+			instrs[i].arg1 =(vmarg*) malloc(sizeof(vmarg));
+			instrs[i].arg2 =(vmarg*) malloc(sizeof(vmarg));
+			
+			fread(&instrs[i].opcode, sizeof(int), 1, executable);
+			printf("opcode %d\n", instrs[i].opcode); 
+			fread(&instrs[i].result->type, sizeof(int), 1, executable);
+			printf("res type %d\n", instrs[i].result->type); 
+			fread(&instrs[i].result->val, sizeof(int), 1, executable);
+			printf("res val %d\n", instrs[i].result->val); 
+			fread(&instrs[i].arg1->type, sizeof(int), 1, executable);
+			printf("arg1 type %d\n", instrs[i].arg1->type);
+			fread(&instrs[i].arg1->val, sizeof(int), 1, executable);
+			printf("arg1 val %d\n", instrs[i].arg1->val);
+			fread(&instrs[i].arg2->type, sizeof(int), 1, executable);
+			printf("arg2 type %d\n", instrs[i].arg2->type);
+			fread(&instrs[i].arg2->val, sizeof(int), 1, executable);
+			printf("arg2 val %d\n",instrs[i].arg2->val);
+			fread(&instrs[i].srcLine, sizeof(unsigned), 1, executable);
+			printf("srcline type %d\n", instrs[i].srcLine);
+
+		}
+		
+	}
+	fread(&poffset,sizeof(int),1,executable);
+	printf("total globals %d\n", poffset); 
+	fclose(executable);
 }
