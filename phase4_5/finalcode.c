@@ -871,3 +871,11 @@ void readBin(){
 	printf("total globals %d\n", poffset); 
 	fclose(executable);
 }
+
+void add_incomplete_jump(unsigned instrNo, unsigned iaddress){
+
+}
+
+void patch_incomplete_jumps(){
+
+}

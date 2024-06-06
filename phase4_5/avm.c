@@ -129,6 +129,14 @@ void avm_tabledestroy(avm_table *t){
     free(t);
 }
 
+avm_memcell *avm_tablegetelem(avm_table *table, avm_memcell *index){
+    return ;
+}
+
+void avm_tablesetelem(avm_table *table, avm_memcell *index, avm_memcell *value){
+
+}
+
 void avm_tablebucketsdestroy(avm_table_bucket **p){
     for(unsigned i=0; i<AVM_STACKSIZE;++i,++p){
         for(avm_table_bucket *b = *p;b;){
@@ -216,7 +224,12 @@ void memclear_table(avm_memcell *m){
     avm_tabledecrefcounter(m->data.tableVal);
 }
 
-void avm_assign(avm_memcell *lv, avm_memcell *rv){
+void avm_warning(char *format){
+
+}
+
+void avm_assign(avm_memcell *lv, avm_memcell *rv)
+{
     if(lv==rv) return;
     if(lv->type == table_m && rv->type ==table_m && 
     lv->data.tableVal == rv->data.tableVal) return;
@@ -225,6 +238,10 @@ void avm_assign(avm_memcell *lv, avm_memcell *rv){
     memcpy(lv,rv,sizeof(avm_memcell));
     if(lv->type == string_m) lv->data.strVal = strdup(rv->data.strVal);
     else if(lv->type == table_m) avm_tableincrefcounter(lv->data.tableVal);
+}
+
+void avm_error(char *format){
+
 }
 
 void avm_call_functor(avm_table *t){
@@ -266,6 +283,22 @@ void avm_callsaveenvironment(){
     avm_push_envvalue(topsp);
 }
 
+double consts_getnumber(unsigned index){
+    return ;
+}
+
+char *consts_getstring(unsigned index){
+    return ;
+}
+
+char *linfuncs_getused(unsigned index){
+    return ;
+}
+
+userfunc *userfuncs_getfunc(unsigned index){
+    return ;
+}
+
 unsigned avm_get_envvalue(unsigned i){
     assert(stack[i].type == number_m);
     unsigned val = (unsigned) stack[i].data.numVal;
@@ -273,7 +306,16 @@ unsigned avm_get_envvalue(unsigned i){
     return val;
 }
 
-void avm_calllibfunc(char *id){
+userfunc *avm_getfuncinfo(unsigned address){
+    return ;
+}
+
+library_func_t avm_getlibraryfunc(char *id){
+    return ;
+}
+
+void avm_calllibfunc(char *id)
+{
     library_func_t f = avm_getlibraryfunc(id);
     if(!f){
         //pass as one string
@@ -307,6 +349,10 @@ void libfunc_print(){
     }
 }
 
+void avm_registerlibfunc(char *id, library_func_t addr){
+
+}
+
 void lifunc_typeof(){
     unsigned n = avm_totalactuals();
     if(n!=1) avm_error("one argument (not d) expected in 'typeof'!");
@@ -330,11 +376,47 @@ void libfunc_totalarguments(){
     }
 }
 
+char *number_tostring(avm_memcell *m){
+    return ;
+}
+
+char *string_tostring(avm_memcell *m){
+    return ;
+}
+
+char *bool_tostring(avm_memcell *m){
+    return ;
+}
+
+char *table_tostring(avm_memcell *m){
+    return ;
+}
+
+char *userfunc_tostring(avm_memcell *m){
+    return ;
+}
+
+char *libfunc_tostring(avm_memcell *m){
+    return ;
+}
+
+char *nil_tostring(avm_memcell *m){
+    return ;
+}
+
+char *undef_tostring(avm_memcell *m){
+    return ;
+}
+
 void avm_push_table_arg(avm_table *t){
     stack[top].type = table_m;
     avm_tableincrefcounter(stack[top].data.tableVal = t);
     ++totalActuals;
     avm_dec_top();
+}
+
+void amv_dec_top(){
+
 }
 
 char *avm_tostring(avm_memcell *m){
@@ -430,6 +512,26 @@ void execute_jeq(instruction *instr){
     if(!executionFinished && result) pc = instr->result->val;
 }
 
+void execute_jne(instruction *instr){
+
+}
+
+void execute_jle(instruction *instr){
+
+}
+
+void execute_jge(instruction *instr){
+
+}
+
+void execute_jlt(instruction *instr){
+
+}
+
+void execute_jgt(instruction *instr){
+
+}
+
 void execute_newtable(instruction *instr){
     avm_memcell *lv = avm_translate_operand(instr->result, (avm_memcell*)0);
     assert(lv && (&stack[0] <= lv && &stack[top] > lv || lv==&retval));
@@ -472,6 +574,10 @@ void execute_tablesetelem(instruction *instr){
     assert(i && c);
     if(t->type != table_m) avm_error("Illegal use of type as table!");
     else avm_tablesetelem(t->data.tableVal,i,c);
+}
+
+void execute_nop(instruction *instr){
+
 }
 
 double add_impl(double x, double y){
@@ -552,3 +658,18 @@ unsigned char avm_tobool(avm_memcell *m){
     return (*toboolFuncs[m->type])(m);
 }
 
+void execute_uminus(instruction *instr){
+
+}
+
+void execute_and(instruction *instr){
+
+}
+
+void execute_or(instruction *instr){
+
+}
+
+void execute_not(instruction *instr){
+
+}
