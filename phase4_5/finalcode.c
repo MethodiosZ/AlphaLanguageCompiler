@@ -1,4 +1,4 @@
-#include "exec.h"
+#include "finalcode.h"
 #include <stdio.h>
 
 extern quad* quads;
@@ -679,7 +679,7 @@ void printInstructions(){
     }
 }
 
-void instrToBinary(){
+void InstrToBin(){
 	FILE *exe;
 	int i;
 	int  length;
