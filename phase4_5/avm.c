@@ -15,6 +15,11 @@ unsigned        top, topsp;
 unsigned        totalActuals = 0;
 unsigned        N = 0;
 
+extern double   *numConsts;
+extern char     **stringConsts;
+extern char     **namedLibFuncs;
+extern userfunc *userFuncs;
+
 execute_func_t executeFuncs[] = {
     execute_assign,
     execute_add,
@@ -89,7 +94,9 @@ char *typeStrings[] = {
 };
 
 void avm_initialize(){
-
+    avm_initstack();
+    top = AVM_STACKSIZE-2;
+    topsp = AVM_STACKSIZE-1;
 }
 
 void avm_initstack(){
@@ -130,11 +137,70 @@ void avm_tabledestroy(avm_table *t){
 }
 
 avm_memcell *avm_tablegetelem(avm_table *table, avm_memcell *index){
-    return ;
+    assert(table);
+    assert(index);
+    avm_memcell *result = (avm_memcell*)0;
+    avm_table_bucket *tmp = avm_tablelookup(table,index);
+    if(tmp == NULL) avm_error("Table not existent!");
+    else result = tmp->value;
+    return result;
 }
 
 void avm_tablesetelem(avm_table *table, avm_memcell *index, avm_memcell *value){
-
+    avm_table_bucket *new;
+    avm_table_bucket *head;
+    assert(table);
+    assert(index);
+    assert(value);
+    if(index->type != number_m && index->type != string_m){
+        avm_error("Index can only be string or number!");
+    }
+    else if(index->type == number_m){
+        int key = HashN(index->data.numVal);
+        avm_table_bucket *tmp = avm_tablelookup(table,index);
+        if(value->type == nil_m){
+            if(tmp != NULL){
+                avm_memcellclear(tmp->key);
+                avm_memcellclear(tmp->value);
+            }
+            if(table->total > 0) table->total--;
+            return;
+        }
+        if(tmp == NULL){
+            head = table->numIndexed[key];
+            new = (avm_table_bucket*)malloc(sizeof(avm_table_bucket));
+            if(!new) avm_error("Not enough space \n");
+            new->key = index;
+            new->value = value;
+            new->next = head;
+            table->numIndexed[key] = new; 
+        }
+        else avm_assign(tmp->value, value);
+        table->total++;
+    }
+    else{
+        int key = HashS(index->data.strVal);
+        avm_table_bucket *tmp = avm_tablelookup(table,index);
+        if(value->type == nil_m){
+		    if(tmp != NULL) {
+            		avm_memcellclear(tmp->key);
+            		avm_memcellclear(tmp->value);
+        	}
+		    if(table->total > 0) table->total--;
+        	return;
+	    }
+        if(tmp == NULL){
+		    head = table->strIndexed[key];
+            new = (avm_table_bucket*)malloc(sizeof(avm_table_bucket));
+		    if(!new) avm_error("Not enough space \n");
+		    new->key= index;
+        	new->value= value;
+            new->next = head;
+		    table->strIndexed[key] = new;
+        }
+        else avm_assign(tmp->value, value);
+	    table->total++;
+    }
 }
 
 void avm_tablebucketsdestroy(avm_table_bucket **p){
@@ -225,7 +291,7 @@ void memclear_table(avm_memcell *m){
 }
 
 void avm_warning(char *format){
-
+    printf("Warning: %s\n",format);
 }
 
 void avm_assign(avm_memcell *lv, avm_memcell *rv)
@@ -241,7 +307,7 @@ void avm_assign(avm_memcell *lv, avm_memcell *rv)
 }
 
 void avm_error(char *format){
-
+    printf("Error!: %s\n",format);
 }
 
 void avm_call_functor(avm_table *t){
@@ -284,19 +350,19 @@ void avm_callsaveenvironment(){
 }
 
 double consts_getnumber(unsigned index){
-    return ;
+    return numConsts[index];
 }
 
 char *consts_getstring(unsigned index){
-    return ;
+    return stringConsts[index];
 }
 
 char *linfuncs_getused(unsigned index){
-    return ;
+    return namedLibFuncs[index];
 }
 
 userfunc *userfuncs_getfunc(unsigned index){
-    return ;
+    return &userFuncs[index];
 }
 
 unsigned avm_get_envvalue(unsigned i){
@@ -307,11 +373,13 @@ unsigned avm_get_envvalue(unsigned i){
 }
 
 userfunc *avm_getfuncinfo(unsigned address){
-    return ;
+    return &userFuncs[address];
 }
 
 library_func_t avm_getlibraryfunc(char *id){
-    return ;
+    int key = HashL(id);
+    if(key<12) return namedLibFuncs[key]; 
+    return (library_func_t)0;
 }
 
 void avm_calllibfunc(char *id)
@@ -377,15 +445,32 @@ void libfunc_totalarguments(){
 }
 
 char *number_tostring(avm_memcell *m){
-    return ;
+    int n;
+    n = getNumberOfDigits(m->data.numVal);
+    char* buffer = malloc(40*sizeof(char));
+    sprintf(buffer,"%0.3f",m->data.numVal);
+    return buffer;
+}
+
+int getNumberOfDigits(int a){
+	int count = 0;
+	while(a > 0){
+		count++;
+		a = a/10;
+	}
+	return count;
 }
 
 char *string_tostring(avm_memcell *m){
-    return ;
+    char* buffer =strdup(m->data.strVal);
+	return buffer;
 }
 
 char *bool_tostring(avm_memcell *m){
-    return ;
+    if(m->data.boolVal == 0)
+		return strdup("False");
+	else
+		return strdup("True");
 }
 
 char *table_tostring(avm_memcell *m){
@@ -393,19 +478,23 @@ char *table_tostring(avm_memcell *m){
 }
 
 char *userfunc_tostring(avm_memcell *m){
-    return ;
+    char* buff;
+	buff = strdup(userFuncs[m->data.funcVal].id);	
+	return buff;
 }
 
 char *libfunc_tostring(avm_memcell *m){
-    return ;
+    char* buff;
+	buff = strdup(m->data.libfuncVal);	
+	return buff;
 }
 
 char *nil_tostring(avm_memcell *m){
-    return ;
+   return strdup("nil");
 }
 
 char *undef_tostring(avm_memcell *m){
-    return ;
+    return strdup("undef");
 }
 
 void avm_push_table_arg(avm_table *t){
@@ -413,10 +502,6 @@ void avm_push_table_arg(avm_table *t){
     avm_tableincrefcounter(stack[top].data.tableVal = t);
     ++totalActuals;
     avm_dec_top();
-}
-
-void amv_dec_top(){
-
 }
 
 char *avm_tostring(avm_memcell *m){

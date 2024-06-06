@@ -35,8 +35,8 @@ typedef struct Avm_memcell{
 } avm_memcell;
 
 typedef struct Avm_table_bucket{
-    avm_memcell             key;
-    avm_memcell             value;
+    avm_memcell             *key;
+    avm_memcell             *value;
     struct Avm_table_bucket *next;
 } avm_table_bucket;
 
@@ -113,7 +113,7 @@ void avm_calllibfunc(char *id);
 void avm_callsaveenvironment();
 void avm_call_functor(avm_table *t);
 void avm_push_table_arg(avm_table *t);
-void amv_dec_top();
+void avm_dec_top();
 void avm_push_envvalue(unsigned val);
 unsigned avm_get_envvalue(unsigned i);
 userfunc *avm_getfuncinfo(unsigned address);

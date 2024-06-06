@@ -638,7 +638,8 @@ void expand_v(){
 }
 
 void reset_operand(vmarg *arg){
-
+    arg->type =  7;
+    arg->val = NULL;
 }
 
 void printVmarg(vmarg* arg){
@@ -873,9 +874,12 @@ void readBin(){
 }
 
 void add_incomplete_jump(unsigned instrNo, unsigned iaddress){
-
+    if(ij_total<instrNo){
+        ij_head = (incomplete_jump*)realloc(ij_head,ij_total+1*sizeof(incomplete_jump));
+    }
+    ij_head[instrNo].iaddress = iaddress;
 }
 
 void patch_incomplete_jumps(){
-
+    
 }
