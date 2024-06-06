@@ -602,7 +602,7 @@ double mod_impl(double x, double y){
     else avm_error("Division with zero!");
 }
 
-void execute_aithmetic(instruction *instr){
+void execute_arithmetic(instruction *instr){
     avm_memcell *lv = avm_translate_operand(instr->result, (avm_memcell*)0);
     avm_memcell *rv1 = avm_translate_operand(instr->arg1,&ax);
     avm_memcell *rv2 = avm_translate_operand(instr->arg2,&bx);

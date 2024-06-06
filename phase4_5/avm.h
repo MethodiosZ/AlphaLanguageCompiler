@@ -76,6 +76,7 @@ userfunc *userfuncs_getfunc(unsigned index);
 library_func_t avm_getlibraryfunc(char *id);
 void avm_calllibfunc(char *id);
 
+void execute_arithmetic(instruction *instr);
 void execute_assign(instruction *instr);
 void execute_add(instruction *instr);
 void execute_sub(instruction *instr);
@@ -137,7 +138,6 @@ double sub_impl(double x, double y);
 double mul_impl(double x, double y);
 double div_impl(double x, double y);
 double mod_impl(double x, double y);
-void execute_aithmetic(instruction *instr);
 
 unsigned char number_tobool(avm_memcell *m);
 unsigned char string_tobool(avm_memcell *m);
