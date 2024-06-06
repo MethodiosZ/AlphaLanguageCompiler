@@ -96,25 +96,25 @@ typedef char* (*tosting_func_t)(avm_memcell*);
 typedef double (*arithmetic_func_t)(double x, double y);
 typedef unsigned char (*tobool_func_t)(avm_memcell*);
 
-typedef enum avm_memcell_t{
+typedef enum Avm_memcell_t{
     number_m, string_m, bool_m, table_m, userfunc_m, libfunc_m,
     nil_m, undef_m
 } avm_memcell_t;
 
-typedef struct avm_table_bucket{
+typedef struct Avm_table_bucket{
     avm_memcell             key;
     avm_memcell             value;
     struct avm_table_bucket *next;
 } avm_table_bucket;
 
-typedef struct avm_table{
+typedef struct Avm_table{
     unsigned            refCounter;
     avm_table_bucket    *strIndexed[AVM_TABLE_HASHSIZE];
     avm_table_bucket    *numIndexed[AVM_TABLE_HASHSIZE];
     unsigned            total;
 } avm_table;
 
-typedef struct avm_memcell{
+typedef struct Avm_memcell{
     avm_memcell_t   type;
     union{
         double          numVal;

@@ -5,55 +5,26 @@
 #define CURR_SIZE_V (totalVmargs*sizeof(instruction))
 #define NEW_SIZE_V (EXPAND_SIZE_V*sizeof(instruction)+CURR_SIZE_V)
 
-generator_func_t generators[] = {
-    generate_ADD,
-    generate_SUB,
-    generate_MUL,
-    generate_DIV,
-    generate_MOD,
-    generate_NEWTABLE,
-    generate_TABLEGETELEM,
-    generate_TABLESETELEM,
-    generate_ASSIGN,
-    generate_NOP,
-    generate_JUMP,
-    generate_IF_EQ,
-    generate_IF_NOTEQ,
-    generate_IF_GREATER,
-    generate_IF_GREATEREQ,
-    generate_IF_LESS,
-    generate_IF_LESSEQ,
-    generate_NOT,
-    generate_OR,
-    generate_AND,
-    generate_PARAM,
-    generate_CALL,
-    generate_GETRETVAL,
-    generate_FUNCSTART,
-    generate_FUNCEND,
-    generate_RETURN
-};
-
 typedef void (*generator_func_t)(quad*);
 
-typedef enum vmopcode_t{
+typedef enum Vmopcode_t{
     assign_v, add_v, sub_v, mul_v, div_v, mod_v, uminus_v, and_v, or_v,
     not_v, jeq_v, jne_v, jle_v, jge_v, jlt_v, jgt_v, call_v, pusharg_v,
     return_v, getretval_v, funcenter_v, funcexit_v, newtable_v, 
     tablegetelem_v, tablesetelem_v, jump_v, nop_v
 } vmopcode_t;
 
-typedef enum vmarg_t{
+typedef enum Vmarg_t{
     label_a, global_a, formal_a, local_a, number_a, string_a,
     bool_a, nil_a, userfunc_a, libfunc_a, retval_a
 } vmarg_t;
 
-typedef struct vmarg{
+typedef struct Vmarg{
     vmarg_t     type;
     unsigned    val;
 }vmarg;
 
-typedef struct instruction{
+typedef struct Instruction{
     vmopcode_t  opcode;
     vmarg       *result;
     vmarg       *arg1;
@@ -61,13 +32,13 @@ typedef struct instruction{
     unsigned    srcLine;
 } instruction;
 
-typedef struct userfunc{
+typedef struct Userfunc{
     unsigned    address;
     unsigned    localSize;
     char        *id;
 } userfunc;
 
-typedef struct incomplete_jump{
+typedef struct Incomplete_jump{
     unsigned                instrNo;
     unsigned                iaddress;
     struct incomplete_jump  *next;

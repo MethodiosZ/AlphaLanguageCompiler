@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "quad.h"
-#include "exec.h"
+#include "finalcode.h"
+#include "avm.h"
 
 int yyerror(char* yaccProvidedMessage);
 int alpha_yylex(void);

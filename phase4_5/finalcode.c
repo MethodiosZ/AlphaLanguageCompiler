@@ -25,6 +25,35 @@ char            **lib_f;
 instruction     *instrs;
 double          *numbers;
 
+generator_func_t generators[] = {
+    generate_ADD,
+    generate_SUB,
+    generate_MUL,
+    generate_DIV,
+    generate_MOD,
+    generate_NEWTABLE,
+    generate_TABLEGETELEM,
+    generate_TABLESETELEM,
+    generate_ASSIGN,
+    generate_NOP,
+    generate_JUMP,
+    generate_IF_EQ,
+    generate_IF_NOTEQ,
+    generate_IF_GREATER,
+    generate_IF_GREATEREQ,
+    generate_IF_LESS,
+    generate_IF_LESSEQ,
+    generate_NOT,
+    generate_OR,
+    generate_AND,
+    generate_PARAM,
+    generate_CALL,
+    generate_GETRETVAL,
+    generate_FUNCSTART,
+    generate_FUNCEND,
+    generate_RETURN
+};
+
 void make_operand(expr *e, vmarg *arg){
     switch(e->type){
         case var_e:
