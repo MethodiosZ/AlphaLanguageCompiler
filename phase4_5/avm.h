@@ -37,7 +37,7 @@ typedef struct Avm_memcell{
 typedef struct Avm_table_bucket{
     avm_memcell             key;
     avm_memcell             value;
-    struct avm_table_bucket *next;
+    struct Avm_table_bucket *next;
 } avm_table_bucket;
 
 typedef struct Avm_table{
@@ -54,8 +54,8 @@ typedef double (*arithmetic_func_t)(double x, double y);
 typedef unsigned char (*tobool_func_t)(avm_memcell*);
 typedef void (*library_func_t)();
 
-static void avm_initialize();
-static void avm_initstack();
+void avm_initialize();
+void avm_initstack();
 avm_table *avm_tablenew();
 void avm_tabledestroy(avm_table *t);
 avm_memcell *avm_tablegetelem(avm_table *table, avm_memcell *index);

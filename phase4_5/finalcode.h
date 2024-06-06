@@ -48,7 +48,7 @@ void make_operand(expr *e, vmarg *arg);
 void make_numberoperand(vmarg *arg, double val);
 void make_booloperand(vmarg *arg, unsigned val);
 void make_retvaloperand(vmarg *arg);
-void add_incomplete_jumo(unsigned instrNo, unsigned iaddress);
+void add_incomplete_jump(unsigned instrNo, unsigned iaddress);
 unsigned int nextinstructionlabel();
 void emit_v(instruction *t);
 void patch_incomplete_jumps();

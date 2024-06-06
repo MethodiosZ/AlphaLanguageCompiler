@@ -637,6 +637,10 @@ void expand_v(){
     totalVmargs += EXPAND_SIZE_V;
 }
 
+void reset_operand(vmarg *arg){
+
+}
+
 void printVmarg(vmarg* arg){
 	if(arg==NULL){
 		printf("%-*s \t",10,"\t");

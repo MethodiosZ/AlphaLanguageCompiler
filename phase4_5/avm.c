@@ -88,8 +88,11 @@ char *typeStrings[] = {
     "number", "string", "bool", "table", "userfunc", "libfunc", "nil", "undef"
 };
 
+void avm_initialize(){
 
-static void avm_initstack(){
+}
+
+void avm_initstack(){
     for(unsigned i=0;i<AVM_STACKSIZE;++i){
         AVM_WIPEOUT(stack[i]);
         stack[i].type = undef_m;
