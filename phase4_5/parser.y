@@ -14,6 +14,11 @@ extern FILE* yyin;
 extern quad* quads;
 extern unsigned int total;
 extern unsigned int currQuad;
+extern unsigned char executionFinished;
+extern avm_memcell ax;
+extern avm_memcell bx;
+extern avm_memcell cx;
+extern avm_memcell retval;
 
 SymTable **stbl; 
 Sym *symbol;

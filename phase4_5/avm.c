@@ -12,6 +12,80 @@ unsigned        top, topsp;
 unsigned        totalActuals = 0;
 unsigned        N = 0;
 
+execute_func_t executeFuncs[] = {
+    execute_assign,
+    execute_add,
+    execute_sub,
+    execute_mul,
+    execute_div,
+    execute_mod,
+    execute_uminus,
+    execute_and,
+    execute_or,
+    execute_not,
+    execute_jeq,
+    execute_jne,
+    execute_jle,
+    execute_jge,
+    execute_jlt,
+    execute_jgt,
+    execute_call,
+    execute_pusharg,
+    execute_funcenter,
+    execute_funcexit,
+    execute_newtable,
+    execute_tablegetelem,
+    execute_tablesetelem,
+    execute_nop
+};
+
+memclear_func_t memclearFuncs[] = {
+    0,
+    0,
+    memclear_string,
+    0,
+    memclear_table,
+    0,
+    0,
+    0,
+    0
+};
+
+tosting_func_t tostringFuncs[]={
+    number_tostring,
+    string_tostring,
+    bool_tostring,
+    table_tostring,
+    userfunc_tostring,
+    libfunc_tostring,
+    nil_tostring,
+    undef_tostring
+};
+
+arithmetic_func_t arithmeticFuncs[] = {
+    add_impl,
+    sub_impl,
+    mul_impl,
+    div_impl,
+    mod_impl
+};
+
+tobool_func_t toboolFuncs[] = {
+    number_tobool,
+    string_tobool,
+    bool_tobool,
+    table_tobool,
+    userfunc_tobool,
+    libfunc_tobool,
+    nil_tobool,
+    undef_tobool
+};
+
+char *typeStrings[] = {
+    "number", "string", "bool", "table", "userfunc", "libfunc", "nil", "undef"
+};
+
+
 static void avm_initstack(){
     for(unsigned i=0;i<AVM_STACKSIZE;++i){
         AVM_WIPEOUT(stack[i]);

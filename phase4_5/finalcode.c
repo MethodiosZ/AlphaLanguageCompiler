@@ -1,5 +1,7 @@
 #include "finalcode.h"
 #include <stdio.h>
+#include <assert.h>
+#include <string.h>
 
 extern quad* quads;
 extern int currQuad;
@@ -651,7 +653,7 @@ void printVmarg(vmarg* arg){
 }
 
 void printInstructions(){
-    char vmopcode_array[25]={
+    char vmopcode_array[27][25]={
 		"assign_v\0","add_v\0","sub_v\0",
 		"mul_v\0","div_v\0","mod_v\0",
 		"uminus_v\0","and_v\0","or_v\0",
@@ -660,8 +662,8 @@ void printInstructions(){
 		"jgt_v\0","call_v\0","pusharg_v\0",
 		"ret_v\0","getretval_v\0","funcenter_v\0",
 		"funcexit_v\0","newtable_v\0","tablegetelem_v\0",    
-		"tablesetelem_v\0","jump_v\0","nop_v\0"};
-
+		"tablesetelem_v\0","jump_v\0","nop_v\0"
+    };
     int line_for_print = 1;
     printf("\n----------------------------------------------------------------------------------------------------------------------------------------------------------\n");    
     printf("\t\t\t\t\t\t\t\tINSTRUCTIONS\t\t\t\t\t\t\t\t\n");
