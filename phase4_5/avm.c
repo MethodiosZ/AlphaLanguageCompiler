@@ -39,11 +39,14 @@ execute_func_t executeFuncs[] = {
     execute_jgt,
     execute_call,
     execute_pusharg,
+    execute_return,
+    execute_getretval,
     execute_funcenter,
     execute_funcexit,
     execute_newtable,
     execute_tablegetelem,
     execute_tablesetelem,
+    execute_jump,
     execute_nop
 };
 
@@ -418,7 +421,7 @@ void libfunc_print(){
 }
 
 void avm_registerlibfunc(char *id, library_func_t addr){
-
+    return;
 }
 
 void lifunc_typeof(){
@@ -574,6 +577,16 @@ void execute_pusharg(instruction *instr){
     avm_dec_top();
 }
 
+void execute_return(instruction *instr){
+    assert(0);
+    return;
+}
+
+void execute_getretval(instruction *instr){
+    assert(0);
+    return;
+}
+
 void execute_jeq(instruction *instr){
     assert(instr->result->type == label_a);
     avm_memcell *rv1 = avm_translate_operand(instr->arg1, &ax);
@@ -592,29 +605,110 @@ void execute_jeq(instruction *instr){
         avm_error("Illegal equality check!");
     }
     else{
-
+        result = (avm_toarithm(rv1) == avm_toarithm(rv2)); 
     }
-    if(!executionFinished && result) pc = instr->result->val;
+    if(!executionFinished && result) pc = instr->result->val-1;
 }
 
 void execute_jne(instruction *instr){
-
+    assert(instr->result->type == label_a);
+    avm_memcell* rv1 = avm_translate_operand(instr->arg1, &ax);
+    avm_memcell* rv2 = avm_translate_operand(instr->arg2, &bx);
+    unsigned char result = 0;
+    if (rv1->type == undef_m || rv2->type == undef_m)
+        avm_error("undef involved in inequality");
+    else if (rv1->type == nil_m || rv2->type == nil_m)
+        result = rv1->type == nil_m && rv2->type == nil_m;
+    else if (rv1->type == bool_m || rv2->type == bool_m){
+        result = (avm_tobool(rv1) != avm_tobool(rv2)); 
+	}
+    else if(rv1->type != rv2->type){
+        avm_error("Illegal inequality check!");
+    }
+    else {
+        result = (avm_toarithm(rv1) != avm_toarithm(rv2)); 
+    }
+    if(!executionFinished && result) pc = instr->result->val-1;
 }
 
 void execute_jle(instruction *instr){
-
+    assert(instr->result->type == label_a);
+    avm_memcell* rv1 = avm_translate_operand(instr->arg1, &ax);
+    avm_memcell* rv2 = avm_translate_operand(instr->arg2, &bx);
+    unsigned char result = 0;
+    if (rv1->type == undef_m || rv2->type == undef_m)
+        avm_error("undef involved in jle");
+    else if (rv1->type == nil_m || rv2->type == nil_m)
+        result = rv1->type == nil_m && rv2->type == nil_m;
+    else if (rv1->type == bool_m || rv2->type == bool_m)
+        result =(avm_tobool(rv1) <= avm_tobool(rv2));
+    else if(rv1->type != rv2->type){
+        avm_error("Illegal less or equal check!");
+    }
+    else {
+        result = (avm_toarithm(rv1) <= avm_toarithm(rv2));
+    }
+    if(!executionFinished && result) pc = instr->result->val-1;
 }
 
 void execute_jge(instruction *instr){
-
+    assert(instr->result->type == label_a);
+    avm_memcell* rv1 = avm_translate_operand(instr->arg1, &ax);
+    avm_memcell* rv2 = avm_translate_operand(instr->arg2, &bx);
+    unsigned char result = 0;
+    if (rv1->type == undef_m || rv2->type == undef_m)
+        avm_error("undef involved in jge");
+    else if (rv1->type == nil_m || rv2->type == nil_m)
+        result = rv1->type == nil_m && rv2->type == nil_m;
+    else if (rv1->type == bool_m || rv2->type == bool_m)
+        result =(avm_tobool(rv1) >= avm_tobool(rv2));
+    else if(rv1->type != rv2->type){
+        avm_error("Illegal greater or equal check!");
+    }
+    else {
+        result = (avm_toarithm(rv1) >= avm_toarithm(rv2));
+    }
+    if(!executionFinished && result) pc = instr->result->val-1;
 }
 
 void execute_jlt(instruction *instr){
-
+    assert(instr->result->type == label_a);
+    avm_memcell* rv1 = avm_translate_operand(instr->arg1, &ax);
+    avm_memcell* rv2 = avm_translate_operand(instr->arg2, &bx);
+    unsigned char result = 0;
+    if (rv1->type == undef_m || rv2->type == undef_m)
+        avm_error("undef involved in jlt");
+    else if (rv1->type == nil_m || rv2->type == nil_m)
+        result = rv1->type == nil_m && rv2->type == nil_m;
+    else if (rv1->type == bool_m || rv2->type == bool_m)
+        result =(avm_tobool(rv1) < avm_tobool(rv2));
+    else if(rv1->type != rv2->type){
+        avm_error("Illegal less check!");
+    }
+    else {
+        result = (avm_toarithm(rv1) < avm_toarithm(rv2));
+    }
+    if(!executionFinished && result) pc = instr->result->val-1;
 }
 
 void execute_jgt(instruction *instr){
-
+    assert(instr->result->type == label_a);
+    avm_memcell* rv1 = avm_translate_operand(instr->arg1, &ax);
+    avm_memcell* rv2 = avm_translate_operand(instr->arg2, &bx);
+    unsigned char result = 0;
+    if (rv1->type == undef_m || rv2->type == undef_m)
+        avm_error("undef involved in jgt");
+    else if (rv1->type == nil_m || rv2->type == nil_m)
+        result = rv1->type == nil_m && rv2->type == nil_m;
+    else if (rv1->type == bool_m || rv2->type == bool_m)
+        result =(avm_tobool(rv1) > avm_tobool(rv2));
+    else if(rv1->type != rv2->type){
+        avm_error("Illegal greater check!");
+    }
+    else {
+        result = (avm_toarithm(rv1) > avm_toarithm(rv2));
+    }
+    if(!executionFinished && result) pc = instr->result->val-1;
 }
 
 void execute_newtable(instruction *instr){
@@ -661,8 +755,14 @@ void execute_tablesetelem(instruction *instr){
     else avm_tablesetelem(t->data.tableVal,i,c);
 }
 
-void execute_nop(instruction *instr){
+void execute_jump(instruction *instr){
+    assert(instr->result->type == label_a);
+    if(!executionFinished) pc = instr->result->val-1;
+}
 
+void execute_nop(instruction *instr){
+    assert(0);
+    return;
 }
 
 double add_impl(double x, double y){
@@ -705,6 +805,31 @@ void execute_arithmetic(instruction *instr){
     }
 }
 
+void execute_add(instruction *instr){
+    execute_arithmetic(instr);
+    return;
+}
+
+void execute_sub(instruction *instr){
+    execute_arithmetic(instr);
+    return;
+}
+
+void execute_mul(instruction *instr){
+    execute_arithmetic(instr);
+    return;
+}
+
+void execute_div(instruction *instr){
+    execute_arithmetic(instr);
+    return;
+}
+
+void execute_mod(instruction *instr){
+    execute_arithmetic(instr);
+    return;
+}
+
 unsigned char number_tobool(avm_memcell *m){
     return m->data.numVal != 0;
 }
@@ -744,17 +869,21 @@ unsigned char avm_tobool(avm_memcell *m){
 }
 
 void execute_uminus(instruction *instr){
-
+    assert(0);
+    return;
 }
 
 void execute_and(instruction *instr){
-
+    assert(0);
+    return;
 }
 
 void execute_or(instruction *instr){
-
+    assert(0);
+    return;
 }
 
 void execute_not(instruction *instr){
-
+    assert(0);
+    return;
 }

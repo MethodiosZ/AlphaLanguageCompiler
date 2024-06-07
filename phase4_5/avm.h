@@ -11,12 +11,6 @@
 #define AVM_SAVEDTOP_OFFSET +2
 #define AVM_SAVEDTOPSP_OFFSET +1
 
-#define execute_add execute_arithmetic
-#define execute_sub execute_arithmetic
-#define execute_mul execute_arithmetic
-#define execute_div execute_arithmetic
-#define execute_mod execute_arithmetic
-
 typedef enum Avm_memcell_t{
     number_m, string_m, bool_m, table_m, userfunc_m, libfunc_m,
     nil_m, undef_m
@@ -95,11 +89,14 @@ void execute_jlt(instruction *instr);
 void execute_jgt(instruction *instr);
 void execute_call(instruction *instr);
 void execute_pusharg(instruction *instr);
+void execute_return(instruction *instr);
+void execute_getretval(instruction *instr);
 void execute_funcenter(instruction *instr);
 void execute_funcexit(instruction *instr);
 void execute_newtable(instruction *instr);
 void execute_tablegetelem(instruction *instr);
 void execute_tablesetelem(instruction *instr);
+void execute_jump(instruction *instr);
 void execute_nop(instruction *instr);
 
 void memclear_string(avm_memcell *m);
