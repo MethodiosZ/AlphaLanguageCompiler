@@ -44,6 +44,7 @@ typedef struct Incomplete_jump{
     struct incomplete_jump  *next;
 } incomplete_jump;
 
+void GenerateFinal();
 void make_operand(expr *e, vmarg *arg);
 void make_numberoperand(vmarg *arg, double val);
 void make_booloperand(vmarg *arg, unsigned val);

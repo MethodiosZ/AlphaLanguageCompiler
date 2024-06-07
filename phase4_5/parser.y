@@ -922,16 +922,18 @@ int main(int argc, char **argv){
         yyin = stdin;
     }
     yyparse();
+    printQuads();
+    GenerateFinal();
     printInstructions();
     InstrToBin();
     readBin();
-    avm_initialize();
+    /*avm_initialize();
     while(executionFinished==0){
       execute_cycle();
     }
     avm_memcellclear(&ax);
     avm_memcellclear(&bx);
     avm_memcellclear(&cx);
-    avm_memcellclear(&retval);
+    avm_memcellclear(&retval);*/
     return 0;
 }

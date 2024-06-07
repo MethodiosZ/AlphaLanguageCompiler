@@ -64,7 +64,15 @@ generator_func_t generators[] = {
     generate_RETURN
 };
 
-void make_operand(expr *e, vmarg *arg){
+void GenerateFinal(){
+    for(int i =1;i<currQuad;i++){
+        (*generators[quads[i].op])(quads);
+    }
+    return;
+}
+
+void make_operand(expr *e, vmarg *arg)
+{
     switch(e->type){
         case var_e:
         case tableitem_e:
@@ -669,14 +677,14 @@ void printVmarg(vmarg* arg){
 void printInstructions(){
     int line_for_print = 1;
     printf("\n-----------------------------------------------------------------------------------------------------------------------------\n");    
-    printf("\t\t\t\t\t\t\t\tINSTRUCTIONS\t\t\t\t\t\t\t\t\n");
+    printf("\t\t\t\t\t\t\tINSTRUCTIONS\t\t\t\t\t\t\t\t\n");
     printf("------------------------------------------------------------------------------------------------------------------------------\n");    
     printf("#instr\t\t\topcode\t\t\tresult\t\t\targ1\t\t\targ2\t\t\tsrcLine\t\t\n");
     printf("------------------------------------------------------------------------------------------------------------------------------\n");    
     for(int i = 0; i < currInstruction; i++){
         printf("%-*d \t",20,line_for_print++);
         printf("%-*s \t", 20, vmopcode_array[vmargs[i].opcode]);
-		 if(vmargs[i].opcode== assign_v){
+		if(vmargs[i].opcode== assign_v){
 			printVmarg(vmargs[i].result);
 			printVmarg(vmargs[i].arg1);
 			printf("%-*s \t",10,"\t");
@@ -785,11 +793,11 @@ void InstrToBin(){
 
 void readBin(){
 	FILE *executable;
-	executable= fopen("executable.abc","r");
+	executable= fopen("exe.bi","r");
 	int magic_number,i,length,temp;
     fread(&magic_number, sizeof(int), 1, executable);
 	printf("Magic number: %ld\n", magic_number);
-	if(magic_number!=200701202){
+	if(magic_number!=161282016){
 		return ;
 	}
    	fread(&user, sizeof(int), 1, executable); printf("userfuncs %d\n", user);
