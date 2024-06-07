@@ -36,36 +36,37 @@ char vmopcode_array[27][23]={
 };
 
 generator_func_t generators[] = {
+    generate_ASSIGN,
     generate_ADD,
     generate_SUB,
     generate_MUL,
     generate_DIV,
     generate_MOD,
-    generate_NEWTABLE,
-    generate_TABLEGETELEM,
-    generate_TABLESETELEM,
-    generate_ASSIGN,
-    generate_NOP,
-    generate_JUMP,
+    generate_UMINUS,
+    generate_AND,
+    generate_OR,
+    generate_NOT,
     generate_IF_EQ,
     generate_IF_NOTEQ,
-    generate_IF_GREATER,
+    generate_IF_LESSEQ,
     generate_IF_GREATEREQ,
     generate_IF_LESS,
-    generate_IF_LESSEQ,
-    generate_NOT,
-    generate_OR,
-    generate_AND,
-    generate_PARAM,
+    generate_IF_GREATER,
     generate_CALL,
+    generate_PARAM,
+    generate_RETURN,
     generate_GETRETVAL,
     generate_FUNCSTART,
     generate_FUNCEND,
-    generate_RETURN
+    generate_NEWTABLE,
+    generate_TABLEGETELEM,
+    generate_TABLESETELEM,
+    generate_JUMP,
+    generate_NOP 
 };
 
 void GenerateFinal(){
-    for(int i =1;i<currQuad;i++){
+    for(int i =0;i<currQuad;i++){
         (*generators[quads[i].op])(quads);
     }
     return;
