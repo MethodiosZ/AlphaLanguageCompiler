@@ -143,10 +143,20 @@ avm_memcell *avm_tablegetelem(avm_table *table, avm_memcell *index){
     assert(table);
     assert(index);
     avm_memcell *result = (avm_memcell*)0;
-    avm_table_bucket *tmp = avm_tablelookup(table,index);
-    if(tmp == NULL) avm_error("Table not existent!");
-    else result = tmp->value;
-    return result;
+    if(index->type != number_m && index->type != string_m){
+        avm_error("Index can only be string or number!");
+        return NULL;
+    }
+    else if(index->type == number_m){
+        int key = HashN(index->data.numVal);
+        result = table->numIndexed[key]->value;
+        return result;
+    }
+    else{
+        int key = HashS(index->data.strVal);
+        result = table->strIndexed[key]->value;
+        return result;
+    }
 }
 
 void avm_tablesetelem(avm_table *table, avm_memcell *index, avm_memcell *value){
@@ -160,48 +170,24 @@ void avm_tablesetelem(avm_table *table, avm_memcell *index, avm_memcell *value){
     }
     else if(index->type == number_m){
         int key = HashN(index->data.numVal);
-        avm_table_bucket *tmp = avm_tablelookup(table,index);
-        if(value->type == nil_m){
-            if(tmp != NULL){
-                avm_memcellclear(tmp->key);
-                avm_memcellclear(tmp->value);
-            }
-            if(table->total > 0) table->total--;
-            return;
-        }
-        if(tmp == NULL){
-            head = table->numIndexed[key];
-            new = (avm_table_bucket*)malloc(sizeof(avm_table_bucket));
-            if(!new) avm_error("Not enough space \n");
-            new->key = index;
-            new->value = value;
-            new->next = head;
-            table->numIndexed[key] = new; 
-        }
-        else avm_assign(tmp->value, value);
+        head = table->numIndexed[key];
+        new = (avm_table_bucket*)malloc(sizeof(avm_table_bucket));
+        if(!new) avm_error("Not enough space \n");
+        new->key = index;
+        new->value = value;
+        new->next = head;
+        table->numIndexed[key] = new; 
         table->total++;
     }
     else{
         int key = HashS(index->data.strVal);
-        avm_table_bucket *tmp = avm_tablelookup(table,index);
-        if(value->type == nil_m){
-		    if(tmp != NULL) {
-            		avm_memcellclear(tmp->key);
-            		avm_memcellclear(tmp->value);
-        	}
-		    if(table->total > 0) table->total--;
-        	return;
-	    }
-        if(tmp == NULL){
-		    head = table->strIndexed[key];
-            new = (avm_table_bucket*)malloc(sizeof(avm_table_bucket));
-		    if(!new) avm_error("Not enough space \n");
-		    new->key= index;
-        	new->value= value;
-            new->next = head;
-		    table->strIndexed[key] = new;
-        }
-        else avm_assign(tmp->value, value);
+		head = table->strIndexed[key];
+        new = (avm_table_bucket*)malloc(sizeof(avm_table_bucket));
+		if(!new) avm_error("Not enough space \n");
+		new->key= index;
+        new->value= value;
+        new->next = head;
+		table->strIndexed[key] = new;
 	    table->total++;
     }
 }
@@ -866,6 +852,30 @@ unsigned char undef_tobool(avm_memcell *m){
 unsigned char avm_tobool(avm_memcell *m){
     assert(m->type >= 0 && m->type < undef_m);
     return (*toboolFuncs[m->type])(m);
+}
+
+int HashN(int n){
+    return n % AVM_TABLE_HASHSIZE;
+}
+
+int HashS(char *id){
+    return atoi(id) % AVM_TABLE_HASHSIZE;
+}
+
+int HashL(char *id){
+    if(!strcmp("print",id)) return 0;
+    else if (!strcmp("typeof",id)) return 1;
+    else if (!strcmp("totalarguments",id)) return 2;
+    else if (!strcmp("sqrt",id)) return 3;
+    else if (!strcmp("cos",id)) return 4;
+    else if (!strcmp("sin",id)) return 5;
+    else if (!strcmp("strtonum",id)) return 6;
+    else if (!strcmp("input",id)) return 7;
+    else if (!strcmp("argument",id)) return 8;
+    else if (!strcmp("objecttotalmembers",id)) return 9;
+    else if (!strcmp("objectmemberkeys",id)) return 10;
+    else if (!strcmp("objectcopy",id)) return 11;
+    else return 12;
 }
 
 void execute_uminus(instruction *instr){

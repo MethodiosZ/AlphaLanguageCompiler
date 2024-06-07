@@ -145,3 +145,7 @@ unsigned char libfunc_tobool(avm_memcell *m);
 unsigned char nil_tobool(avm_memcell *m);
 unsigned char undef_tobool(avm_memcell *m);
 unsigned char avm_tobool(avm_memcell *m);
+
+int HashN(int n);
+int HashS(char *id);
+int HashL(char* id);
