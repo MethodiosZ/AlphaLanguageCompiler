@@ -639,7 +639,7 @@ void expand_v(){
 
 void reset_operand(vmarg *arg){
     arg->type =  7;
-    arg->val = NULL;
+    arg->val = 0;
 }
 
 void printVmarg(vmarg* arg){

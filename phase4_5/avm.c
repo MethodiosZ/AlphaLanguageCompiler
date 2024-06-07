@@ -197,8 +197,8 @@ void avm_tablebucketsdestroy(avm_table_bucket **p){
         for(avm_table_bucket *b = *p;b;){
             avm_table_bucket *del = b;
             b = b->next;
-            avm_memcellclear(&del->key);
-            avm_memcellclear(&del->value);
+            avm_memcellclear(del->key);
+            avm_memcellclear(del->value);
             free(del);
         }
         p[i] = (avm_table_bucket*)0;
@@ -434,8 +434,6 @@ void libfunc_totalarguments(){
 }
 
 char *number_tostring(avm_memcell *m){
-    int n;
-    n = getNumberOfDigits(m->data.numVal);
     char* buffer = malloc(40*sizeof(char));
     sprintf(buffer,"%0.3f",m->data.numVal);
     return buffer;
@@ -463,7 +461,35 @@ char *bool_tostring(avm_memcell *m){
 }
 
 char *table_tostring(avm_memcell *m){
-    return ;
+    char *table = malloc(12 * sizeof(char*));
+	char *buffer = malloc(sizeof(char*));
+	strcat(table, "[");
+	int i = 0;
+	while (i < 211)
+	{
+		avm_table_bucket* tmp = m->data.tableVal->strIndexed[i];
+		while(tmp != NULL){
+			strcat(table, "{");
+			strcat(table, tmp->key->data.strVal);
+			strcat(table, " : ");
+			strcat(table, avm_tostring((tmp->value)));
+			strcat(table, "}");
+			tmp= tmp->next;
+		}
+		tmp = m->data.tableVal->numIndexed[i];
+        while (tmp != NULL) {
+            	strcat(table, "{");
+            	sprintf(buffer, "%d", (int)tmp->key->data.numVal);
+           		strcat(table, buffer);
+            	strcat(table, " : ");
+            	strcat(table, avm_tostring((tmp->value)));
+            	strcat(table, "}");
+            	tmp = tmp->next;
+        }
+		i++;
+	}
+	strcat(table, "]");
+	return table;
 }
 
 char *userfunc_tostring(avm_memcell *m){
@@ -591,7 +617,21 @@ void execute_jeq(instruction *instr){
         avm_error("Illegal equality check!");
     }
     else{
-        result = (avm_toarithm(rv1) == avm_toarithm(rv2)); 
+        if(rv1->type==number_m){
+            result = (rv1->data.numVal == rv2->data.numVal);
+        }
+        else if(rv1->type == string_m){
+            result = (strlen(rv1->data.strVal) == strlen(rv2->data.strVal));
+        }
+        else if(rv1->type == table_m){
+            result = (rv1->data.tableVal->total == rv2->data.tableVal->total);
+        }
+        else if(rv1->type == userfunc_m){
+            result = (rv1->data.funcVal == rv2->data.funcVal);
+        }
+        else if(rv1->type==libfunc_m){
+            result = (strlen(rv1->data.libfuncVal) == strlen(rv2->data.libfuncVal));
+        }
     }
     if(!executionFinished && result) pc = instr->result->val-1;
 }
@@ -612,7 +652,21 @@ void execute_jne(instruction *instr){
         avm_error("Illegal inequality check!");
     }
     else {
-        result = (avm_toarithm(rv1) != avm_toarithm(rv2)); 
+        if(rv1->type==number_m){
+            result = (rv1->data.numVal != rv2->data.numVal);
+        }
+        else if(rv1->type == string_m){
+            result = (strlen(rv1->data.strVal) != strlen(rv2->data.strVal));
+        }
+        else if(rv1->type == table_m){
+            result = (rv1->data.tableVal->total != rv2->data.tableVal->total);
+        }
+        else if(rv1->type == userfunc_m){
+            result = (rv1->data.funcVal != rv2->data.funcVal);
+        }
+        else if(rv1->type==libfunc_m){
+            result = (strlen(rv1->data.libfuncVal) != strlen(rv2->data.libfuncVal));
+        }
     }
     if(!executionFinished && result) pc = instr->result->val-1;
 }
@@ -632,7 +686,21 @@ void execute_jle(instruction *instr){
         avm_error("Illegal less or equal check!");
     }
     else {
-        result = (avm_toarithm(rv1) <= avm_toarithm(rv2));
+        if(rv1->type==number_m){
+            result = (rv1->data.numVal <= rv2->data.numVal);
+        }
+        else if(rv1->type == string_m){
+            result = (strlen(rv1->data.strVal) <= strlen(rv2->data.strVal));
+        }
+        else if(rv1->type == table_m){
+            result = (rv1->data.tableVal->total <= rv2->data.tableVal->total);
+        }
+        else if(rv1->type == userfunc_m){
+            result = (rv1->data.funcVal <= rv2->data.funcVal);
+        }
+        else if(rv1->type==libfunc_m){
+            result = (strlen(rv1->data.libfuncVal) <= strlen(rv2->data.libfuncVal));
+        }
     }
     if(!executionFinished && result) pc = instr->result->val-1;
 }
@@ -652,7 +720,21 @@ void execute_jge(instruction *instr){
         avm_error("Illegal greater or equal check!");
     }
     else {
-        result = (avm_toarithm(rv1) >= avm_toarithm(rv2));
+        if(rv1->type==number_m){
+            result = (rv1->data.numVal >= rv2->data.numVal);
+        }
+        else if(rv1->type == string_m){
+            result = (strlen(rv1->data.strVal) >= strlen(rv2->data.strVal));
+        }
+        else if(rv1->type == table_m){
+            result = (rv1->data.tableVal->total >= rv2->data.tableVal->total);
+        }
+        else if(rv1->type == userfunc_m){
+            result = (rv1->data.funcVal >= rv2->data.funcVal);
+        }
+        else if(rv1->type==libfunc_m){
+            result = (strlen(rv1->data.libfuncVal) >= strlen(rv2->data.libfuncVal));
+        }
     }
     if(!executionFinished && result) pc = instr->result->val-1;
 }
@@ -672,7 +754,21 @@ void execute_jlt(instruction *instr){
         avm_error("Illegal less check!");
     }
     else {
-        result = (avm_toarithm(rv1) < avm_toarithm(rv2));
+        if(rv1->type==number_m){
+            result = (rv1->data.numVal < rv2->data.numVal);
+        }
+        else if(rv1->type == string_m){
+            result = (strlen(rv1->data.strVal) < strlen(rv2->data.strVal));
+        }
+        else if(rv1->type == table_m){
+            result = (rv1->data.tableVal->total < rv2->data.tableVal->total);
+        }
+        else if(rv1->type == userfunc_m){
+            result = (rv1->data.funcVal < rv2->data.funcVal);
+        }
+        else if(rv1->type==libfunc_m){
+            result = (strlen(rv1->data.libfuncVal) < strlen(rv2->data.libfuncVal));
+        }
     }
     if(!executionFinished && result) pc = instr->result->val-1;
 }
@@ -692,7 +788,21 @@ void execute_jgt(instruction *instr){
         avm_error("Illegal greater check!");
     }
     else {
-        result = (avm_toarithm(rv1) > avm_toarithm(rv2));
+        if(rv1->type==number_m){
+            result = (rv1->data.numVal > rv2->data.numVal);
+        }
+        else if(rv1->type == string_m){
+            result = (strlen(rv1->data.strVal) > strlen(rv2->data.strVal));
+        }
+        else if(rv1->type == table_m){
+            result = (rv1->data.tableVal->total > rv2->data.tableVal->total);
+        }
+        else if(rv1->type == userfunc_m){
+            result = (rv1->data.funcVal > rv2->data.funcVal);
+        }
+        else if(rv1->type==libfunc_m){
+            result = (strlen(rv1->data.libfuncVal) > strlen(rv2->data.libfuncVal));
+        }
     }
     if(!executionFinished && result) pc = instr->result->val-1;
 }
