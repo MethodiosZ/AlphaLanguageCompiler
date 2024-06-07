@@ -583,13 +583,12 @@ unsigned consts_newstring(char* s){
 
 unsigned consts_newnumber(double n){
     unsigned index;
-    for(unsigned i=0;i<totalNumConsts;i++){
+    for(int i=0;i<totalNumConsts;i++){
         if(numConsts[i]==n) return i;
     }
     if(totalNumConsts==0){
         numConsts=malloc(sizeof(double));
     }else numConsts= realloc(numConsts,sizeof(double)*(totalNumConsts+1));
-    
     numConsts[totalNumConsts]=n;
     index=totalNumConsts++;
     return index;
@@ -735,6 +734,16 @@ void InstrToBin(){
 	int magic_num = 161282016;
 	exe= fopen("exe.bi","wb");
 	fwrite(&magic_num,sizeof(int),1,exe);
+    fwrite(&totalNumConsts,sizeof(int),1,exe);
+	for(i=0;i<totalNumConsts;i++){
+		fwrite(&numConsts[i],sizeof(double),1,exe);
+	}
+    fwrite(&totalStringConsts,sizeof(int),1,exe);
+	for(i=0;i<totalStringConsts;++i){
+		length = strlen(stringConsts[i]);
+		fwrite(&length,sizeof(int),1,exe);
+		fwrite(stringConsts[i],length+1,1,exe);
+	}
 	fwrite(&totalUserFuncs,sizeof(int),1,exe);
 	for(i=0;i<totalUserFuncs;i++){
 		--userFuncs[i].address;
@@ -743,16 +752,6 @@ void InstrToBin(){
 		length = strlen(userFuncs[i].id);
 		fwrite(&length,sizeof(int),1,exe);
 		fwrite(userFuncs[i].id,length+1,1,exe);
-	}
-	fwrite(&totalStringConsts,sizeof(int),1,exe);
-	for(i=0;i<totalStringConsts;++i){
-		length = strlen(stringConsts[i]);
-		fwrite(&length,sizeof(int),1,exe);
-		fwrite(stringConsts[i],length+1,1,exe);
-	}
-	fwrite(&totalNumConsts,sizeof(int),1,exe);
-	for(i=0;i<totalNumConsts;i++){
-		fwrite(&numConsts[i],sizeof(double),1,exe);
 	}
 	fwrite(&totalNamedLibFuncs,sizeof(int),1,exe);
 	for(i=0;i<totalNamedLibFuncs;i++){
@@ -797,85 +796,76 @@ void readBin(){
 	executable= fopen("exe.bi","r");
 	int magic_number,i,length,temp;
     fread(&magic_number, sizeof(int), 1, executable);
-	printf("Magic number: %ld\n", magic_number);
 	if(magic_number!=161282016){
 		return ;
 	}
-   	fread(&user, sizeof(int), 1, executable); printf("userfuncs %d\n", user);
+    fread(&num, sizeof(int), 1, executable); printf("Numbers: %d\n", num);
+	if(num!=0){
+		numbers= (double*)malloc(sizeof(double) * num);
+		for(i=0;i<num;i++){
+			fread(&numbers[i], sizeof(double), 1, executable);
+            printf("%lf\n", numbers[i]);
+		}
+	}
+    fread(&str, sizeof(int), 1, executable); printf("Strings: %d\n", str);
+	if(str!=0){
+		str_c = (char**) malloc(sizeof(char*)*str);
+		for(i=0;i<str;i++){
+			fread(&length, sizeof(int), 1, executable);
+        	str_c[i] = (char*) malloc(sizeof(char)*(length+1));
+       		fread(str_c[i], length+1, 1, executable);			
+		}
+	}
+   	fread(&user, sizeof(int), 1, executable); printf("User functions: %d\n", user);
 	if(user!=0){
 		userfs =(userfunc*) malloc(user*sizeof(userfunc));
 		for(i=0;i<user;i++){
-			//temp=userfs[i].address-1;
 			fread(&userfs[i].address, sizeof(int), 1, executable);
 			printf("%u ", userfs[i].address);
 			fread(&userfs[i].localSize, sizeof(int), 1, executable);
 			printf("%u ", userfs[i].localSize);
 			fread(&length, sizeof(int), 1, executable);
-			
         	userfs[i].id = (char*) malloc(sizeof(char)*(length+1));
         	fread((char*)userfs[i].id, length+1, 1, executable);
 			printf("%s\n", userfs[i].id);
 		}
 	}
-	fread(&str, sizeof(int), 1, executable); printf("strings %d\n", str);
-	if(str!=0){
-		str_c = (char**) malloc(sizeof(char*)*str);
-		for(i=0;i<str;i++){
-			 fread(&length, sizeof(int), 1, executable);
-        	str_c[i] = (char*) malloc(sizeof(char)*(length+1));
-       		 fread(str_c[i], length+1, 1, executable);			
-
-		}
-	}
-	 fread(&num, sizeof(int), 1, executable); printf("numbers %d\n", num);
-	 if(num!=0){
-		numbers= (double*)malloc(sizeof(double) * num);
-		for(i=0;i<num;i++){
-			fread(&numbers[i], sizeof(double), 1, executable);
-            		printf("%lf\n", numbers[i]);
-
-		}
-	}
-	fread(&fun, sizeof(int), 1, executable); printf("functions %d\n", fun); 
+	fread(&fun, sizeof(int), 1, executable); printf("Liibrary Functions: %d\n", fun); 
 	if(fun!=0){
 		lib_f = (char**) malloc(sizeof(char*)*fun);
 		for(i=0;i<fun;i++){
-			 fread(&length, sizeof(int), 1, executable);
-       		 lib_f[i] = (char*) malloc(sizeof(char)*(length+1));
-       		 fread(lib_f[i], length+1, 1, executable);
+			fread(&length, sizeof(int), 1, executable);
+       		lib_f[i] = (char*) malloc(sizeof(char)*(length+1));
+       	    fread(lib_f[i], length+1, 1, executable);
 		}
 	}
-	fread(&insr_s, sizeof(int), 1, executable); printf("instructions %d\n", insr_s); 
+	fread(&insr_s, sizeof(int), 1, executable); printf("Instructions: %d\n", insr_s); 
 	if(insr_s!=0){
 		instrs = (instruction*) malloc((insr_s+1)*sizeof(instruction));
 		for(i=0;i<insr_s;i++){
-		
 			instrs[i].result =(vmarg*) malloc(sizeof(vmarg));
 			instrs[i].arg1 =(vmarg*) malloc(sizeof(vmarg));
 			instrs[i].arg2 =(vmarg*) malloc(sizeof(vmarg));
-			
 			fread(&instrs[i].opcode, sizeof(int), 1, executable);
-			printf("opcode %d\n", instrs[i].opcode); 
+			printf("opcode: %d\n", instrs[i].opcode); 
 			fread(&instrs[i].result->type, sizeof(int), 1, executable);
-			printf("res type %d\n", instrs[i].result->type); 
+			printf("result type: %d\n", instrs[i].result->type); 
 			fread(&instrs[i].result->val, sizeof(int), 1, executable);
-			printf("res val %d\n", instrs[i].result->val); 
+			printf("result value: %d\n", instrs[i].result->val); 
 			fread(&instrs[i].arg1->type, sizeof(int), 1, executable);
-			printf("arg1 type %d\n", instrs[i].arg1->type);
+			printf("arg1 type: %d\n", instrs[i].arg1->type);
 			fread(&instrs[i].arg1->val, sizeof(int), 1, executable);
-			printf("arg1 val %d\n", instrs[i].arg1->val);
+			printf("arg1 value: %d\n", instrs[i].arg1->val);
 			fread(&instrs[i].arg2->type, sizeof(int), 1, executable);
-			printf("arg2 type %d\n", instrs[i].arg2->type);
+			printf("arg2 type: %d\n", instrs[i].arg2->type);
 			fread(&instrs[i].arg2->val, sizeof(int), 1, executable);
-			printf("arg2 val %d\n",instrs[i].arg2->val);
+			printf("arg2 value: %d\n",instrs[i].arg2->val);
 			fread(&instrs[i].srcLine, sizeof(unsigned), 1, executable);
-			printf("srcline type %d\n", instrs[i].srcLine);
-
+			printf("srcline: %d\n", instrs[i].srcLine);
 		}
-		
 	}
 	fread(&poffset,sizeof(int),1,executable);
-	printf("total globals %d\n", poffset); 
+	printf("Total Globals: %d\n", poffset); 
 	fclose(executable);
 }
 
