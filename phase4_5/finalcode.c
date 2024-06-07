@@ -27,6 +27,14 @@ char            **lib_f;
 instruction     *instrs;
 double          *numbers;
 
+char vmopcode_array[27][23]={
+	"assign_v", "add_v", "sub_v", "mul_v", "div_v", "mod_v", "uminus_v",
+    "and_v", "or_v", "not_v", "jeq_v", "jne_v", "jle_v", "jge_v", "jlt_v",
+	"jgt_v", "call_v", "pusharg_v", "ret_v", "getretval_v", "funcenter_v",
+	"funcexit_v", "newtable_v", "tablegetelem_v", "tablesetelem_v",
+    "jump_v","nop_v"
+};
+
 generator_func_t generators[] = {
     generate_ADD,
     generate_SUB,
@@ -645,51 +653,41 @@ void reset_operand(vmarg *arg){
 void printVmarg(vmarg* arg){
 	if(arg==NULL){
 		printf("%-*s \t",10,"\t");
-	}else{
+	}
+    else{
         if(arg->type == nil_a){
 			printf("%-*s \t",20,"NIL");
         }
         else{
-            printf(" %d,",arg->type);
-            printf("%d",arg->val);
+        printf(" %d,",arg->type);
+        printf("%d",arg->val);
 		printf("%-*s",20,"");
         }
 	}
 }
 
 void printInstructions(){
-    char vmopcode_array[27][25]={
-		"assign_v\0","add_v\0","sub_v\0",
-		"mul_v\0","div_v\0","mod_v\0",
-		"uminus_v\0","and_v\0","or_v\0",
-		"not_v\0","jeq_v\0","jne_v\0","jle_v\0",
-		"jge_v\0", "jlt_v\0",
-		"jgt_v\0","call_v\0","pusharg_v\0",
-		"ret_v\0","getretval_v\0","funcenter_v\0",
-		"funcexit_v\0","newtable_v\0","tablegetelem_v\0",    
-		"tablesetelem_v\0","jump_v\0","nop_v\0"
-    };
     int line_for_print = 1;
-    printf("\n----------------------------------------------------------------------------------------------------------------------------------------------------------\n");    
+    printf("\n-----------------------------------------------------------------------------------------------------------------------------\n");    
     printf("\t\t\t\t\t\t\t\tINSTRUCTIONS\t\t\t\t\t\t\t\t\n");
-    printf("----------------------------------------------------------------------------------------------------------------------------------------------------------\n");    
-    printf("instr#\t\t\topcode\t\t\tresult\t\t\targ1\t\t\targ2\t\t\tsrcLine\t\t\n");
-    printf("----------------------------------------------------------------------------------------------------------------------------------------------------------\n");    
+    printf("------------------------------------------------------------------------------------------------------------------------------\n");    
+    printf("#instr\t\t\topcode\t\t\tresult\t\t\targ1\t\t\targ2\t\t\tsrcLine\t\t\n");
+    printf("------------------------------------------------------------------------------------------------------------------------------\n");    
     for(int i = 0; i < currInstruction; i++){
-        printf("%-*d \t",20,line_for_print);
+        printf("%-*d \t",20,line_for_print++);
         printf("%-*s \t", 20, vmopcode_array[vmargs[i].opcode]);
 		 if(vmargs[i].opcode== assign_v){
 			printVmarg(vmargs[i].result);
 			printVmarg(vmargs[i].arg1);
-			printf("%-*s \t",15,"\t");
+			printf("%-*s \t",10,"\t");
         }else if(vmargs[i].opcode == add_v || vmargs[i].opcode== sub_v || vmargs[i].opcode == mul_v || vmargs[i].opcode == div_v || vmargs[i].opcode== mod_v){
-           		printVmarg(vmargs[i].result);
+           	printVmarg(vmargs[i].result);
 			printVmarg(vmargs[i].arg1);
 			printVmarg(vmargs[i].arg2);
 	    }else if(vmargs[i].opcode == uminus_v || vmargs[i].opcode == not_v){
             printVmarg(vmargs[i].result);
 			printVmarg(vmargs[i].arg1);
-			printf("%-*s \t",15,"\t");
+			printf("%-*s \t",10,"\t");
 	    }else if(vmargs[i].opcode == and_v ||vmargs[i].opcode== or_v ){
 		    printVmarg(vmargs[i].result);
 			printVmarg(vmargs[i].arg1);
@@ -700,12 +698,12 @@ void printInstructions(){
 			printVmarg(vmargs[i].arg2);
         }else if(vmargs[i].opcode == call_v || vmargs[i].opcode == return_v || vmargs[i].opcode == jump_v || vmargs[i].opcode == newtable_v || vmargs[i].opcode == funcexit_v || vmargs[i].opcode == getretval_v || vmargs[i].opcode== pusharg_v){
 		        printVmarg(vmargs[i].result);
-			printf("%-*s \t",20,"\t");
-			printf("%-*s \t",5,"\t");
+			printf("%-*s \t",10,"\t");
+			printf("%-*s \t",10,"\t");
 	    }else if(vmargs[i].opcode == funcenter_v){
             printVmarg(vmargs[i].result);
-			printf("%-*s \t",20,"\t");
-			printf("%-*s \t",5,"\t");
+			printf("%-*s \t",10,"\t");
+			printf("%-*s \t",10,"\t");
         }else if(vmargs[i].opcode == tablegetelem_v){
             printVmarg(vmargs[i].result);
 			printVmarg(vmargs[i].arg1);
@@ -716,7 +714,6 @@ void printInstructions(){
 			printVmarg(vmargs[i].arg2);  
 	    }
 		printf(" %-*d \t",20,vmargs[i].srcLine);
-        line_for_print++;
         printf("\n");
     }
 }
