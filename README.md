@@ -1,4 +1,7 @@
-# Author: Methodios Zacharioudakis
+# Alpha Compiler
+
+##Author 
+**Methodios Zacharioudakis**
 
 ## Overview
 In this project, I've created a simple compiler for **Alpha Language**.  
