@@ -1,6 +1,6 @@
 # Alpha Compiler
 
-##Author 
+## Author 
 **Methodios Zacharioudakis**
 
 ## Overview
