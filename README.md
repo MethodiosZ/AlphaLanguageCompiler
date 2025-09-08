@@ -9,12 +9,12 @@
 In this project, I've created a simple compiler for **Alpha Language**.  
 This was done as project for my undergraduate studies.
 
-**For compiling run**
+**To compile:**
 ```sh
 make all
 ```
 
-**To clean compilation products**
+**To clean compilation products:**
 ```sh
 make clean
 ```
