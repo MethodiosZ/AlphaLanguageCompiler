@@ -1,7 +1,7 @@
 # Author: Methodios Zacharioudakis
 
 ## Overview
-In this project, I've created a simple compiler for **Alpha Language**\n
+In this project, I've created a simple compiler for **Alpha Language**  
 This was done as project for my undergraduate studies
 
 **For compiling run**
@@ -9,7 +9,7 @@ This was done as project for my undergraduate studies
 make compiler
 ```
 
-***To clean compilation products**
+**To clean compilation products**
 ```sh
 make clean
 ```
