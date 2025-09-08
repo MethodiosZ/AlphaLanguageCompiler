@@ -11,7 +11,7 @@ This was done as project for my undergraduate studies.
 
 **For compiling run**
 ```sh
-make compiler
+make all
 ```
 
 **To clean compilation products**
